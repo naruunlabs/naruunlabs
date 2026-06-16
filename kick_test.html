@@ -628,7 +628,7 @@ function drawApchaGuide(){
   ctx.restore();
 }
 
-// 돌려차기용 가이드 라인 — 앞차기와 같은 스타일, 호형
+// 돌려차기용 가이드 라인 — 앞차기와 동일 스타일, 호형
 function drawDolloGuide(){
   if(smHipY==null||smHipX==null||!running) return;
   const W=canvas.width, H=canvas.height;
@@ -640,50 +640,66 @@ function drawDolloGuide(){
   const peakY=(smHipY - liftRatio*smTorso)*H;
   const startY=smHipY*H+10;
 
-  // 오른발 기준: 몸 중앙에서 오른쪽 시작 → 위로 → 왼쪽으로 빠짐
-  // 미러 모드면 반전
+  // 오른발 기준: 오른쪽 시작 → 꼭대기 → 왼쪽으로
   const side=mirrored?-1:1;
-  const span=W*0.22; // 가로 이동 폭
-  const startX=bodyX + side*span*0.5;
-  const endX=bodyX - side*span*0.5;
-  const ctrlX=bodyX;
+  const span=W*0.20;
+  const startX=bodyX + side*span*0.55;
+  const endX  =bodyX - side*span*0.55;
+  const peakX =bodyX;
+  const peakCY=peakY; // 꼭대기 Y
 
   ctx.save();
-  // 글로우
-  ctx.strokeStyle='rgba(232,160,32,0.15)'; ctx.lineWidth=26; ctx.lineCap='round'; ctx.setLineDash([]);
+
+  // ① 글로우 (앞차기와 동일 두께/투명도)
+  ctx.strokeStyle='rgba(232,160,32,0.18)'; ctx.lineWidth=26;
+  ctx.lineCap='round'; ctx.lineJoin='round'; ctx.setLineDash([]);
   ctx.beginPath();
-  ctx.moveTo(startX,startY);
-  ctx.quadraticCurveTo(ctrlX, peakY-30, endX, startY-20);
+  ctx.moveTo(startX, startY);
+  ctx.bezierCurveTo(startX, peakCY, peakX, peakCY, endX, startY-10);
   ctx.stroke();
-  // 메인 그라데이션 점선
-  const g=ctx.createLinearGradient(startX,startY,endX,startY-20);
-  g.addColorStop(0,'rgba(232,160,32,0.25)');
+
+  // ② 메인 그라데이션 점선
+  const g=ctx.createLinearGradient(startX, startY, endX, startY-10);
+  g.addColorStop(0,  'rgba(232,160,32,0.25)');
   g.addColorStop(0.5,'rgba(232,160,32,1)');
-  g.addColorStop(1,'rgba(232,160,32,0.4)');
+  g.addColorStop(1,  'rgba(232,160,32,0.35)');
   ctx.strokeStyle=g; ctx.lineWidth=6; ctx.setLineDash([14,8]);
   ctx.beginPath();
-  ctx.moveTo(startX,startY);
-  ctx.quadraticCurveTo(ctrlX, peakY-30, endX, startY-20);
+  ctx.moveTo(startX, startY);
+  ctx.bezierCurveTo(startX, peakCY, peakX, peakCY, endX, startY-10);
   ctx.stroke();
   ctx.setLineDash([]);
-  // 작은 화살표 (끝 방향 기준, 앞차기 스타일로 소형)
-  const aw=11;
-  const ex=endX, ey=startY-20;
-  const dx=(endX-ctrlX), dy=((startY-20)-peakY+30);
-  const angle=Math.atan2(dy,dx);
-  ctx.save(); ctx.translate(ex,ey); ctx.rotate(angle);
+
+  // ③ 끝점 화살표 — 앞차기처럼 삼각형, 진행 방향 기준
+  // 끝점 접선 방향: bezier 끝 제어점(peakX,peakCY) → 끝점(endX,startY-10)
+  const aw=13;
+  const adx=endX-peakX, ady=(startY-10)-peakCY;
+  const aAngle=Math.atan2(ady,adx);
+  ctx.save();
+  ctx.translate(endX, startY-10); ctx.rotate(aAngle);
   ctx.fillStyle='rgba(232,160,32,0.95)';
-  ctx.beginPath(); ctx.moveTo(aw*1.2,0); ctx.lineTo(-aw,aw); ctx.lineTo(-aw,-aw); ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(aw*1.3, 0);
+  ctx.lineTo(-aw, aw*0.8);
+  ctx.lineTo(-aw, -aw*0.8);
+  ctx.closePath(); ctx.fill();
   ctx.restore();
-  // 꼭대기 점 표시
-  ctx.beginPath(); ctx.arc(ctrlX,peakY-30,8,0,Math.PI*2);
-  ctx.fillStyle='rgba(232,160,32,0.7)'; ctx.fill();
-  ctx.beginPath(); ctx.arc(ctrlX,peakY-30,4,0,Math.PI*2);
+
+  // ④ 꼭대기 흰 점 (앞차기 화살표 머리 대신)
+  ctx.beginPath(); ctx.arc(peakX, peakCY, 9, 0, Math.PI*2);
+  ctx.fillStyle='rgba(232,160,32,0.75)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(peakX, peakCY, 5, 0, Math.PI*2);
   ctx.fillStyle='#fff'; ctx.fill();
-  // 라벨
-  ctx.fillStyle='rgba(9,22,40,.88)'; ctx.fillRect(ctrlX-80,peakY-66,160,24);
+
+  // ⑤ 꼭대기 가로 점선 (앞차기 목표선과 동일 스타일)
+  ctx.strokeStyle='rgba(232,160,32,0.5)'; ctx.lineWidth=2; ctx.setLineDash([8,5]);
+  ctx.beginPath(); ctx.moveTo(peakX-70,peakCY); ctx.lineTo(peakX+70,peakCY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ⑥ 라벨 (앞차기와 동일 크기/배경)
+  ctx.fillStyle='rgba(9,22,40,.88)'; ctx.fillRect(peakX-80, peakCY-32, 160, 24);
   ctx.fillStyle='#E8A020'; ctx.font='bold 13px Gothic A1,sans-serif'; ctx.textAlign='center';
-  ctx.fillText('이 곡선을 따라 차요', ctrlX, peakY-48);
+  ctx.fillText('↩ 이 곡선을 따라 차요', peakX, peakCY-14);
   ctx.textAlign='left';
   ctx.restore();
 }
@@ -696,9 +712,9 @@ function onDrillKick(peak, traj){
   drillScores.push(result.score);
   lastScore=result.score; lastGrade=result.msg; lastColor=result.ok?'#4caf50':'#9fb0c8';
 
-  // 가벼운 성공/실패 리액션
-  if(result.ok){ sndSuccess(); popup('✅ '+result.score+'점', '#4caf50'); }
-  else { sndFail(); popup('❌ '+result.score+'점', '#9fb0c8'); }
+  // 가벼운 점수 팝업 (OX 없이 점수만)
+  if(result.ok){ sndSuccess(); popup(result.score+'점', '#4caf50'); }
+  else { sndFail(); popup(result.score+'점', '#9fb0c8'); }
 
   renderStats();
   trajX=[]; trajY=[]; trajActive=false;
