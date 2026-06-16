@@ -294,6 +294,7 @@
     <div class="btns">
       <button class="btn-new" id="newBtn">👤 다음 아이</button>
       <button class="btn-flip" id="flipBtn">📷 카메라 전환</button>
+      <button class="btn-flip" id="fsBtn" onclick="toggleFullscreen()">⛶ 전체화면</button>
     </div>
   </div>
 </div>
@@ -950,6 +951,18 @@ document.getElementById('flipBtn').onclick=async()=>{
   facingMode=(facingMode==='user')?'environment':'user';
   camWrap.classList.toggle('mirrored',facingMode==='user');
   await startCamera();
+};
+window.toggleFullscreen=()=>{
+  const el=document.documentElement;
+  if(!document.fullscreenElement&&!document.webkitFullscreenElement){
+    if(el.requestFullscreen) el.requestFullscreen();
+    else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    document.getElementById('fsBtn').textContent='✕ 전체화면 끄기';
+  } else {
+    if(document.exitFullscreen) document.exitFullscreen();
+    else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+    document.getElementById('fsBtn').textContent='⛶ 전체화면';
+  }
 };
 
 /* ── 발차기 완료 처리 ── */
