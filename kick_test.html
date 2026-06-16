@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 발차기 챌린지</title>
+<style>
+  :root{ --red:#D92B3A; --navy:#0A1628; --gold:#E8A020; --green:#2ecc71; --blue:#4ca3ff;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;background:var(--navy);color:#fff;
+    font-family:'Gothic A1','Noto Sans KR',system-ui,sans-serif;}
+  .stage{display:flex;width:100vw;height:100vh;}
+
+  .cam-wrap{position:relative;flex:0 0 52%;background:#000;overflow:hidden;}
+  .cam-wrap.mirrored #video,
+  .cam-wrap.mirrored #overlay{transform:scaleX(-1);}
+  #video,#overlay{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
+
+  #status{position:absolute;bottom:10px;left:10px;
+    background:rgba(0,0,0,.65);padding:6px 12px;border-radius:8px;
+    font-size:12px;font-weight:600;z-index:5;max-width:80%;}
+
+  /* 타이머 우상단 */
+  #timerBadge{display:none;position:absolute;top:16px;right:16px;
+    background:rgba(9,22,40,.88);border:3px solid var(--green);border-radius:20px;
+    padding:10px 22px;z-index:8;text-align:center;min-width:110px;}
+  #timerBadge.show{display:block;}
+  #timerBadgeNum{font-size:100px;font-weight:900;color:var(--green);line-height:1;}
+  #timerBadgeLabel{font-size:15px;color:#9fb0c8;font-weight:600;margin-top:2px;}
+
+  /* 카메라 왼쪽 랭킹 오버레이 */
+  #camRank{display:none;position:absolute;top:16px;left:16px;
+    background:rgba(9,22,40,.82);border:2px solid rgba(232,160,32,.6);
+    border-radius:14px;padding:10px 14px;z-index:8;min-width:130px;}
+  #camRank.show{display:block;}
+  #camRankTitle{font-size:11px;color:var(--gold);font-weight:800;margin-bottom:6px;}
+  #camRankList{list-style:none;display:flex;flex-direction:column;gap:3px;}
+  .cr-item{display:flex;align-items:center;gap:6px;font-weight:800;}
+  .cr-item .crk{font-size:14px;width:20px;text-align:center;}
+  .cr-item .crv{font-size:14px;color:#fff;}
+  .cr-item.me .crv{color:var(--gold);}
+
+  /* 과녁 안내 하단 */
+  #targetGuide{display:none;position:absolute;bottom:48px;left:50%;transform:translateX(-50%);
+    background:rgba(9,22,40,.88);border:2px solid var(--gold);border-radius:14px;
+    padding:8px 20px;z-index:8;text-align:center;white-space:nowrap;}
+  #targetGuide.show{display:block;}
+  #targetGuideText{font-size:16px;font-weight:800;color:var(--gold);}
+  #targetGuideSub{font-size:12px;color:#cdd8e8;margin-top:2px;}
+
+  /* 콤보 패널 우하단 */
+  #comboPanel{display:none;position:absolute;bottom:48px;right:14px;
+    background:rgba(9,22,40,.88);border:2px solid #1d3050;border-radius:14px;
+    padding:10px 14px;z-index:8;text-align:center;min-width:120px;}
+  #comboPanel.show{display:block;}
+  #comboCurNum{font-size:80px;font-weight:900;color:var(--gold);line-height:1;
+    text-shadow:0 0 30px rgba(232,160,32,.7);}
+  #comboPanelLbl{font-size:14px;font-weight:900;color:#fff;letter-spacing:3px;margin-bottom:6px;}
+  #comboBarTrack{height:10px;background:#0a1220;border-radius:5px;overflow:hidden;border:1px solid #1d3050;margin-top:6px;}
+  #comboBarFill{height:100%;width:100%;background:linear-gradient(90deg,var(--gold),var(--red));border-radius:5px;}
+  #comboMaxLbl{font-size:11px;color:#9fb0c8;margin-top:4px;}
+
+  /* ── 발차기 연습 결과 오버레이 (화면 중앙) ── */
+  #drillResult{display:none;position:absolute;inset:0;
+    align-items:center;justify-content:center;flex-direction:column;
+    gap:14px;z-index:11;pointer-events:none;
+    background:rgba(9,22,40,.72);}
+  #drillResult.show{display:flex;}
+  #drillResultIcon{font-size:100px;line-height:1;animation:drillIconPop .5s cubic-bezier(.22,1,.36,1);}
+  #drillResultText{font-size:54px;font-weight:900;text-align:center;line-height:1.1;
+    animation:drillIconPop .5s cubic-bezier(.22,1,.36,1);}
+  #drillResultSub{font-size:20px;color:#cdd8e8;font-weight:700;text-align:center;}
+  @keyframes drillIconPop{0%{transform:scale(.2);opacity:0;}70%{transform:scale(1.12);}100%{transform:scale(1);opacity:1;}}
+
+  /* 풍선 */
+  .balloon{position:absolute;transform:translate(-50%,-50%);
+    font-size:64px;z-index:7;pointer-events:none;
+    filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));}
+  .balloon.pop{animation:balloonPop .25s ease forwards;}
+  @keyframes balloonPop{0%{transform:translate(-50%,-50%) scale(1);}100%{transform:translate(-50%,-50%) scale(2);opacity:0;}}
+  .burst{position:absolute;transform:translate(-50%,-50%);font-size:56px;z-index:8;pointer-events:none;animation:burstFade .45s ease forwards;}
+  @keyframes burstFade{0%{opacity:1;transform:translate(-50%,-50%) scale(.5);}100%{opacity:0;transform:translate(-50%,-50%) scale(1.8);}}
+
+  /* 준비 카운트다운 */
+  #readyOverlay{display:none;position:absolute;inset:0;background:rgba(9,22,40,.82);
+    align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:10;}
+  #readyOverlay.show{display:flex;}
+  #readyNum{font-size:160px;font-weight:900;color:var(--gold);line-height:1;
+    text-shadow:0 0 40px rgba(232,160,32,.7);}
+  #readySub{font-size:20px;color:#cdd8e8;font-weight:700;}
+
+  /* 점수 팝업 */
+  #popOverlay{display:none;position:absolute;inset:0;align-items:center;justify-content:center;z-index:9;pointer-events:none;}
+  #popOverlay.show{display:flex;}
+  #popScore{font-size:120px;font-weight:900;text-shadow:0 4px 30px rgba(0,0,0,.7);animation:popIn .35s ease forwards;}
+  @keyframes popIn{0%{transform:scale(0.2);opacity:0;}60%{transform:scale(1.18);}100%{transform:scale(1);opacity:1;}}
+
+  /* 패널 */
+  .panel{flex:1 1 0;background:linear-gradient(180deg,#0A1628,#12233d);
+    border-left:4px solid var(--gold);display:flex;flex-direction:column;
+    overflow-y:auto;padding:12px 14px;gap:9px;}
+
+  .title{font-size:15px;font-weight:800;color:var(--gold);}
+  .title small{display:block;font-size:10px;color:#9fb0c8;font-weight:500;}
+
+  /* 섹션 구분선 */
+  .section-label{font-size:10px;font-weight:800;color:#5a7294;letter-spacing:1px;
+    border-bottom:1px solid #1d3050;padding-bottom:3px;margin-top:2px;}
+
+  .mode-row{display:flex;gap:6px;}
+  .mode-btn{flex:1;padding:9px 4px;font-size:13px;font-weight:700;
+    border:2px solid #1d3050;border-radius:10px;background:#0d1e35;color:#7d8ca5;
+    cursor:pointer;font-family:inherit;transition:all .15s;}
+  .mode-btn.active{background:var(--navy);color:#fff;border-color:var(--gold);}
+  .game-btn{flex:1;padding:9px 4px;font-size:13px;font-weight:700;
+    border:2px solid #1d3050;border-radius:10px;background:#0d1e35;color:#7d8ca5;
+    cursor:pointer;font-family:inherit;transition:all .15s;}
+  .game-btn.active{background:var(--red);color:#fff;border-color:var(--gold);}
+  /* 연습 모드 버튼: 파란계열로 구분 */
+  .drill-btn{flex:1;padding:9px 4px;font-size:13px;font-weight:700;
+    border:2px solid #1d3050;border-radius:10px;background:#0d1e35;color:#7d8ca5;
+    cursor:pointer;font-family:inherit;transition:all .15s;}
+  .drill-btn.active{background:#0d2744;color:#4ca3ff;border-color:#4ca3ff;}
+
+  /* 스탯 */
+  .stats-row{display:flex;gap:6px;}
+  .stat-box{flex:1;text-align:center;border-radius:12px;padding:8px 4px;}
+  .stat-box.count-box{background:rgba(217,43,58,.12);border:2px solid var(--red);}
+  .stat-box.score-box{background:rgba(232,160,32,.1);border:2px solid var(--gold);}
+  .stat-box.avg-box{background:rgba(46,204,113,.1);border:2px solid var(--green);}
+  .stat-label{font-size:10px;color:#cdd8e8;font-weight:600;margin-bottom:2px;}
+  .stat-num{font-size:40px;font-weight:900;line-height:1;}
+  .count-box .stat-num{color:#fff;}
+  .score-box .stat-num{color:var(--gold);}
+  .avg-box .stat-num{color:var(--green);}
+  #scoreGrade{font-size:12px;font-weight:800;min-height:16px;}
+
+  /* 게임/연습 시작 */
+  .game-area{display:none;flex-direction:column;gap:6px;}
+  #startBtn{width:100%;padding:12px;font-size:16px;font-weight:700;
+    background:var(--green);color:#0A1628;border:none;border-radius:10px;cursor:pointer;font-family:inherit;}
+  #startBtn:disabled{background:#1d3050;color:#7d8ca5;cursor:default;}
+  #startBtn:active{transform:scale(.97);}
+  #gameResult{text-align:center;font-size:13px;font-weight:700;color:var(--green);min-height:18px;}
+
+  /* 연습 회수 설정 */
+  .drill-count-row{display:flex;gap:6px;align-items:center;}
+  .drill-count-row label{font-size:11px;color:#9fb0c8;font-weight:600;white-space:nowrap;}
+  .drill-count-row select{flex:1;background:#0d1e35;color:#fff;border:2px solid #1d3050;
+    border-radius:8px;padding:6px 8px;font-family:inherit;font-size:13px;font-weight:700;}
+
+  /* 높이 바 */
+  .height-box{background:rgba(255,255,255,.05);border-radius:10px;padding:10px;}
+  .height-box h3{font-size:11px;color:#9fb0c8;margin-bottom:5px;font-weight:600;}
+  .bar-track{position:relative;height:18px;background:#0a1220;border-radius:9px;overflow:hidden;border:1px solid #1d3050;}
+  .bar-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--red));border-radius:9px;transition:width .06s linear;}
+  .bar-thresh{position:absolute;top:-3px;bottom:-3px;width:3px;background:#fff;opacity:.85;}
+
+  .ctrl label{font-size:11px;color:#cdd8e8;font-weight:600;display:flex;justify-content:space-between;margin-bottom:4px;}
+  input[type=range]{width:100%;accent-color:var(--gold);}
+
+  .btns{display:flex;gap:8px;margin-top:2px;}
+  .btns button{flex:1;padding:11px 4px;font-size:13px;font-weight:700;border:none;border-radius:10px;cursor:pointer;font-family:inherit;}
+  .btn-new{background:var(--red);color:#fff;}
+  .btn-flip{background:#1d3050;color:#fff;}
+  button:active{transform:scale(.97);}
+
+  @media (orientation:portrait){
+    .stage{display:none;}
+    .rotate-msg{display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;text-align:center;padding:24px;}
+    .rotate-msg .icon{font-size:64px;}
+    .rotate-msg p{font-size:20px;font-weight:700;color:var(--gold);}
+    .rotate-msg small{font-size:14px;color:#9fb0c8;}
+  }
+  @media (orientation:landscape){.rotate-msg{display:none;}}
+</style>
+</head>
+<body>
+
+<div class="rotate-msg">
+  <div class="icon">🔄</div>
+  <p>태블릿을 가로로 돌려주세요</p>
+  <small>이 앱은 가로 모드 전용입니다</small>
+</div>
+
+<div class="stage">
+  <div class="cam-wrap mirrored" id="camWrap">
+    <div id="status">AI 모델 로딩 중…</div>
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="overlay"></canvas>
+
+    <div id="timerBadge">
+      <div id="timerBadgeNum">10</div>
+      <div id="timerBadgeLabel">남은 시간</div>
+    </div>
+
+    <div id="camRank">
+      <div id="camRankTitle">🏆 오늘의 랭킹</div>
+      <ol id="camRankList"></ol>
+    </div>
+
+    <div id="targetGuide">
+      <div id="targetGuideText">이 높이까지 차세요! 🎯</div>
+      <div id="targetGuideSub">목표 <span id="tgRound">1</span>/5 · <span id="tgPct">—</span>%</div>
+    </div>
+
+    <div id="comboPanel">
+      <div id="comboPanelLbl">COMBO</div>
+      <div id="comboCurNum">0</div>
+      <div id="comboBarTrack"><div id="comboBarFill"></div></div>
+      <div id="comboMaxLbl">최고: <span id="comboMaxNum">0</span></div>
+    </div>
+
+    <!-- 발차기 연습 완료 오버레이 -->
+    <div id="drillResult">
+      <div id="drillResultIcon">🏆</div>
+      <div id="drillResultText">훌륭해요!</div>
+      <div id="drillResultSub"></div>
+    </div>
+
+    <div id="readyOverlay">
+      <div id="readyNum">3</div>
+      <div id="readySub"></div>
+    </div>
+    <div id="popOverlay"><div id="popScore"></div></div>
+  </div>
+
+  <div class="panel">
+    <div class="title">AI 발차기 챌린지 <small>v0.9</small></div>
+
+    <div class="section-label">— 연습 모드</div>
+    <div class="mode-row">
+      <button class="drill-btn" id="m_apcha" onclick="setMode('apcha')">🦵 앞차기 연습</button>
+      <button class="drill-btn" id="m_dollo" onclick="setMode('dollo')">🔄 돌려차기 연습</button>
+    </div>
+    <div class="game-area" id="drillCountArea">
+      <div class="drill-count-row">
+        <label>목표 횟수</label>
+        <select id="drillCountSel">
+          <option value="5">5회</option>
+          <option value="10" selected>10회</option>
+          <option value="15">15회</option>
+          <option value="20">20회</option>
+        </select>
+      </div>
+      <button id="startBtn" onclick="startGame()">▶ 시작!</button>
+      <div id="gameResult"></div>
+    </div>
+
+    <div class="section-label">— 게임 모드</div>
+    <div class="mode-row">
+      <button class="mode-btn active" id="m_free" onclick="setMode('free')">🏋️ 자유</button>
+      <button class="mode-btn" id="m_challenge" onclick="setMode('challenge')">⏱ 10초</button>
+    </div>
+    <div class="mode-row">
+      <button class="game-btn" id="m_target" onclick="setMode('target')">🎯 과녁</button>
+      <button class="game-btn" id="m_balloon" onclick="setMode('balloon')">🎈 풍선</button>
+      <button class="game-btn" id="m_combo" onclick="setMode('combo')">🔥 콤보</button>
+    </div>
+    <div class="game-area" id="gameArea">
+      <button id="startBtn2" onclick="startGame()">▶ 시작!</button>
+      <div id="gameResult2" style="text-align:center;font-size:13px;font-weight:700;color:var(--green);min-height:18px;"></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box count-box">
+        <div class="stat-label" id="lblA">횟수</div>
+        <div class="stat-num" id="valA">0</div>
+      </div>
+      <div class="stat-box score-box">
+        <div class="stat-label" id="lblB">이번 점수</div>
+        <div class="stat-num" id="valB">—</div>
+        <div id="scoreGrade"></div>
+      </div>
+      <div class="stat-box avg-box">
+        <div class="stat-label" id="lblC">평균</div>
+        <div class="stat-num" id="valC">—</div>
+      </div>
+    </div>
+
+    <div class="height-box">
+      <h3>발 높이 (실시간)</h3>
+      <div class="bar-track">
+        <div class="bar-fill" id="barFill"></div>
+        <div class="bar-thresh" id="barThresh"></div>
+      </div>
+    </div>
+
+    <div class="ctrl">
+      <label>민감도 (기준 높이) <span id="sensVal">50%</span></label>
+      <input type="range" id="sens" min="25" max="85" value="50">
+    </div>
+
+    <div class="btns">
+      <button class="btn-new" id="newBtn">👤 다음 아이</button>
+      <button class="btn-flip" id="flipBtn">📷 카메라 전환</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { PoseLandmarker, FilesetResolver, DrawingUtils }
+  from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+
+/* ── DOM ── */
+const video=document.getElementById('video');
+const canvas=document.getElementById('overlay');
+const ctx=canvas.getContext('2d');
+const statusEl=document.getElementById('status');
+const lblA=document.getElementById('lblA'), valA=document.getElementById('valA');
+const lblB=document.getElementById('lblB'), valB=document.getElementById('valB');
+const lblC=document.getElementById('lblC'), valC=document.getElementById('valC');
+const scoreGrade=document.getElementById('scoreGrade');
+const barFill=document.getElementById('barFill'), barThresh=document.getElementById('barThresh');
+const sensEl=document.getElementById('sens'), sensVal=document.getElementById('sensVal');
+const camWrap=document.getElementById('camWrap');
+const timerBadge=document.getElementById('timerBadge'), timerBadgeNum=document.getElementById('timerBadgeNum');
+const camRank=document.getElementById('camRank'), camRankList=document.getElementById('camRankList'), camRankTitle=document.getElementById('camRankTitle');
+const targetGuide=document.getElementById('targetGuide'), targetGuideText=document.getElementById('targetGuideText');
+const tgRound=document.getElementById('tgRound'), tgPct=document.getElementById('tgPct');
+const comboPanel=document.getElementById('comboPanel'), comboCurNum=document.getElementById('comboCurNum');
+const comboBarFill=document.getElementById('comboBarFill'), comboMaxNum=document.getElementById('comboMaxNum');
+const readyOverlay=document.getElementById('readyOverlay'), readyNum=document.getElementById('readyNum'), readySub=document.getElementById('readySub');
+const popOverlay=document.getElementById('popOverlay'), popScore=document.getElementById('popScore');
+const drillResult=document.getElementById('drillResult');
+const drillResultIcon=document.getElementById('drillResultIcon');
+const drillResultText=document.getElementById('drillResultText');
+const drillResultSub=document.getElementById('drillResultSub');
+const drillCountArea=document.getElementById('drillCountArea');
+const drillCountSel=document.getElementById('drillCountSel');
+const gameArea=document.getElementById('gameArea');
+// 두 시작 버튼을 하나처럼
+const startBtn=document.getElementById('startBtn');
+const startBtn2=document.getElementById('startBtn2');
+const gameResult=document.getElementById('gameResult');
+const gameResult2=document.getElementById('gameResult2');
+
+/* ── 모드 설정 ── */
+const MODE_CFG={
+  free:     {rank:false, isDrill:false},
+  challenge:{rank:true,  isDrill:false, unit:'회',   title:'10초 챌린지'},
+  target:   {rank:true,  isDrill:false, unit:'점',   title:'과녁 정확도'},
+  balloon:  {rank:true,  isDrill:false, unit:'개',   title:'풍선 터뜨리기'},
+  combo:    {rank:true,  isDrill:false, unit:'콤보', title:'콤보 챌린지'},
+  apcha:    {rank:false, isDrill:true,  label:'앞차기'},
+  dollo:    {rank:false, isDrill:true,  label:'돌려차기'},
+};
+
+/* ── 상태 ── */
+let poseLandmarker=null, drawingUtils=null, lastVideoTime=-1;
+let facingMode='user', stream=null;
+let threshPct=50;
+let kicking=false, peakPct=0, aboveFrames=0, belowFrames=0;
+const ABOVE_REQ=4, BELOW_REQ=4, RESET_PCT=12;
+const COMBO_WINDOW=2500;
+
+let currentMode='free';
+let running=false, gameTimer=null, gameRemain=0, popTimer=null;
+
+let count=0, scoreList=[], lastScore=null, lastGrade='', lastColor='var(--gold)';
+let targetRound=0, targetScores=[], currentTargetPct=0, targetLastAcc=null, acceptTargetKick=false;
+let balloons=[], balloonCount=0;
+let comboCur=0, comboMax=0, comboTotal=0, comboLastT=0, comboBarAnim=null;
+let lastRankTs=null;
+let smHipY=null, smTorso=null, smHipX=null;
+
+// 발차기 궤적 추적 (연습 모드용)
+let trajX=[], trajY=[], trajActive=false;
+
+// 연습 모드 상태
+let drillTarget=10, drillDone=0, drillScores=[], drillResultTimer=null;
+
+/* ── 사운드 ── */
+let audioCtx=null;
+function ensureAudio(){ try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); }catch(e){} }
+function tone(freq,dur,type='sine',vol=0.18,delay=0){
+  if(!audioCtx) return;
+  const t=audioCtx.currentTime+delay;
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.type=type; o.frequency.value=freq;
+  g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(vol,t+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(audioCtx.destination); o.start(t); o.stop(t+dur+0.03);
+}
+function sndKick(){ tone(170,0.09,'square',0.10); }
+function sndScore(s){ tone(280+Math.min(100,s)*5,0.16,'sine',0.18); }
+function sndCount(){ tone(520,0.12,'sine',0.2); }
+function sndGo(){ tone(740,0.30,'sine',0.22); }
+function sndPop(){ tone(880,0.05,'triangle',0.22); tone(360,0.08,'sine',0.18,0.04); }
+function sndCombo(n){ tone(300+Math.min(n,16)*42,0.12,'square',0.16); }
+function sndRecord(){ [523,659,784,1047].forEach((f,i)=>tone(f,0.22,'sine',0.2,i*0.12)); }
+function sndSuccess(){ [440,554,659].forEach((f,i)=>tone(f,0.18,'sine',0.18,i*0.08)); }
+function sndFail(){ tone(220,0.25,'sawtooth',0.12); }
+['click','touchstart'].forEach(ev=>document.addEventListener(ev,ensureAudio));
+
+/* ── 컨페티 ── */
+function confetti(big=false){
+  let cv=document.getElementById('confettiCv');
+  if(!cv){ cv=document.createElement('canvas'); cv.id='confettiCv';
+    cv.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9999;';
+    document.body.appendChild(cv); }
+  cv.width=innerWidth; cv.height=innerHeight;
+  const cx=cv.getContext('2d');
+  const colors=['#D92B3A','#E8A020','#2ecc71','#fff','#4ca3ff'];
+  const n=big?300:150;
+  const P=[];
+  for(let i=0;i<n;i++) P.push({x:Math.random()*cv.width,y:-20-Math.random()*cv.height*0.4,
+    vx:(Math.random()-0.5)*8,vy:3+Math.random()*6,s:big?8+Math.random()*10:5+Math.random()*7,
+    c:colors[i%colors.length],rot:Math.random()*6,vr:(Math.random()-0.5)*0.3});
+  const start=performance.now();
+  const dur=big?2400:1800;
+  (function frame(now){
+    const t=now-start; cx.clearRect(0,0,cv.width,cv.height);
+    P.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=0.12; p.rot+=p.vr;
+      cx.save(); cx.translate(p.x,p.y); cx.rotate(p.rot); cx.fillStyle=p.c;
+      cx.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.6); cx.restore(); });
+    if(t<dur) requestAnimationFrame(frame); else cx.clearRect(0,0,cv.width,cv.height);
+  })(start);
+}
+
+/* ── 랭킹 ── */
+function todayKey(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function loadRank(mode){
+  try{ const raw=localStorage.getItem('kickRank_'+mode); if(!raw) return [];
+    const obj=JSON.parse(raw); if(obj.date!==todayKey()) return []; return obj.scores||[];
+  }catch(e){ return []; }
+}
+function saveRank(mode,scores){ try{ localStorage.setItem('kickRank_'+mode,JSON.stringify({date:todayKey(),scores})); }catch(e){} }
+function addRank(mode,value){
+  let s=loadRank(mode); const entry={v:value,ts:Date.now()};
+  s.push(entry); s.sort((a,b)=>b.v-a.v); s=s.slice(0,10); saveRank(mode,s);
+  return {newTs:entry.ts, rank:s.findIndex(e=>e.ts===entry.ts)};
+}
+function renderCamRank(){
+  const cfg=MODE_CFG[currentMode];
+  if(!cfg.rank){ camRank.classList.remove('show'); return; }
+  const list=loadRank(currentMode).slice(0,5);
+  if(list.length===0){ camRank.classList.remove('show'); return; }
+  camRank.classList.add('show');
+  camRankTitle.textContent='🏆 '+cfg.title;
+  const medals=['🥇','🥈','🥉','4위','5위'];
+  camRankList.innerHTML=list.map((e,i)=>{
+    const me=(e.ts===lastRankTs)?' me':'';
+    return '<li class="cr-item'+me+'"><span class="crk">'+medals[i]+'</span><span class="crv">'+e.v+cfg.unit+'</span></li>';
+  }).join('');
+}
+
+/* ── 민감도 ── */
+sensEl.addEventListener('input',()=>{ threshPct=parseInt(sensEl.value); sensVal.textContent=threshPct+'%'; barThresh.style.left=threshPct+'%'; });
+barThresh.style.left=threshPct+'%';
+
+/* ── 스탯 렌더 ── */
+function avgOf(arr){ return arr.length?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):null; }
+function renderStats(){
+  scoreGrade.style.display='none';
+  if(currentMode==='free'||currentMode==='challenge'){
+    lblA.textContent='횟수'; valA.textContent=count;
+    lblB.textContent='이번 점수'; valB.textContent=(lastScore==null?'—':lastScore); valB.style.color=lastColor;
+    scoreGrade.style.display='block'; scoreGrade.textContent=lastGrade; scoreGrade.style.color=lastColor;
+    lblC.textContent='평균'; valC.textContent=(avgOf(scoreList)??'—');
+  } else if(currentMode==='target'){
+    lblA.textContent='과녁'; valA.textContent=targetRound+'/5';
+    lblB.textContent='정확도'; valB.textContent=(targetLastAcc==null?'—':targetLastAcc+'점'); valB.style.color='var(--gold)';
+    lblC.textContent='평균'; valC.textContent=(avgOf(targetScores)??'—');
+  } else if(currentMode==='balloon'){
+    lblA.textContent='터뜨림'; valA.textContent=balloonCount;
+    lblB.textContent='남은 시간'; valB.textContent=(running?gameRemain+'초':'—'); valB.style.color='var(--gold)';
+    const best=loadRank('balloon')[0]; lblC.textContent='오늘 1등'; valC.textContent=(best?best.v+'개':'—');
+  } else if(currentMode==='combo'){
+    lblA.textContent='현재 콤보'; valA.textContent=comboCur;
+    lblB.textContent='최고 콤보'; valB.textContent=comboMax; valB.style.color='var(--gold)';
+    lblC.textContent='총 횟수'; valC.textContent=comboTotal;
+  } else if(currentMode==='apcha'||currentMode==='dollo'){
+    lblA.textContent='횟수'; valA.textContent=drillDone+'/'+drillTarget;
+    lblB.textContent='이번 점수'; valB.textContent=(lastScore==null?'—':lastScore); valB.style.color=lastColor;
+    scoreGrade.style.display='block'; scoreGrade.textContent=lastGrade; scoreGrade.style.color=lastColor;
+    lblC.textContent='평균'; valC.textContent=(avgOf(drillScores)??'—');
+  }
+}
+
+/* ── 팝업 ── */
+function popup(text,color){
+  popScore.textContent=text; popScore.style.color=color;
+  popOverlay.classList.add('show');
+  if(popTimer) clearTimeout(popTimer);
+  popTimer=setTimeout(()=>popOverlay.classList.remove('show'),900);
+}
+
+/* ── 자유/챌린지 점수 ── */
+function showScore(peak){
+  const score=Math.round(Math.min(100,Math.max(40,((peak-threshPct)/(100-threshPct))*60+40)));
+  scoreList.push(score); lastScore=score;
+  let grade,color;
+  if(score>=95){grade='🔥 완벽해요!';color='#ff4d6d';}
+  else if(score>=85){grade='⚡ 아주 좋아요!';color='#E8A020';}
+  else if(score>=70){grade='👍 잘했어요!';color='#4caf50';}
+  else if(score>=55){grade='💪 조금 더!';color='#64b5f6';}
+  else{grade='😊 도전!';color='#9fb0c8';}
+  lastGrade=grade; lastColor=color;
+  sndScore(score); popup(score+'점!',color); renderStats();
+}
+
+/* ─────────────────────────────────────────────
+   ── 발차기 연습 모드 (앞차기 / 돌려차기) ──
+   ─────────────────────────────────────────── */
+
+// 궤적에서 발차기 형태 분석
+function analyzeTraj(){
+  if(trajX.length<4) return {score:0,ok:false,msg:'너무 짧아요'};
+  const n=trajX.length;
+  // Y 최대 상승량 (위로 올라갈수록 음수 → 절댓값)
+  const startY=trajY[0], minY=Math.min(...trajY);
+  const riseY=startY-minY; // 0~1 (canvas 정규화 좌표)
+
+  // X 최대 이동량
+  const startX=trajX[0];
+  let maxDX=0;
+  trajX.forEach(x=>{ if(Math.abs(x-startX)>Math.abs(maxDX)) maxDX=x-startX; });
+  const absDX=Math.abs(maxDX);
+
+  if(currentMode==='apcha'){
+    // 앞차기: Y는 많이 올라가고 X는 거의 안 변해야 함
+    // 성공 기준: riseY > 0.08 (화면 8% 이상 상승) AND absDX < riseY*0.9
+    const heightScore=Math.min(100, Math.round((riseY/0.25)*80)); // 25%상승=80점
+    const straightScore=Math.max(0, Math.round(100-(absDX/Math.max(riseY,0.01))*120));
+    const score=Math.round(heightScore*0.5+straightScore*0.5);
+    const ok=riseY>0.06 && absDX<riseY*1.2;
+    let msg;
+    if(score>=85) msg='🔥 완벽한 앞차기!';
+    else if(score>=70) msg='✅ 좋아요!';
+    else if(absDX>riseY*1.2) msg='↕️ 더 직선으로!';
+    else msg='🦵 더 높이!';
+    return {score,ok,msg};
+  } else {
+    // 돌려차기: X 이동이 크고, Y도 일정 이상 올라가야 함
+    // 호의 정도 = X이동 / Y상승 비율이 높을수록 돌려차기
+    const arcRatio=absDX/Math.max(riseY,0.01);
+    const heightScore=Math.min(100, Math.round((riseY/0.2)*70));
+    const arcScore=Math.min(100, Math.round(arcRatio*80)); // 옆으로 많이 휠수록
+    const score=Math.round(heightScore*0.4+arcScore*0.6);
+    const ok=riseY>0.05 && absDX>0.04;
+    let msg;
+    if(score>=85) msg='🔥 완벽한 돌려차기!';
+    else if(score>=70) msg='✅ 좋아요!';
+    else if(absDX<0.04) msg='↩️ 더 옆으로 휘어요!';
+    else msg='🔄 더 높이!';
+    return {score,ok,msg};
+  }
+}
+
+// 궤적을 캔버스에 그리기
+function drawDrillTrail(){
+  if(trajX.length<2) return;
+  const W=canvas.width, H=canvas.height;
+  const mirrored=camWrap.classList.contains('mirrored');
+  ctx.save();
+  // 궤적 그로우 (외곽)
+  ctx.lineWidth=22; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.strokeStyle='rgba(76,163,255,0.18)'; ctx.setLineDash([]);
+  ctx.beginPath();
+  trajX.forEach((x,i)=>{
+    const px=(mirrored?1-x:x)*W, py=trajY[i]*H;
+    i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+  });
+  ctx.stroke();
+  // 메인 궤적 (그라데이션)
+  const grad=ctx.createLinearGradient(
+    (mirrored?1-trajX[0]:trajX[0])*W, trajY[0]*H,
+    (mirrored?1-trajX[trajX.length-1]:trajX[trajX.length-1])*W, trajY[trajY.length-1]*H
+  );
+  grad.addColorStop(0,'rgba(76,163,255,0.4)');
+  grad.addColorStop(1,'rgba(76,163,255,1)');
+  ctx.lineWidth=7; ctx.strokeStyle=grad;
+  ctx.beginPath();
+  trajX.forEach((x,i)=>{
+    const px=(mirrored?1-x:x)*W, py=trajY[i]*H;
+    i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+  });
+  ctx.stroke();
+  // 현재 발 위치 (점)
+  const lx=trajX[trajX.length-1], ly=trajY[trajY.length-1];
+  const lpx=(mirrored?1-lx:lx)*W, lpy=ly*H;
+  ctx.beginPath(); ctx.arc(lpx,lpy,14,0,Math.PI*2);
+  ctx.fillStyle='rgba(76,163,255,0.9)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(lpx,lpy,8,0,Math.PI*2);
+  ctx.fillStyle='#fff'; ctx.fill();
+  ctx.restore();
+}
+
+// 앞차기용 가이드 라인 — 몸 정중앙 X에 수직으로
+function drawApchaGuide(){
+  if(smHipY==null||smHipX==null||!running) return;
+  const W=canvas.width, H=canvas.height;
+  const mirrored=camWrap.classList.contains('mirrored');
+
+  // 엉덩이 중심 X → 캔버스 픽셀로 변환 (미러 보정)
+  const bodyX=(mirrored?1-smHipX:smHipX)*W;
+
+  // 목표 높이
+  const targetPct=Math.min(95, threshPct+30);
+  const liftRatio=(targetPct/100)*1.6-0.8;
+  const targetY=(smHipY - liftRatio*smTorso)*H;
+  const startY=smHipY*H;
+
+  ctx.save();
+  // 글로우
+  ctx.strokeStyle='rgba(76,163,255,0.18)'; ctx.lineWidth=26; ctx.lineCap='round'; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(bodyX,startY); ctx.lineTo(bodyX,targetY); ctx.stroke();
+  // 메인 그라데이션 점선
+  const g=ctx.createLinearGradient(bodyX,startY,bodyX,targetY);
+  g.addColorStop(0,'rgba(76,163,255,0.25)');
+  g.addColorStop(1,'rgba(76,163,255,0.95)');
+  ctx.strokeStyle=g; ctx.lineWidth=6; ctx.setLineDash([14,8]);
+  ctx.beginPath(); ctx.moveTo(bodyX,startY); ctx.lineTo(bodyX,targetY); ctx.stroke();
+  ctx.setLineDash([]);
+  // 작은 화살표 머리
+  const aw=13;
+  ctx.fillStyle='rgba(76,163,255,0.95)';
+  ctx.beginPath(); ctx.moveTo(bodyX,targetY-2); ctx.lineTo(bodyX-aw,targetY+aw*1.3); ctx.lineTo(bodyX+aw,targetY+aw*1.3); ctx.closePath(); ctx.fill();
+  // 목표 가로선
+  ctx.strokeStyle='rgba(76,163,255,0.5)'; ctx.lineWidth=2; ctx.setLineDash([8,5]);
+  ctx.beginPath(); ctx.moveTo(bodyX-70,targetY); ctx.lineTo(bodyX+70,targetY); ctx.stroke();
+  ctx.setLineDash([]);
+  // 라벨
+  ctx.fillStyle='rgba(9,22,40,.88)'; ctx.fillRect(bodyX-78,targetY-32,156,24);
+  ctx.fillStyle='#4ca3ff'; ctx.font='bold 13px Gothic A1,sans-serif'; ctx.textAlign='center';
+  ctx.fillText('▲ 여기까지 차올려요', bodyX, targetY-14);
+  ctx.textAlign='left';
+  ctx.restore();
+}
+
+// 돌려차기용 가이드 라인 — 앞차기와 같은 스타일, 호형
+function drawDolloGuide(){
+  if(smHipY==null||smHipX==null||!running) return;
+  const W=canvas.width, H=canvas.height;
+  const mirrored=camWrap.classList.contains('mirrored');
+
+  const bodyX=(mirrored?1-smHipX:smHipX)*W;
+  const targetPct=Math.min(85, threshPct+20);
+  const liftRatio=(targetPct/100)*1.6-0.8;
+  const peakY=(smHipY - liftRatio*smTorso)*H;
+  const startY=smHipY*H+10;
+
+  // 오른발 기준: 몸 중앙에서 오른쪽 시작 → 위로 → 왼쪽으로 빠짐
+  // 미러 모드면 반전
+  const side=mirrored?-1:1;
+  const span=W*0.22; // 가로 이동 폭
+  const startX=bodyX + side*span*0.5;
+  const endX=bodyX - side*span*0.5;
+  const ctrlX=bodyX;
+
+  ctx.save();
+  // 글로우
+  ctx.strokeStyle='rgba(232,160,32,0.15)'; ctx.lineWidth=26; ctx.lineCap='round'; ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(startX,startY);
+  ctx.quadraticCurveTo(ctrlX, peakY-30, endX, startY-20);
+  ctx.stroke();
+  // 메인 그라데이션 점선
+  const g=ctx.createLinearGradient(startX,startY,endX,startY-20);
+  g.addColorStop(0,'rgba(232,160,32,0.25)');
+  g.addColorStop(0.5,'rgba(232,160,32,1)');
+  g.addColorStop(1,'rgba(232,160,32,0.4)');
+  ctx.strokeStyle=g; ctx.lineWidth=6; ctx.setLineDash([14,8]);
+  ctx.beginPath();
+  ctx.moveTo(startX,startY);
+  ctx.quadraticCurveTo(ctrlX, peakY-30, endX, startY-20);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // 작은 화살표 (끝 방향 기준, 앞차기 스타일로 소형)
+  const aw=11;
+  const ex=endX, ey=startY-20;
+  const dx=(endX-ctrlX), dy=((startY-20)-peakY+30);
+  const angle=Math.atan2(dy,dx);
+  ctx.save(); ctx.translate(ex,ey); ctx.rotate(angle);
+  ctx.fillStyle='rgba(232,160,32,0.95)';
+  ctx.beginPath(); ctx.moveTo(aw*1.2,0); ctx.lineTo(-aw,aw); ctx.lineTo(-aw,-aw); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  // 꼭대기 점 표시
+  ctx.beginPath(); ctx.arc(ctrlX,peakY-30,8,0,Math.PI*2);
+  ctx.fillStyle='rgba(232,160,32,0.7)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(ctrlX,peakY-30,4,0,Math.PI*2);
+  ctx.fillStyle='#fff'; ctx.fill();
+  // 라벨
+  ctx.fillStyle='rgba(9,22,40,.88)'; ctx.fillRect(ctrlX-80,peakY-66,160,24);
+  ctx.fillStyle='#E8A020'; ctx.font='bold 13px Gothic A1,sans-serif'; ctx.textAlign='center';
+  ctx.fillText('이 곡선을 따라 차요', ctrlX, peakY-48);
+  ctx.textAlign='left';
+  ctx.restore();
+}
+
+/* ── 발차기 연습 완료 처리 ── */
+function onDrillKick(peak, traj){
+  if(!running) return;
+  const result=analyzeTraj();
+  drillDone++;
+  drillScores.push(result.score);
+  lastScore=result.score; lastGrade=result.msg; lastColor=result.ok?'#4caf50':'#9fb0c8';
+
+  // 가벼운 성공/실패 리액션
+  if(result.ok){ sndSuccess(); popup('✅ '+result.score+'점', '#4caf50'); }
+  else { sndFail(); popup('❌ '+result.score+'점', '#9fb0c8'); }
+
+  renderStats();
+  trajX=[]; trajY=[]; trajActive=false;
+
+  // 목표 횟수 달성
+  if(drillDone>=drillTarget) setTimeout(finishDrill, 700);
+}
+
+function finishDrill(){
+  running=false;
+  const avg=avgOf(drillScores)||0;
+  const cfg=MODE_CFG[currentMode];
+
+  // 과한 리액션 기준: 평균 80점 이상
+  if(avg>=80){
+    const icon=avg>=95?'🏆':avg>=90?'🥇':'🎉';
+    const txt=avg>=95?'완벽해요!!':avg>=90?'아주 잘했어요!':'훌륭해요!';
+    drillResultIcon.textContent=icon;
+    drillResultText.textContent=txt;
+    drillResultText.style.color=avg>=90?'#E8A020':'#2ecc71';
+    drillResultSub.textContent=cfg.label+' '+drillDone+'회 · 평균 '+avg+'점';
+    drillResult.classList.add('show');
+    confetti(avg>=90);
+    sndRecord();
+    drillResultTimer=setTimeout(()=>drillResult.classList.remove('show'),3500);
+  } else {
+    // 평범한 결과
+    drillResultIcon.textContent='💪';
+    drillResultText.textContent='수고했어요!';
+    drillResultText.style.color='#fff';
+    drillResultSub.textContent=cfg.label+' '+drillDone+'회 · 평균 '+avg+'점';
+    drillResult.classList.add('show');
+    sndScore(avg);
+    drillResultTimer=setTimeout(()=>drillResult.classList.remove('show'),2500);
+  }
+
+  startBtn.disabled=false; startBtn.textContent='🔁 다시!';
+  setGrResult('결과: '+cfg.label+' '+drillDone+'회 · 평균 '+avg+'점');
+}
+
+/* ── 과녁 ── */
+function newTarget(){
+  const minPct=threshPct+5, maxPct=Math.min(90,threshPct+45);
+  currentTargetPct=Math.round(minPct+Math.random()*(maxPct-minPct));
+  acceptTargetKick=true;
+  tgRound.textContent=targetRound+1; tgPct.textContent=currentTargetPct;
+  targetGuide.classList.add('show'); targetGuideText.textContent='이 높이까지 차세요! 🎯';
+}
+function handleTargetKick(peak){
+  acceptTargetKick=false;
+  const diff=Math.abs(peak-currentTargetPct);
+  const acc=Math.max(0,Math.round(100-diff*2.5));
+  targetScores.push(acc); targetLastAcc=acc; targetRound++;
+  let color,msg;
+  if(acc>=90){color='#ff4d6d';msg='🎯 완벽 명중!';}
+  else if(acc>=70){color='#E8A020';msg='👍 좋아요!';}
+  else if(acc>=50){color='#4caf50';msg='💪 조금 더!';}
+  else{color='#9fb0c8';msg='😅 아쉬워요';}
+  sndScore(acc); popup(acc+'점! '+msg,color); renderStats();
+  if(targetRound>=5){ targetGuide.classList.remove('show'); setTimeout(finishTarget,1000); }
+  else { targetGuideText.textContent=msg; setTimeout(newTarget,1100); }
+}
+function finishTarget(){
+  running=false; targetGuide.classList.remove('show');
+  const avg=avgOf(targetScores)||0;
+  const r=addRank('target',avg); lastRankTs=r.newTs; renderCamRank();
+  setGrResult('결과: 평균 정확도 '+avg+'점');
+  setStartBtn(false,'🔁 다시!'); celebrate(r.rank, avg+'점');
+}
+
+/* ── 풍선 ── */
+function spawnBalloon(){
+  const b=document.createElement('div'); b.className='balloon';
+  const left=15+Math.random()*70, top=42+Math.random()*40;
+  b.style.left=left+'%'; b.style.top=top+'%';
+  b.dataset.left=left; b.dataset.top=top;
+  b.textContent=['🎈','🎈','🎈','🎉','🎊'][Math.floor(Math.random()*5)];
+  camWrap.appendChild(b); balloons.push(b);
+}
+function popBalloon(b,i){
+  balloons.splice(i,1); b.classList.add('pop'); setTimeout(()=>b.remove(),250);
+  const burst=document.createElement('div'); burst.className='burst'; burst.textContent='💥';
+  burst.style.left=b.dataset.left+'%'; burst.style.top=b.dataset.top+'%';
+  camWrap.appendChild(burst); setTimeout(()=>burst.remove(),450);
+  sndPop(); balloonCount++; renderStats(); spawnBalloon();
+}
+function checkBalloons(fx,fy){
+  const W=camWrap.clientWidth, H=camWrap.clientHeight;
+  const fpx=fx/100*W, fpy=fy/100*H, R=0.10*W;
+  for(let i=balloons.length-1;i>=0;i--){
+    const b=balloons[i];
+    const bx=parseFloat(b.dataset.left)/100*W, by=parseFloat(b.dataset.top)/100*H;
+    if(Math.hypot(fpx-bx,fpy-by)<R) popBalloon(b,i);
+  }
+}
+function clearBalloons(){ balloons.forEach(b=>b.remove()); balloons=[]; }
+function startBalloon(){ balloonCount=0; clearBalloons(); spawnBalloon(); spawnBalloon(); }
+function finishBalloon(){
+  running=false; timerBadge.classList.remove('show'); clearBalloons();
+  const r=addRank('balloon',balloonCount); lastRankTs=r.newTs; renderCamRank();
+  setGrResult('결과: 풍선 '+balloonCount+'개');
+  setStartBtn(false,'🔁 다시!'); celebrate(r.rank, balloonCount+'개');
+}
+
+/* ── 콤보 ── */
+function updateComboBar(){
+  if(comboBarAnim) cancelAnimationFrame(comboBarAnim);
+  (function tick(){
+    if(!running||currentMode!=='combo'){ comboBarFill.style.width='0%'; return; }
+    const elapsed=performance.now()-comboLastT;
+    const pct=Math.max(0,100-(elapsed/COMBO_WINDOW)*100);
+    comboBarFill.style.width=pct+'%';
+    comboBarFill.style.background=pct>40?'linear-gradient(90deg,var(--gold),var(--red))':'var(--red)';
+    if(pct<=0&&comboCur>0){ comboCur=0; comboCurNum.textContent='0'; renderStats(); }
+    comboBarAnim=requestAnimationFrame(tick);
+  })();
+}
+function updateComboPanel(){ comboCurNum.textContent=comboCur; comboMaxNum.textContent=comboMax; }
+function registerCombo(){
+  const now=performance.now();
+  if(now-comboLastT<COMBO_WINDOW) comboCur++; else comboCur=1;
+  comboLastT=now; comboTotal++;
+  if(comboCur>comboMax) comboMax=comboCur;
+  sndCombo(comboCur); updateComboPanel(); renderStats();
+}
+function startCombo(){ comboCur=0; comboMax=0; comboTotal=0; comboLastT=performance.now(); comboPanel.classList.add('show'); updateComboBar(); }
+function finishCombo(){
+  running=false; timerBadge.classList.remove('show'); comboPanel.classList.remove('show');
+  if(comboBarAnim){ cancelAnimationFrame(comboBarAnim); comboBarAnim=null; }
+  const r=addRank('combo',comboMax); lastRankTs=r.newTs; renderCamRank();
+  setGrResult('결과: 최고 '+comboMax+'콤보 · 총 '+comboTotal+'회');
+  setStartBtn(false,'🔁 다시!'); celebrate(r.rank, comboMax+'콤보');
+}
+
+/* ── 공통 ── */
+function celebrate(rank,label){
+  if(rank===0){ confetti(true); sndRecord(); statusEl.textContent='🏆 오늘 1등! '+label; }
+  else if(rank>0&&rank<5){ statusEl.textContent='👏 오늘 '+(rank+1)+'위! '+label; }
+  else { statusEl.textContent='완료! '+label; }
+}
+function runReadyCountdown(subText,cb){
+  const steps=['3','2','1','시작!']; let i=0;
+  readyOverlay.classList.add('show'); readySub.textContent=subText;
+  (function next(){
+    if(i>=steps.length){ readyOverlay.classList.remove('show'); cb(); return; }
+    readyNum.textContent=steps[i];
+    if(i<3) sndCount(); else sndGo();
+    i++; setTimeout(next,i<=3?800:600);
+  })();
+}
+function startTimed(sec,onEnd){
+  gameRemain=sec; timerBadgeNum.textContent=sec; timerBadge.classList.add('show'); renderStats();
+  gameTimer=setInterval(()=>{
+    gameRemain--; timerBadgeNum.textContent=Math.max(0,gameRemain); renderStats();
+    if(gameRemain<=0){ clearInterval(gameTimer); gameTimer=null; onEnd(); }
+  },1000);
+}
+
+// 시작 버튼 / 결과 헬퍼 (드릴/게임 두 세트 통합)
+function setStartBtn(disabled,text){
+  startBtn.disabled=disabled; startBtn.textContent=text;
+  startBtn2.disabled=disabled; startBtn2.textContent=text;
+}
+function setGrResult(text){ gameResult.textContent=text; gameResult2.textContent=text; }
+
+window.startGame=()=>{
+  if(running) return; ensureAudio();
+  resetCounters(); setGrResult('');
+  setStartBtn(true,'준비 중…');
+  const subTexts={
+    free:'', challenge:'10초 동안 최대한 많이!',
+    target:'목표 높이에 정확히!', balloon:'풍선을 발로 터뜨려요!', combo:'끊기지 않게 연속으로!',
+    apcha:'앞차기 — 위로 쭉 차올려요!', dollo:'돌려차기 — 옆으로 휘어서 차요!'
+  };
+  runReadyCountdown(subTexts[currentMode]||'',()=>{
+    running=true; statusEl.textContent='발차기 하세요!';
+    if(currentMode==='challenge') startTimed(10,finishChallenge);
+    else if(currentMode==='balloon'){ startBalloon(); startTimed(30,finishBalloon); }
+    else if(currentMode==='combo'){ startCombo(); startTimed(20,finishCombo); }
+    else if(currentMode==='target'){ targetRound=0; targetScores=[]; targetLastAcc=null; newTarget(); }
+    else if(currentMode==='apcha'||currentMode==='dollo'){
+      drillTarget=parseInt(drillCountSel.value);
+      drillDone=0; drillScores=[];
+    }
+    setStartBtn(true,'진행 중…'); renderStats();
+  });
+};
+
+function finishChallenge(){
+  running=false; timerBadge.classList.remove('show');
+  const r=addRank('challenge',count); lastRankTs=r.newTs; renderCamRank();
+  setGrResult('결과: '+count+'회 · 평균 '+(avgOf(scoreList)||0)+'점');
+  setStartBtn(false,'🔁 다시!'); celebrate(r.rank,count+'회');
+}
+
+function resetCounters(){
+  count=0; scoreList=[]; lastScore=null; lastGrade=''; lastColor='var(--gold)';
+  balloonCount=0; comboCur=0; comboMax=0; comboTotal=0; comboLastT=0;
+  targetRound=0; targetScores=[]; targetLastAcc=null; currentTargetPct=0; acceptTargetKick=false;
+  drillDone=0; drillScores=[];
+  kicking=false; aboveFrames=0; belowFrames=0; peakPct=0; lastRankTs=null;
+  trajX=[]; trajY=[]; trajActive=false;
+  popOverlay.classList.remove('show'); comboPanel.classList.remove('show');
+  targetGuide.classList.remove('show'); drillResult.classList.remove('show');
+  if(drillResultTimer){ clearTimeout(drillResultTimer); drillResultTimer=null; }
+  updateComboPanel();
+}
+function stopGame(){
+  running=false;
+  if(gameTimer){ clearInterval(gameTimer); gameTimer=null; }
+  if(comboBarAnim){ cancelAnimationFrame(comboBarAnim); comboBarAnim=null; }
+  timerBadge.classList.remove('show'); readyOverlay.classList.remove('show');
+  clearBalloons(); targetGuide.classList.remove('show');
+  comboPanel.classList.remove('show'); drillResult.classList.remove('show');
+  if(drillResultTimer){ clearTimeout(drillResultTimer); drillResultTimer=null; }
+}
+
+window.setMode=(mode)=>{
+  ensureAudio(); stopGame(); currentMode=mode;
+  const all=['free','challenge','target','balloon','combo','apcha','dollo'];
+  all.forEach(m=>{ const el=document.getElementById('m_'+m); if(el) el.classList.toggle('active',m===mode); });
+  const isDrill=MODE_CFG[mode].isDrill;
+  drillCountArea.style.display=isDrill?'flex':'none';
+  gameArea.style.display=(!isDrill&&mode!=='free')?'flex':'none';
+  setStartBtn(false,'▶ 시작!'); setGrResult('');
+  resetCounters(); renderStats(); renderCamRank();
+  if(isDrill) statusEl.textContent='시작 버튼을 눌러 '+MODE_CFG[mode].label+' 연습을 시작하세요';
+  else statusEl.textContent=(mode==='free')?'자유 연습 — 발차기 하세요!':'시작 버튼을 누르세요';
+};
+
+document.getElementById('newBtn').onclick=()=>{
+  stopGame(); resetCounters();
+  setStartBtn(false,'▶ 시작!'); setGrResult('');
+  renderStats(); renderCamRank();
+  const isDrill=MODE_CFG[currentMode].isDrill;
+  if(isDrill) statusEl.textContent='시작 버튼을 눌러 '+MODE_CFG[currentMode].label+' 연습을 시작하세요';
+  else statusEl.textContent=(currentMode==='free')?'자유 연습 — 발차기 하세요!':'시작 버튼을 누르세요';
+};
+document.getElementById('flipBtn').onclick=async()=>{
+  facingMode=(facingMode==='user')?'environment':'user';
+  camWrap.classList.toggle('mirrored',facingMode==='user');
+  await startCamera();
+};
+
+/* ── 발차기 완료 처리 ── */
+function onKickComplete(peak){
+  sndKick();
+  if(currentMode==='free'){ count++; showScore(peak); renderStats(); }
+  else if(currentMode==='challenge'){ if(!running) return; count++; showScore(peak); renderStats(); }
+  else if(currentMode==='combo'){ if(!running) return; registerCombo(); }
+  else if(currentMode==='target'){ if(!running||!acceptTargetKick) return; handleTargetKick(peak); }
+  else if(currentMode==='apcha'||currentMode==='dollo'){ onDrillKick(peak); }
+}
+function runKick(pct){
+  if(!kicking){
+    if(pct>=threshPct){ aboveFrames++; if(aboveFrames>=ABOVE_REQ){ kicking=true; peakPct=pct; belowFrames=0; trajActive=true; } }
+    else aboveFrames=0;
+  } else {
+    peakPct=Math.max(peakPct,pct);
+    if(pct<RESET_PCT){ belowFrames++; if(belowFrames>=BELOW_REQ){ kicking=false; aboveFrames=0; belowFrames=0; trajActive=false; onKickComplete(peakPct); } }
+    else belowFrames=0;
+  }
+}
+
+/* ── 지표 계산 ── */
+function computeMetrics(lm){
+  const shoulderY=(lm[11].y+lm[12].y)/2;
+  const hipY=(lm[23].y+lm[24].y)/2;
+  const hipX=(lm[23].x+lm[24].x)/2; // 엉덩이 중심 X
+  const torso=hipY-shoulderY;
+  if(torso<=0.02) return null;
+  const aIdx=(lm[27].y<lm[28].y)?27:28;
+  const liftRatio=(hipY-lm[aIdx].y)/torso;
+  const pct=Math.max(0,Math.min(100,((liftRatio+0.8)/1.6)*100));
+  return {pct, hipY, hipX, torso, ankleX:lm[aIdx].x, ankleY:lm[aIdx].y};
+}
+
+function drawTargetLine(){
+  if(smHipY==null||!acceptTargetKick) return;
+  const liftRatio=(currentTargetPct/100)*1.6-0.8;
+  const ankleY=smHipY - liftRatio*smTorso;
+  const y=ankleY*canvas.height;
+  ctx.save();
+  ctx.strokeStyle='rgba(232,160,32,0.3)'; ctx.lineWidth=16; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke();
+  ctx.strokeStyle='#E8A020'; ctx.lineWidth=5; ctx.setLineDash([20,10]);
+  ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(9,22,40,.85)'; ctx.fillRect(8,y-30,155,28); ctx.fillRect(8,y+2,155,28);
+  ctx.fillStyle='#E8A020'; ctx.font='bold 17px Gothic A1,sans-serif';
+  ctx.fillText('▶ 여기까지 차세요!',14,y-9);
+  ctx.fillStyle='#cdd8e8'; ctx.font='13px Gothic A1,sans-serif';
+  ctx.fillText('목표 '+(targetRound+1)+'/5  ('+currentTargetPct+'%)',14,y+21);
+  ctx.restore();
+}
+
+/* ── MediaPipe ── */
+async function initModel(){
+  statusEl.textContent='AI 모델 로딩 중…';
+  const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+  poseLandmarker=await PoseLandmarker.createFromOptions(vision,{
+    baseOptions:{ modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task", delegate:"GPU" },
+    runningMode:"VIDEO", numPoses:1
+  });
+  drawingUtils=new DrawingUtils(ctx);
+  statusEl.textContent='카메라 준비 중…';
+}
+async function startCamera(){
+  if(stream) stream.getTracks().forEach(t=>t.stop());
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({ video:{facingMode,width:{ideal:1280},height:{ideal:720}},audio:false });
+    video.srcObject=stream; await video.play();
+    const isDrill=MODE_CFG[currentMode].isDrill;
+    statusEl.textContent=isDrill?'시작 버튼을 눌러 연습을 시작하세요':(currentMode==='free'?'자유 연습 — 발차기 하세요!':'시작 버튼을 누르세요');
+  }catch(e){ statusEl.textContent='카메라 실패: '+e.message; }
+}
+
+function loop(){
+  if(poseLandmarker && video.readyState>=2 && video.currentTime!==lastVideoTime){
+    lastVideoTime=video.currentTime;
+    if(canvas.width!==video.videoWidth){ canvas.width=video.videoWidth; canvas.height=video.videoHeight; }
+    const result=poseLandmarker.detectForVideo(video,performance.now());
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    if(result.landmarks && result.landmarks.length>0){
+      const lm=result.landmarks[0];
+      drawingUtils.drawConnectors(lm,PoseLandmarker.POSE_CONNECTIONS,{color:'rgba(232,160,32,0.6)',lineWidth:2});
+      drawingUtils.drawLandmarks(lm,{color:'#D92B3A',lineWidth:1,radius:3});
+
+      const ankleVis=Math.max(lm[27]?.visibility??0,lm[28]?.visibility??0);
+      if(ankleVis>0.4){
+        const m=computeMetrics(lm);
+        if(m){
+          barFill.style.width=m.pct+'%';
+          smHipY=(smHipY==null)?m.hipY:smHipY*0.7+m.hipY*0.3;
+          smTorso=(smTorso==null)?m.torso:smTorso*0.7+m.torso*0.3;
+          smHipX=(smHipX==null)?m.hipX:smHipX*0.8+m.hipX*0.2; // 엉덩이 X 스무딩
+          const mirrored=camWrap.classList.contains('mirrored');
+          const fx=(mirrored?1-m.ankleX:m.ankleX)*100, fy=m.ankleY*100;
+
+          if(currentMode==='free'||running) runKick(m.pct);
+          else { kicking=false; aboveFrames=0; belowFrames=0; }
+
+          // 연습 모드: 궤적 수집
+          if((currentMode==='apcha'||currentMode==='dollo')&&running&&trajActive){
+            const MAX_TRAJ=40;
+            trajX.push(m.ankleX); trajY.push(m.ankleY);
+            if(trajX.length>MAX_TRAJ){ trajX.shift(); trajY.shift(); }
+          }
+          // 연습 가이드 라인
+          if(currentMode==='apcha') drawApchaGuide();
+          if(currentMode==='dollo') drawDolloGuide();
+          // 궤적 표시
+          if((currentMode==='apcha'||currentMode==='dollo')&&trajX.length>1) drawDrillTrail();
+
+          if(currentMode==='target'&&running) drawTargetLine();
+          if(currentMode==='balloon'&&running) checkBalloons(fx,fy);
+        }
+      } else {
+        barFill.style.width='0%';
+        if(!running) statusEl.textContent='🔍 전신이 보이게 뒤로 물러서세요';
+        kicking=false; aboveFrames=0; belowFrames=0;
+      }
+    } else {
+      barFill.style.width='0%';
+      if(!running) statusEl.textContent='🔍 사람을 찾는 중…';
+      kicking=false; aboveFrames=0; belowFrames=0; smHipY=null; smTorso=null; smHipX=null;
+    }
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ── 시작 ── */
+// 초기 UI 세팅: 자유모드는 게임버튼 숨김
+drillCountArea.style.display='none';
+gameArea.style.display='none';
+renderStats(); renderCamRank();
+(async()=>{ await initModel(); await startCamera(); loop(); })();
+</script>
+</body>
+</html>
