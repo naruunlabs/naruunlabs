@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 발차기 챌린지 v2.7.1 Difficulty</title>
+<title>AI 발차기 챌린지 v2.7.7 Kick Tabs Fix</title>
 <style>
   :root{ --red:#D92B3A; --navy:#0A1628; --gold:#E8A020; --green:#2ecc71; --blue:#4ca3ff;}
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -166,7 +166,7 @@
 
 
 /* ─────────────────────────────────────────────
-   v2.7.1 CLEAN HUD CSS
+   v2.7.7 CLEAN HUD CSS
    기준: 기존 v2.6 기능 유지 + 누적 HUD 스타일 단일화
    ───────────────────────────────────────────── */
 body.hud-v21 .stage{
@@ -406,11 +406,9 @@ body.hud-v21 #drillResultSub{font-size:20px; color:#cdd8e8; font-weight:700;}
     </div>
 
     <div class="section-label">— 연습 모드</div>
-    <div class="mode-row hud-kick-row hud-kick-row1">
+    <div class="mode-row hud-kick-row hud-kick-row1 hud-kick-tabs">
       <button class="drill-btn active" id="m_apcha_r" onclick="setMode('apcha_r')">앞R</button>
       <button class="drill-btn" id="m_apcha_l" onclick="setMode('apcha_l')">앞L</button>
-    </div>
-    <div class="mode-row hud-kick-row hud-kick-row2">
       <button class="drill-btn" id="m_dollo_r" onclick="setMode('dollo_r')">돌R</button>
       <button class="drill-btn" id="m_dollo_l" onclick="setMode('dollo_l')">돌L</button>
     </div>
@@ -1617,7 +1615,7 @@ renderStats(); renderCamRank(); updateModeBadge();
 
 
 <style id="v265c-layout-fix">
-/* v2.7.1: clean final layout fix for mode buttons and kick buttons */
+/* v2.7.7: clean final layout fix for mode buttons and kick buttons */
 
 /* Left mode buttons */
 body.hud-v21 .hud-drill-row,
@@ -1779,7 +1777,7 @@ body.hud-v21.playing-ui .difficulty-panel{
 
 
 <style id="v271-bugfix-layout">
-/* v2.7.1 bugfix: status message no longer covers mode buttons */
+/* v2.7.7 bugfix: status message no longer covers mode buttons */
 body.hud-v21 #status{
   top:82px !important;
   left:14px !important;
@@ -1831,6 +1829,1092 @@ body.hud-v21 .diff-btn.active{
   body.hud-v21 .difficulty-panel{
     top:58px !important;
     right:14px !important;
+  }
+}
+</style>
+
+
+<style id="v272-sparring-target-upgrade">
+/* v2.7.7: 겨루기 상대 타겟만 업그레이드.
+   버튼/레이아웃/기능은 v2.7.1 안정본 유지 */
+
+/* 겨루기 상대 전체: 더 크고 선명한 게임 타겟 느낌 */
+#enemyTarget{
+  width:270px !important;
+  height:440px !important;
+  opacity:.94 !important;
+  transform:translate(-50%,-43%) perspective(500px) rotateY(-5deg) scale(1.08) !important;
+  filter:
+    drop-shadow(0 0 28px rgba(255,36,77,.45))
+    drop-shadow(0 0 30px rgba(25,186,255,.34))
+    drop-shadow(0 28px 26px rgba(0,0,0,.55)) !important;
+  transition:transform .18s ease, filter .18s ease, opacity .18s ease;
+}
+
+/* 기존 장비/팔다리 도형은 숨기고 타격존 중심으로 */
+#enemyTarget .enemyGear,
+#enemyTarget .enemyFace,
+#enemyTarget .enemyHogu,
+#enemyTarget .enemyBelt,
+#enemyTarget .enemyArm,
+#enemyTarget .enemyLeg{
+  display:none !important;
+}
+
+/* 상대 주변 에너지 아우라 */
+#enemyTarget .enemyAura{
+  position:absolute !important;
+  inset:-10px !important;
+  border-radius:50% !important;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255,36,77,.28), transparent 26%),
+    radial-gradient(circle at 50% 56%, rgba(25,186,255,.26), transparent 38%),
+    conic-gradient(from 0deg, transparent, rgba(255,36,77,.22), transparent, rgba(25,186,255,.22), transparent) !important;
+  border:1px solid rgba(255,255,255,.08) !important;
+  animation:v272TargetAura 5s linear infinite;
+  filter:blur(.2px);
+}
+@keyframes v272TargetAura{
+  from{rotate:0deg}
+  to{rotate:360deg}
+}
+
+/* 은은한 사람 실루엣 몸통 그림자 */
+#enemyTarget::before{
+  content:"" !important;
+  display:block !important;
+  position:absolute !important;
+  left:50% !important;
+  top:20px !important;
+  width:154px !important;
+  height:360px !important;
+  transform:translateX(-50%) !important;
+  border-radius:70px 70px 46px 46px !important;
+  background:
+    radial-gradient(circle at 50% 14%, rgba(255,255,255,.12) 0 42px, rgba(0,0,0,.48) 43px 58px, transparent 59px),
+    linear-gradient(180deg, rgba(0,0,0,.30), rgba(0,0,0,.58)) !important;
+  border:2px solid rgba(255,255,255,.22) !important;
+  box-shadow:
+    inset 0 0 32px rgba(255,255,255,.08),
+    0 0 30px rgba(0,0,0,.45) !important;
+  z-index:1 !important;
+}
+
+/* 어깨 라인 */
+#enemyTarget::after{
+  content:"" !important;
+  display:block !important;
+  position:absolute !important;
+  left:50% !important;
+  top:128px !important;
+  width:238px !important;
+  height:170px !important;
+  transform:translateX(-50%) !important;
+  border-radius:70px 70px 42px 42px !important;
+  background:
+    linear-gradient(90deg, transparent 0 8%, rgba(0,0,0,.44) 25%, rgba(0,0,0,.54) 50%, rgba(0,0,0,.44) 75%, transparent 92%) !important;
+  border-top:2px solid rgba(255,255,255,.18) !important;
+  z-index:1 !important;
+}
+
+/* 머리 타격존: 빨간 락온 타겟 */
+#enemyTarget .enemyHead{
+  top:22px !important;
+  left:50% !important;
+  width:92px !important;
+  height:92px !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border-radius:50% !important;
+  font-size:13px !important;
+  font-weight:1000 !important;
+  letter-spacing:.7px !important;
+  color:#fff !important;
+  background:
+    radial-gradient(circle,rgba(255,255,255,.18) 0 21%, transparent 22% 30%, rgba(255,36,77,.38) 31% 48%, rgba(255,36,77,.08) 49% 100%) !important;
+  border:3px solid rgba(255,36,77,.98) !important;
+  box-shadow:
+    0 0 32px rgba(255,36,77,.85),
+    inset 0 0 22px rgba(255,36,77,.25) !important;
+  text-shadow:0 0 12px rgba(0,0,0,.85) !important;
+  z-index:5 !important;
+  animation:v272PulseHead 1.35s ease-in-out infinite;
+}
+
+/* 머리 조준선 */
+#enemyTarget .enemyHead::before,
+#enemyTarget .enemyHead::after{
+  content:"" !important;
+  position:absolute !important;
+  background:rgba(255,255,255,.70) !important;
+  box-shadow:0 0 10px rgba(255,36,77,.9);
+}
+#enemyTarget .enemyHead::before{
+  width:74px !important;
+  height:2px !important;
+  left:8px !important;
+  top:45px !important;
+}
+#enemyTarget .enemyHead::after{
+  width:2px !important;
+  height:74px !important;
+  left:45px !important;
+  top:8px !important;
+}
+
+/* 몸통 타격존: 파란 락온 타겟 */
+#enemyTarget .enemyBody{
+  top:214px !important;
+  left:50% !important;
+  width:152px !important;
+  height:124px !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border-radius:34px !important;
+  font-size:15px !important;
+  font-weight:1000 !important;
+  letter-spacing:.7px !important;
+  color:#fff !important;
+  background:
+    radial-gradient(circle,rgba(255,255,255,.18) 0 22%, transparent 23% 31%, rgba(25,186,255,.34) 32% 50%, rgba(25,186,255,.08) 51% 100%) !important;
+  border:3px solid rgba(25,186,255,.96) !important;
+  box-shadow:
+    0 0 34px rgba(25,186,255,.80),
+    inset 0 0 22px rgba(25,186,255,.25) !important;
+  text-shadow:0 0 12px rgba(0,0,0,.85) !important;
+  z-index:5 !important;
+  animation:v272PulseBody 1.65s ease-in-out infinite;
+}
+
+/* 몸통 조준선 */
+#enemyTarget .enemyBody::before,
+#enemyTarget .enemyBody::after{
+  content:"" !important;
+  position:absolute !important;
+  background:rgba(255,255,255,.68) !important;
+  box-shadow:0 0 10px rgba(25,186,255,.9);
+}
+#enemyTarget .enemyBody::before{
+  width:118px !important;
+  height:2px !important;
+  left:17px !important;
+  top:61px !important;
+}
+#enemyTarget .enemyBody::after{
+  width:2px !important;
+  height:96px !important;
+  left:75px !important;
+  top:14px !important;
+}
+
+/* 라벨을 조금 더 게임처럼 */
+#enemyTarget .enemyHead{
+  font-family:inherit !important;
+}
+#enemyTarget .enemyBody{
+  font-family:inherit !important;
+}
+
+/* 타격 애니메이션 강화 */
+#enemyTarget.hit-body{
+  animation:v272HitBody .45s ease !important;
+}
+#enemyTarget.hit-head{
+  animation:v272HitHead .45s ease !important;
+}
+#enemyTarget.hit-critical{
+  filter:
+    drop-shadow(0 0 36px rgba(255,36,77,.85))
+    drop-shadow(0 0 34px rgba(25,186,255,.48))
+    drop-shadow(0 28px 26px rgba(0,0,0,.58)) !important;
+}
+@keyframes v272HitBody{
+  0%{transform:translate(-50%,-43%) perspective(500px) rotateY(-5deg) scale(1.08);}
+  35%{transform:translate(calc(-50% + 24px),-43%) perspective(500px) rotateY(-18deg) scale(1.10);}
+  100%{transform:translate(-50%,-43%) perspective(500px) rotateY(-5deg) scale(1.08);}
+}
+@keyframes v272HitHead{
+  0%{transform:translate(-50%,-43%) perspective(500px) rotateY(-5deg) rotate(0deg) scale(1.08);}
+  30%{transform:translate(calc(-50% - 18px),-44%) perspective(500px) rotateY(10deg) rotate(-4deg) scale(1.10);}
+  60%{transform:translate(calc(-50% + 12px),-42%) perspective(500px) rotateY(-15deg) rotate(3deg) scale(1.09);}
+  100%{transform:translate(-50%,-43%) perspective(500px) rotateY(-5deg) rotate(0deg) scale(1.08);}
+}
+@keyframes v272PulseHead{
+  0%,100%{transform:translateX(-50%) scale(1);}
+  50%{transform:translateX(-50%) scale(1.07);}
+}
+@keyframes v272PulseBody{
+  0%,100%{transform:translateX(-50%) scale(1);}
+  50%{transform:translateX(-50%) scale(1.04);}
+}
+
+/* 태블릿 화면에서 너무 커지지 않게 */
+@media (orientation:landscape) and (max-width:1220px){
+  #enemyTarget{
+    width:240px !important;
+    height:400px !important;
+    transform:translate(-50%,-42%) perspective(500px) rotateY(-5deg) scale(1.00) !important;
+  }
+  #enemyTarget::before{
+    width:136px !important;
+    height:320px !important;
+  }
+  #enemyTarget::after{
+    width:210px !important;
+  }
+  #enemyTarget .enemyHead{
+    width:82px !important;
+    height:82px !important;
+    top:24px !important;
+  }
+  #enemyTarget .enemyBody{
+    width:136px !important;
+    height:112px !important;
+    top:200px !important;
+  }
+}
+</style>
+
+
+<style id="v273-kick-tabs">
+/* 발차기 선택 버튼을 탭 형태로 변경 */
+.mode-row.hud-kick-row{
+  width:auto !important;
+  max-width:none !important;
+  gap:18px !important;
+}
+
+.mode-row.hud-kick-row1{
+  bottom:22px !important;
+}
+
+.mode-row.hud-kick-row2{
+  display:none !important; /* 2번째 줄 숨김 */
+}
+
+/* 기존 버튼 느낌 제거 */
+.mode-row.hud-kick-row .drill-btn{
+  min-width:auto !important;
+  min-height:auto !important;
+  height:auto !important;
+  padding:4px 2px !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  color:rgba(255,255,255,.55) !important;
+  font-size:18px !important;
+  font-weight:900 !important;
+}
+
+/* 선택된 버튼만 강조 */
+.mode-row.hud-kick-row .drill-btn.active{
+  background:transparent !important;
+  color:#ffffff !important;
+  border:none !important;
+  box-shadow:none !important;
+  text-shadow:0 0 12px rgba(80,180,255,.8) !important;
+  border-bottom:3px solid #4ab8ff !important;
+}
+
+/* 두번째 줄 버튼을 첫줄로 이동시키기 위한 간단한 표시 */
+.mode-row.hud-kick-row .drill-btn[data-kick="frontR"]::after,
+.mode-row.hud-kick-row .drill-btn[data-kick="frontL"]::after,
+.mode-row.hud-kick-row .drill-btn[data-kick="roundR"]::after,
+.mode-row.hud-kick-row .drill-btn[data-kick="roundL"]::after{
+  display:none;
+}
+</style>
+
+
+<style id="v274-borderless-ui">
+/* v2.7.7: 전체 버튼/패널 테두리 최소화.
+   시작 버튼과 HP바는 기능 강조를 위해 유지 */
+
+/* 공통 패널 테두리 제거 */
+body.hud-v21 .title,
+body.hud-v21 #modeBadge,
+body.hud-v21 #status,
+body.hud-v21 .stat-box,
+body.hud-v21 #drillCountArea,
+body.hud-v21 #gameArea,
+body.hud-v21 .btns button,
+body.hud-v21 #camRank,
+body.hud-v21 #comboBadge,
+body.hud-v21 .height-box,
+body.hud-v21 .ctrl{
+  border:none !important;
+  box-shadow:
+    0 10px 24px rgba(0,0,0,.22),
+    inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+
+/* 왼쪽 모드 버튼: 박스 느낌 제거, 선택된 것만 밑줄/글자 강조 */
+body.hud-v21 .hud-drill-row,
+body.hud-v21 .hud-balloon-row,
+body.hud-v21 .hud-sparring-row{
+  width:142px !important;
+}
+
+body.hud-v21 .hud-drill-row .game-btn,
+body.hud-v21 .hud-balloon-row .game-btn,
+body.hud-v21 .hud-sparring-row .game-btn{
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  color:rgba(255,255,255,.55) !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+  min-height:30px !important;
+  padding:4px 2px !important;
+  text-align:left !important;
+  position:relative !important;
+}
+
+body.hud-v21 .hud-drill-row .game-btn.active,
+body.hud-v21 .hud-balloon-row .game-btn.active,
+body.hud-v21 .hud-sparring-row .game-btn.active{
+  background:transparent !important;
+  color:#fff !important;
+  border:none !important;
+  box-shadow:none !important;
+  text-shadow:0 0 12px rgba(76,163,255,.75) !important;
+}
+
+body.hud-v21 .hud-drill-row .game-btn.active::after,
+body.hud-v21 .hud-balloon-row .game-btn.active::after,
+body.hud-v21 .hud-sparring-row .game-btn.active::after{
+  content:"" !important;
+  position:absolute !important;
+  left:0 !important;
+  bottom:-3px !important;
+  width:42px !important;
+  height:3px !important;
+  border-radius:999px !important;
+  background:#4ab8ff !important;
+  box-shadow:0 0 12px rgba(76,163,255,.85) !important;
+}
+
+/* 난이도 버튼: 칩에서 텍스트 탭 느낌으로 */
+body.hud-v21 .difficulty-panel{
+  background:rgba(5,14,29,.32) !important;
+  border:none !important;
+  box-shadow:0 8px 18px rgba(0,0,0,.18) !important;
+  padding:5px 8px !important;
+  gap:10px !important;
+}
+
+body.hud-v21 .diff-btn{
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  color:rgba(255,255,255,.48) !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  min-width:auto !important;
+  min-height:auto !important;
+  padding:4px 0 !important;
+  position:relative !important;
+}
+
+body.hud-v21 .diff-btn.active{
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  color:#ffd86b !important;
+  text-shadow:0 0 12px rgba(232,160,32,.75) !important;
+}
+
+body.hud-v21 .diff-btn.active::after{
+  content:"" !important;
+  position:absolute !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:-3px !important;
+  height:3px !important;
+  border-radius:999px !important;
+  background:#ffd86b !important;
+  box-shadow:0 0 12px rgba(232,160,32,.8) !important;
+}
+
+/* 설정 버튼: 아이콘/텍스트만 남김 */
+body.hud-v21 .hud-settings-btn{
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  color:rgba(255,255,255,.72) !important;
+  font-weight:900 !important;
+  min-width:auto !important;
+  padding:4px 6px !important;
+}
+
+body.hud-v21 .hud-settings-btn:hover,
+body.hud-v21 .hud-settings-btn:active{
+  color:#fff !important;
+  text-shadow:0 0 12px rgba(76,163,255,.75) !important;
+}
+
+/* 보조 버튼: 테두리 제거하고 텍스트 버튼 느낌 */
+body.hud-v21 .btns button{
+  background:rgba(5,14,29,.28) !important;
+  border:none !important;
+  box-shadow:none !important;
+  color:rgba(255,255,255,.68) !important;
+  font-weight:900 !important;
+}
+
+body.hud-v21 .btns button:active{
+  color:#fff !important;
+  background:rgba(76,163,255,.16) !important;
+}
+
+/* 새로하기 버튼만 색감 약간 유지 */
+body.hud-v21 .btn-new{
+  color:#ff7b8a !important;
+  background:rgba(217,43,58,.10) !important;
+}
+
+/* 점수판: 카드 테두리 제거, 숫자만 강조 */
+body.hud-v21 .stat-box{
+  background:rgba(5,14,29,.35) !important;
+}
+
+body.hud-v21 .stat-label{
+  color:rgba(255,255,255,.58) !important;
+}
+
+body.hud-v21 .stat-num{
+  text-shadow:0 0 18px rgba(76,163,255,.35) !important;
+}
+
+/* 시작 버튼은 그대로 강조하되 테두리만 제거 */
+body.hud-v21 .panel .primary-start,
+body.hud-v21 #startBtn,
+body.hud-v21 #startBtn2{
+  border:none !important;
+}
+
+/* HP바는 유지. 단 바깥 박스 테두리만 살짝 완화 */
+#enemyHpWrap{
+  border:none !important;
+  background:rgba(5,14,29,.56) !important;
+}
+
+#enemyHpTrack{
+  border:1px solid rgba(255,255,255,.18) !important;
+}
+
+/* 발차기 탭 위치/표시 보정 */
+body.hud-v21 .mode-row.hud-kick-row{
+  gap:20px !important;
+}
+
+body.hud-v21 .mode-row.hud-kick-row .drill-btn{
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  color:rgba(255,255,255,.52) !important;
+}
+
+body.hud-v21 .mode-row.hud-kick-row .drill-btn.active{
+  color:#fff !important;
+  border-bottom:3px solid #4ab8ff !important;
+  text-shadow:0 0 12px rgba(76,163,255,.75) !important;
+}
+
+/* 눌렀을 때 버튼 전체가 줄어드는 느낌 줄이기 */
+body.hud-v21 button:active{
+  transform:none !important;
+}
+</style>
+
+
+<style id="v275-right-text-hud">
+/* v2.7.7: 오른쪽 점수 패널을 카드 없이 텍스트 HUD로 통일 */
+
+/* 오른쪽 전체 위치 고정: 모든 모드 동일 */
+body.hud-v21 .stats-row{
+  position:absolute !important;
+  top:300px !important;
+  right:72px !important;
+  width:230px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:42px !important;
+  align-items:flex-end !important;
+  z-index:30 !important;
+}
+
+/* 기존 카드 제거 */
+body.hud-v21 .stat-box,
+body.hud-v21 .stat-box.count-box,
+body.hud-v21 .stat-box.score-box,
+body.hud-v21 .stat-box.avg-box{
+  width:230px !important;
+  min-height:auto !important;
+  padding:0 !important;
+  margin:0 !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  text-align:right !important;
+}
+
+/* 라벨: 작고 묵직하게 */
+body.hud-v21 .stat-label{
+  display:block !important;
+  margin:0 0 6px 0 !important;
+  padding:0 !important;
+  color:rgba(255,255,255,.62) !important;
+  font-size:21px !important;
+  line-height:1 !important;
+  font-weight:1000 !important;
+  letter-spacing:-.6px !important;
+  text-shadow:0 2px 12px rgba(0,0,0,.65) !important;
+}
+
+/* 숫자: 카드 없이 크게 */
+body.hud-v21 .stat-num{
+  display:block !important;
+  margin:0 !important;
+  padding:0 !important;
+  color:#ffffff !important;
+  font-size:76px !important;
+  line-height:.9 !important;
+  font-weight:1000 !important;
+  letter-spacing:-3px !important;
+  text-shadow:
+    0 3px 14px rgba(0,0,0,.82),
+    0 0 22px rgba(255,255,255,.14) !important;
+}
+
+/* 각 성격별 색상만 유지 */
+body.hud-v21 .score-box .stat-num{
+  color:#E8A020 !important;
+  text-shadow:
+    0 3px 14px rgba(0,0,0,.82),
+    0 0 22px rgba(232,160,32,.45) !important;
+}
+
+body.hud-v21 .avg-box .stat-num{
+  color:#86ffb1 !important;
+  text-shadow:
+    0 3px 14px rgba(0,0,0,.82),
+    0 0 22px rgba(46,204,113,.42) !important;
+}
+
+/* 횟수 0/10 같은 긴 글자는 살짝 작게 */
+body.hud-v21 .count-box .stat-num{
+  font-size:72px !important;
+}
+
+/* 작은 등급 텍스트도 카드 없이 */
+body.hud-v21 #scoreGrade{
+  display:block !important;
+  margin-top:8px !important;
+  font-size:18px !important;
+  font-weight:1000 !important;
+  text-align:right !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.75) !important;
+}
+
+/* 풍선/겨루기 모드에서 혹시 top을 덮는 기존 CSS 무력화 */
+body.hud-v21.balloon-mode .stats-row,
+body.hud-v21.sparring-mode .stats-row{
+  top:300px !important;
+  right:72px !important;
+  width:230px !important;
+  gap:42px !important;
+}
+
+/* 오른쪽 HUD 뒤쪽만 은은하게 어둡게 해서 글씨 가독성 확보 */
+body.hud-v21 .stats-row::before{
+  content:"" !important;
+  position:absolute !important;
+  right:-34px !important;
+  top:-44px !important;
+  width:330px !important;
+  height:430px !important;
+  border-radius:42px !important;
+  background:
+    radial-gradient(circle at 70% 50%, rgba(0,0,0,.48), rgba(0,0,0,.18) 52%, transparent 76%) !important;
+  z-index:-1 !important;
+  pointer-events:none !important;
+}
+
+/* 태블릿/좁은 화면 */
+@media (orientation:landscape) and (max-width:1220px){
+  body.hud-v21 .stats-row,
+  body.hud-v21.balloon-mode .stats-row,
+  body.hud-v21.sparring-mode .stats-row{
+    top:270px !important;
+    right:54px !important;
+    width:210px !important;
+    gap:34px !important;
+  }
+  body.hud-v21 .stat-box{
+    width:210px !important;
+  }
+  body.hud-v21 .stat-label{
+    font-size:18px !important;
+  }
+  body.hud-v21 .stat-num{
+    font-size:64px !important;
+  }
+  body.hud-v21 .count-box .stat-num{
+    font-size:60px !important;
+  }
+  body.hud-v21 .stats-row::before{
+    right:-28px !important;
+    top:-34px !important;
+    width:292px !important;
+    height:360px !important;
+  }
+}
+</style>
+
+
+<style id="v276-minimal-hud-polish">
+/* v2.7.7: 미니멀 HUD 정리
+   - 설명글 제거
+   - 상단/안내/시작영역 배경과 테두리 최소화
+   - 발차기 선택 실제 1줄 정렬
+   - 겨루기 타겟 축소 */
+
+/* 상단 좌측 제목: 박스 제거, 작은 텍스트만 */
+body.hud-v21 .title{
+  top:16px !important;
+  left:16px !important;
+  min-width:auto !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  color:rgba(255,255,255,.78) !important;
+  font-size:18px !important;
+  line-height:1.05 !important;
+  font-weight:1000 !important;
+  text-shadow:0 2px 12px rgba(0,0,0,.72) !important;
+}
+body.hud-v21 .title small{
+  display:none !important;
+}
+
+/* 중앙 상단 현재 발차기: 설명 삭제, 글자만 */
+body.hud-v21 #modeBadge{
+  top:18px !important;
+  left:50% !important;
+  transform:translateX(-50%) !important;
+  min-width:0 !important;
+  width:auto !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  color:#fff !important;
+  font-size:28px !important;
+  line-height:1 !important;
+  font-weight:1000 !important;
+  letter-spacing:-.8px !important;
+  text-align:center !important;
+  text-shadow:
+    0 3px 16px rgba(0,0,0,.82),
+    0 0 16px rgba(76,163,255,.38) !important;
+}
+body.hud-v21 #modeBadge small{
+  display:none !important;
+}
+
+/* 안내 문구: 배경/테두리 제거, 작은 텍스트만 */
+body.hud-v21 #status{
+  top:52px !important;
+  left:16px !important;
+  bottom:auto !important;
+  max-width:360px !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  color:rgba(255,255,255,.58) !important;
+  font-size:13px !important;
+  line-height:1.35 !important;
+  font-weight:800 !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.82) !important;
+}
+
+/* 왼쪽 모드 메뉴도 난이도 버튼처럼 더 가볍게 */
+body.hud-v21 .hud-drill-row,
+body.hud-v21 .hud-balloon-row,
+body.hud-v21 .hud-sparring-row{
+  left:16px !important;
+  width:126px !important;
+}
+body.hud-v21 .hud-drill-row{ top:92px !important; }
+body.hud-v21 .hud-balloon-row{ top:126px !important; }
+body.hud-v21 .hud-sparring-row{ top:160px !important; }
+
+body.hud-v21 .hud-drill-row .game-btn,
+body.hud-v21 .hud-balloon-row .game-btn,
+body.hud-v21 .hud-sparring-row .game-btn{
+  min-height:24px !important;
+  padding:3px 0 !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  color:rgba(255,255,255,.50) !important;
+  font-size:13px !important;
+  font-weight:1000 !important;
+  text-align:left !important;
+}
+body.hud-v21 .hud-drill-row .game-btn.active,
+body.hud-v21 .hud-balloon-row .game-btn.active,
+body.hud-v21 .hud-sparring-row .game-btn.active{
+  color:#fff !important;
+  text-shadow:0 0 12px rgba(76,163,255,.75) !important;
+}
+body.hud-v21 .hud-drill-row .game-btn.active::after,
+body.hud-v21 .hud-balloon-row .game-btn.active::after,
+body.hud-v21 .hud-sparring-row .game-btn.active::after{
+  bottom:-2px !important;
+  width:34px !important;
+  height:3px !important;
+}
+
+/* 발차기 선택: 실제 1줄, 더 작고 촘촘하게 */
+body.hud-v21 .mode-row.hud-kick-row,
+body.hud-v21 .mode-row.hud-kick-row1,
+body.hud-v21 .mode-row.hud-kick-tabs{
+  position:absolute !important;
+  left:50% !important;
+  bottom:18px !important;
+  transform:translateX(-50%) !important;
+  width:auto !important;
+  min-width:0 !important;
+  max-width:none !important;
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:14px !important;
+  z-index:45 !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
+body.hud-v21 .mode-row.hud-kick-row2{
+  display:none !important;
+}
+body.hud-v21 .mode-row.hud-kick-row .drill-btn{
+  min-width:auto !important;
+  min-height:auto !important;
+  height:auto !important;
+  padding:3px 1px !important;
+  margin:0 !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  color:rgba(255,255,255,.50) !important;
+  font-size:15px !important;
+  line-height:1 !important;
+  font-weight:1000 !important;
+  letter-spacing:-.7px !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.72) !important;
+}
+body.hud-v21 .mode-row.hud-kick-row .drill-btn.active{
+  color:#fff !important;
+  border-bottom:3px solid #4ab8ff !important;
+  text-shadow:
+    0 2px 10px rgba(0,0,0,.72),
+    0 0 12px rgba(76,163,255,.8) !important;
+}
+
+/* 왼쪽 아래 시작 패널: 배경/테두리 거의 제거 */
+body.hud-v21 #drillCountArea,
+body.hud-v21 #gameArea{
+  left:16px !important;
+  bottom:16px !important;
+  width:230px !important;
+  padding:0 !important;
+  gap:8px !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+}
+
+/* 목표횟수/시간 선택 영역도 텍스트형 */
+body.hud-v21 .drill-count-row{
+  display:flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  width:100% !important;
+  margin:0 0 8px 0 !important;
+}
+body.hud-v21 .drill-count-row label{
+  color:rgba(255,255,255,.58) !important;
+  font-size:13px !important;
+  font-weight:1000 !important;
+  white-space:nowrap !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.72) !important;
+}
+body.hud-v21 .drill-count-row select{
+  height:auto !important;
+  min-height:0 !important;
+  flex:0 0 auto !important;
+  padding:2px 4px !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  color:#fff !important;
+  font-size:14px !important;
+  font-weight:1000 !important;
+  outline:none !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.72) !important;
+}
+
+/* 시작 버튼: 색과 덩어리감 줄이기 */
+body.hud-v21 .panel .primary-start,
+body.hud-v21 #startBtn,
+body.hud-v21 #startBtn2{
+  min-height:auto !important;
+  width:auto !important;
+  padding:7px 16px !important;
+  border:none !important;
+  border-radius:999px !important;
+  background:rgba(46,204,113,.12) !important;
+  color:#86ffb1 !important;
+  font-size:16px !important;
+  font-weight:1000 !important;
+  box-shadow:none !important;
+  text-shadow:0 0 12px rgba(46,204,113,.5) !important;
+}
+body.hud-v21.playing-ui #startBtn,
+body.hud-v21.playing-ui #startBtn2{
+  background:rgba(217,43,58,.14) !important;
+  color:#ff8b99 !important;
+  text-shadow:0 0 12px rgba(217,43,58,.55) !important;
+}
+
+/* 결과 텍스트도 시작영역 안에서 튀지 않게 */
+body.hud-v21 #gameResult,
+body.hud-v21 #gameResult2{
+  color:rgba(255,255,255,.62) !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.72) !important;
+}
+
+/* 보조 버튼은 더 얇게 */
+body.hud-v21 .btns{
+  width:270px !important;
+  right:16px !important;
+  bottom:16px !important;
+  gap:8px !important;
+}
+body.hud-v21 .btns button{
+  min-height:auto !important;
+  padding:6px 4px !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  color:rgba(255,255,255,.52) !important;
+  font-size:12px !important;
+  font-weight:1000 !important;
+}
+body.hud-v21 .btn-new{
+  color:#ff7b8a !important;
+  background:transparent !important;
+}
+
+/* 겨루기 타겟 10~15% 축소 */
+#enemyTarget{
+  width:235px !important;
+  height:385px !important;
+  transform:translate(-50%,-42%) perspective(500px) rotateY(-5deg) scale(.94) !important;
+}
+#enemyTarget::before{
+  width:132px !important;
+  height:316px !important;
+  top:18px !important;
+}
+#enemyTarget::after{
+  width:204px !important;
+  height:146px !important;
+  top:120px !important;
+}
+#enemyTarget .enemyHead{
+  width:78px !important;
+  height:78px !important;
+  top:24px !important;
+  font-size:12px !important;
+}
+#enemyTarget .enemyHead::before{
+  width:62px !important;
+  left:8px !important;
+  top:38px !important;
+}
+#enemyTarget .enemyHead::after{
+  height:62px !important;
+  left:38px !important;
+  top:8px !important;
+}
+#enemyTarget .enemyBody{
+  width:130px !important;
+  height:104px !important;
+  top:194px !important;
+  border-radius:30px !important;
+  font-size:14px !important;
+}
+#enemyTarget .enemyBody::before{
+  width:100px !important;
+  left:15px !important;
+  top:51px !important;
+}
+#enemyTarget .enemyBody::after{
+  height:80px !important;
+  left:64px !important;
+  top:12px !important;
+}
+
+/* 타격 애니메이션 축소 크기에 맞춰 보정 */
+@keyframes v272HitBody{
+  0%{transform:translate(-50%,-42%) perspective(500px) rotateY(-5deg) scale(.94);}
+  35%{transform:translate(calc(-50% + 20px),-42%) perspective(500px) rotateY(-18deg) scale(.97);}
+  100%{transform:translate(-50%,-42%) perspective(500px) rotateY(-5deg) scale(.94);}
+}
+@keyframes v272HitHead{
+  0%{transform:translate(-50%,-42%) perspective(500px) rotateY(-5deg) rotate(0deg) scale(.94);}
+  30%{transform:translate(calc(-50% - 15px),-43%) perspective(500px) rotateY(10deg) rotate(-4deg) scale(.97);}
+  60%{transform:translate(calc(-50% + 10px),-41%) perspective(500px) rotateY(-15deg) rotate(3deg) scale(.96);}
+  100%{transform:translate(-50%,-42%) perspective(500px) rotateY(-5deg) rotate(0deg) scale(.94);}
+}
+
+/* 좁은 화면 */
+@media (orientation:landscape) and (max-width:1220px){
+  body.hud-v21 #modeBadge{
+    top:16px !important;
+    font-size:24px !important;
+  }
+  body.hud-v21 #status{
+    top:48px !important;
+    max-width:310px !important;
+    font-size:12px !important;
+  }
+  body.hud-v21 .hud-drill-row{ top:86px !important; }
+  body.hud-v21 .hud-balloon-row{ top:118px !important; }
+  body.hud-v21 .hud-sparring-row{ top:150px !important; }
+  body.hud-v21 .mode-row.hud-kick-row{
+    gap:11px !important;
+    bottom:14px !important;
+  }
+  body.hud-v21 .mode-row.hud-kick-row .drill-btn{
+    font-size:14px !important;
+  }
+  body.hud-v21 #drillCountArea,
+  body.hud-v21 #gameArea{
+    width:210px !important;
+  }
+  #enemyTarget{
+    transform:translate(-50%,-42%) perspective(500px) rotateY(-5deg) scale(.86) !important;
+  }
+}
+</style>
+
+
+<style id="v277-kick-tabs-align-fix">
+/* v2.7.7: 하단 발차기 선택 탭 가로 정렬 고정 */
+
+body.hud-v21 .mode-row.hud-kick-row,
+body.hud-v21 .mode-row.hud-kick-row1,
+body.hud-v21 .mode-row.hud-kick-tabs{
+  position:absolute !important;
+  left:50% !important;
+  bottom:18px !important;
+  transform:translateX(-50%) !important;
+  width:auto !important;
+  min-width:0 !important;
+  max-width:none !important;
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:22px !important;
+  z-index:80 !important;
+  white-space:nowrap !important;
+}
+
+body.hud-v21 .mode-row.hud-kick-row2{
+  display:none !important;
+}
+
+body.hud-v21 .mode-row.hud-kick-row .drill-btn,
+body.hud-v21 .mode-row.hud-kick-tabs .drill-btn{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:auto !important;
+  min-width:34px !important;
+  max-width:none !important;
+  height:26px !important;
+  min-height:26px !important;
+  padding:0 0 4px 0 !important;
+  margin:0 !important;
+  background:transparent !important;
+  border:none !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  color:rgba(255,255,255,.50) !important;
+  font-size:16px !important;
+  font-weight:1000 !important;
+  line-height:1 !important;
+  letter-spacing:-.4px !important;
+  text-align:center !important;
+  white-space:nowrap !important;
+  word-break:keep-all !important;
+  writing-mode:horizontal-tb !important;
+  text-orientation:mixed !important;
+  overflow:visible !important;
+}
+
+body.hud-v21 .mode-row.hud-kick-row .drill-btn.active,
+body.hud-v21 .mode-row.hud-kick-tabs .drill-btn.active{
+  color:#fff !important;
+  border-bottom:3px solid #4ab8ff !important;
+  text-shadow:
+    0 2px 10px rgba(0,0,0,.72),
+    0 0 12px rgba(76,163,255,.8) !important;
+}
+
+body.hud-v21 .mode-row.hud-kick-row .drill-btn br,
+body.hud-v21 .mode-row.hud-kick-tabs .drill-btn br{
+  display:none !important;
+}
+
+@media (orientation:landscape) and (max-width:1220px){
+  body.hud-v21 .mode-row.hud-kick-row,
+  body.hud-v21 .mode-row.hud-kick-tabs{
+    gap:18px !important;
+    bottom:14px !important;
+  }
+  body.hud-v21 .mode-row.hud-kick-row .drill-btn,
+  body.hud-v21 .mode-row.hud-kick-tabs .drill-btn{
+    min-width:32px !important;
+    height:24px !important;
+    min-height:24px !important;
+    font-size:15px !important;
   }
 }
 </style>
