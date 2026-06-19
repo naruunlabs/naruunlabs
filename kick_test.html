@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 발차기 챌린지 v2.7.8 Bottom Buttons Fix</title>
+<title>AI 발차기 챌린지 v3.0 KICK FIGHTER UI Fix1</title>
 <style>
   :root{ --red:#D92B3A; --navy:#0A1628; --gold:#E8A020; --green:#2ecc71; --blue:#4ca3ff;}
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -337,8 +337,107 @@ body.hud-v21 #drillResultSub{font-size:20px; color:#cdd8e8; font-weight:700;}
 }
 
 </style>
+
+<style id="fix4-start-stop-clean-css">
+/* Fix4: 시작/중지 버튼 배경 완전 제거, 텍스트만 표시 */
+body.hud-v21.tekken-v30 #drillCountArea,
+body.hud-v21.tekken-v30 #gameArea{
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  padding:0 !important;
+}
+
+body.hud-v21.tekken-v30 .panel .primary-start,
+body.hud-v21.tekken-v30 #startBtn,
+body.hud-v21.tekken-v30 #startBtn2{
+  display:block !important;
+  width:auto !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:0 !important;
+  padding:10px 0 0 0 !important;
+  margin:0 !important;
+  border:0 !important;
+  outline:0 !important;
+  border-radius:0 !important;
+  clip-path:none !important;
+  -webkit-clip-path:none !important;
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  filter:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  color:var(--arcade-green) !important;
+  font-size:34px !important;
+  line-height:1.05 !important;
+  font-weight:1000 !important;
+  letter-spacing:-1.2px !important;
+  text-align:left !important;
+  font-family:inherit !important;
+  text-shadow:0 3px 12px rgba(0,0,0,.86) !important;
+}
+
+body.hud-v21.tekken-v30 .panel .primary-start::before,
+body.hud-v21.tekken-v30 .panel .primary-start::after,
+body.hud-v21.tekken-v30 #startBtn::before,
+body.hud-v21.tekken-v30 #startBtn::after,
+body.hud-v21.tekken-v30 #startBtn2::before,
+body.hud-v21.tekken-v30 #startBtn2::after{
+  content:none !important;
+  display:none !important;
+  background:none !important;
+  box-shadow:none !important;
+  border:0 !important;
+}
+
+/* 실행 중에는 JS가 텍스트를 ■ 중지로 바꾸고, 색만 빨강으로 */
+body.hud-v21.tekken-v30.playing-ui #startBtn,
+body.hud-v21.tekken-v30.playing-ui #startBtn2{
+  color:#ff6578 !important;
+}
+
+/* 목표횟수/제한시간 선택 줄은 기존 HUD 느낌 유지 */
+body.hud-v21.tekken-v30 #drillCountArea .drill-count-row,
+body.hud-v21.tekken-v30 #gameArea .drill-count-row{
+  width:max-content !important;
+  padding:0 !important;
+  margin:0 !important;
+}
+</style>
+
+
+<style id="fix5-remove-stop-glow">
+body.hud-v21.tekken-v30.playing-ui #startBtn,
+body.hud-v21.tekken-v30.playing-ui #startBtn2{
+  background:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  filter:none !important;
+  text-shadow:none !important;
+}
+
+body.hud-v21.tekken-v30.playing-ui #startBtn::before,
+body.hud-v21.tekken-v30.playing-ui #startBtn::after,
+body.hud-v21.tekken-v30.playing-ui #startBtn2::before,
+body.hud-v21.tekken-v30.playing-ui #startBtn2::after{
+  background:none !important;
+  box-shadow:none !important;
+  filter:none !important;
+}
+
+body.hud-v21.tekken-v30.playing-ui .primary-start{
+  box-shadow:none !important;
+  filter:none !important;
+}
+</style>
+
 </head>
-<body class="hud-v21">
+<body class="hud-v21 tekken-v30">
 
 <div class="rotate-msg">
   <div class="icon">🔄</div>
@@ -396,7 +495,7 @@ body.hud-v21 #drillResultSub{font-size:20px; color:#cdd8e8; font-weight:700;}
   </div>
 
   <div class="panel">
-    <div class="title"><span class="title-text">AI 발차기 챌린지<small>TAEKWONDO TRAINING</small></span></div>
+    <div class="title"><span class="title-text">KICK FIGHTER<small>AI TAEKWONDO v3.0</small></span></div>
     <button id="hudSettingsBtn" class="hud-settings-btn" type="button" onclick="toggleHudSettings()">⚙ 설정</button>
 
     <div id="difficultyPanel" class="difficulty-panel" aria-label="난이도 선택">
@@ -3005,6 +3104,323 @@ body.hud-v21 .btns button br{
   }
 }
 </style>
+
+
+
+<style id="v30-kick-fighter-arcade-ui">
+/* ─────────────────────────────────────────────
+   v3.0 KICK FIGHTER UI
+   목적: 기능 유지 + 철권/아케이드 느낌의 대폭 UI 전환
+   ───────────────────────────────────────────── */
+body.hud-v21.tekken-v30{
+  --arcade-red:#ff304f;
+  --arcade-blue:#31b7ff;
+  --arcade-gold:#ffd15a;
+  --arcade-green:#51ff9d;
+  --arcade-dark:#040912;
+  background:#000 !important;
+}
+body.hud-v21.tekken-v30 .stage{background:#000 !important;}
+body.hud-v21.tekken-v30 .cam-wrap::before{
+  z-index:4 !important;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(0,0,0,0) 34%, rgba(3,8,18,.26) 68%, rgba(0,0,0,.72) 100%),
+    linear-gradient(90deg,rgba(255,48,79,.18),rgba(0,0,0,0) 23%,rgba(0,0,0,0) 72%,rgba(49,183,255,.20)),
+    linear-gradient(180deg,rgba(0,0,0,.62),rgba(0,0,0,0) 25%,rgba(0,0,0,0) 62%,rgba(0,0,0,.76));
+}
+body.hud-v21.tekken-v30 .cam-wrap::after{
+  content:"";
+  position:absolute; inset:0; z-index:5; pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,rgba(0,0,0,0) 1px 5px);
+  mix-blend-mode:screen; opacity:.20;
+}
+body.hud-v21.tekken-v30 .panel{z-index:10 !important;}
+body.hud-v21.tekken-v30 .panel *,
+body.hud-v21.tekken-v30 .panel button,
+body.hud-v21.tekken-v30 .panel select{font-family:inherit !important;}
+
+/* 좌상단 게임 로고 */
+body.hud-v21.tekken-v30 .title{
+  top:18px !important; left:22px !important; min-width:0 !important;
+  padding:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important;
+  color:#fff !important; font-size:22px !important; font-weight:1000 !important; letter-spacing:.5px !important;
+  text-shadow:0 3px 12px rgba(0,0,0,.95),0 0 18px rgba(255,48,79,.55) !important;
+}
+body.hud-v21.tekken-v30 .title small{
+  margin-top:2px !important; font-size:10px !important; color:rgba(255,255,255,.58) !important; letter-spacing:1.6px !important;
+}
+
+/* 중앙 현재 미션: 카드가 아니라 경기 타이틀 */
+body.hud-v21.tekken-v30 #modeBadge{
+  top:22px !important; left:50% !important; transform:translateX(-50%) skewX(-8deg) !important;
+  min-width:360px !important; padding:0 38px 8px !important;
+  border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important;
+  color:#fff !important; font-size:36px !important; font-weight:1000 !important; letter-spacing:-1.2px !important;
+  text-align:center !important; text-shadow:0 4px 18px rgba(0,0,0,.95),0 0 22px rgba(49,183,255,.55),0 0 10px rgba(255,255,255,.25) !important;
+}
+body.hud-v21.tekken-v30 #modeBadge small{display:none !important;}
+body.hud-v21.tekken-v30 #modeBadge::before,
+body.hud-v21.tekken-v30 #modeBadge::after{
+  content:""; position:absolute; top:50%; width:96px; height:5px; transform:translateY(-50%);
+  background:linear-gradient(90deg,transparent,var(--arcade-gold),transparent); opacity:.88;
+  filter:drop-shadow(0 0 10px rgba(255,209,90,.8));
+}
+body.hud-v21.tekken-v30 #modeBadge::before{right:100%;}
+body.hud-v21.tekken-v30 #modeBadge::after{left:100%;}
+
+/* 상태 문구는 작게. 화면 주인공에서 제외 */
+body.hud-v21.tekken-v30 #status{
+  top:58px !important; left:22px !important; max-width:280px !important;
+  padding:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important;
+  color:rgba(255,255,255,.58) !important; font-size:12px !important; line-height:1.25 !important;
+  text-shadow:0 2px 8px rgba(0,0,0,.95) !important;
+}
+
+/* 난이도: 우상단 CPU LEVEL 느낌 */
+body.hud-v21.tekken-v30 .difficulty-panel{
+  top:20px !important; right:22px !important; z-index:70 !important;
+  display:flex !important; gap:8px !important; padding:0 !important;
+  border:0 !important; background:transparent !important; box-shadow:none !important; backdrop-filter:none !important;
+}
+body.hud-v21.tekken-v30 .difficulty-panel::before{
+  content:"LEVEL"; align-self:center; margin-right:2px;
+  color:rgba(255,255,255,.54); font-size:10px; font-weight:1000; letter-spacing:1.4px;
+  text-shadow:0 2px 8px rgba(0,0,0,.95);
+}
+body.hud-v21.tekken-v30 .diff-btn{
+  min-width:38px !important; min-height:24px !important; padding:0 2px 4px !important;
+  border:0 !important; border-bottom:2px solid rgba(255,255,255,.22) !important; border-radius:0 !important;
+  background:transparent !important; box-shadow:none !important; color:rgba(255,255,255,.48) !important;
+  font-size:13px !important; font-weight:1000 !important; line-height:1 !important;
+  text-shadow:0 2px 8px rgba(0,0,0,.9) !important;
+}
+body.hud-v21.tekken-v30 .diff-btn.active{
+  color:#fff !important; border-bottom-color:var(--arcade-gold) !important;
+  text-shadow:0 2px 9px rgba(0,0,0,.95),0 0 13px rgba(255,209,90,.95) !important;
+}
+
+/* 설정 버튼 */
+body.hud-v21.tekken-v30 .hud-settings-btn{
+  top:52px !important; right:22px !important; min-width:0 !important; min-height:0 !important; padding:0 !important;
+  border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important;
+  color:rgba(255,255,255,.42) !important; font-size:13px !important; font-weight:1000 !important;
+  text-shadow:0 2px 8px rgba(0,0,0,.95) !important;
+}
+body.hud-v21.tekken-v30 .hud-settings-btn:hover{color:#fff !important;}
+
+/* 점수판: 카드 3개가 아니라 전투 HUD */
+body.hud-v21.tekken-v30 .stats-row{
+  top:132px !important; right:24px !important; width:232px !important; gap:16px !important; z-index:60 !important;
+}
+body.hud-v21.tekken-v30 .stat-box{
+  position:relative; min-height:82px !important; padding:5px 0 10px !important;
+  border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important;
+  text-align:right !important;
+}
+body.hud-v21.tekken-v30 .stat-box::after{
+  content:""; position:absolute; right:0; bottom:0; width:176px; height:4px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.34),var(--arcade-blue));
+  box-shadow:0 0 16px rgba(49,183,255,.60);
+}
+body.hud-v21.tekken-v30 .stat-label{
+  color:rgba(255,255,255,.62) !important; font-size:14px !important; font-weight:1000 !important; letter-spacing:.5px !important;
+  text-shadow:0 2px 8px rgba(0,0,0,.95) !important;
+}
+body.hud-v21.tekken-v30 .stat-num{
+  margin-top:0 !important; font-size:58px !important; line-height:.98 !important; font-weight:1000 !important;
+  color:#fff !important; text-shadow:0 4px 18px rgba(0,0,0,.96),0 0 22px rgba(49,183,255,.55) !important;
+}
+body.hud-v21.tekken-v30 .score-box .stat-num{color:var(--arcade-gold) !important; text-shadow:0 4px 16px rgba(0,0,0,.96),0 0 22px rgba(255,209,90,.85) !important;}
+body.hud-v21.tekken-v30 .avg-box .stat-num{color:var(--arcade-green) !important; text-shadow:0 4px 16px rgba(0,0,0,.96),0 0 20px rgba(81,255,157,.60) !important;}
+body.hud-v21.tekken-v30 #scoreGrade{font-size:14px !important; font-weight:1000 !important; text-shadow:0 2px 10px rgba(0,0,0,.9) !important;}
+
+/* 모드 버튼: 좌측 미션 선택 */
+body.hud-v21.tekken-v30 .hud-drill-row,
+body.hud-v21.tekken-v30 .hud-balloon-row,
+body.hud-v21.tekken-v30 .hud-sparring-row{
+  left:22px !important; width:174px !important; z-index:65 !important; display:flex !important; position:absolute !important;
+}
+body.hud-v21.tekken-v30 .hud-drill-row{top:118px !important;}
+body.hud-v21.tekken-v30 .hud-balloon-row{top:160px !important;}
+body.hud-v21.tekken-v30 .hud-sparring-row{top:202px !important;}
+body.hud-v21.tekken-v30 .hud-drill-row .game-btn,
+body.hud-v21.tekken-v30 .hud-balloon-row .game-btn,
+body.hud-v21.tekken-v30 .hud-sparring-row .game-btn{
+  width:100% !important; height:28px !important; min-height:28px !important; padding:0 !important;
+  border:0 !important; border-left:4px solid rgba(255,255,255,.22) !important; border-radius:0 !important;
+  background:linear-gradient(90deg,rgba(0,0,0,.46),rgba(0,0,0,0)) !important; box-shadow:none !important;
+  color:rgba(255,255,255,.58) !important; font-size:14px !important; font-weight:1000 !important; text-align:left !important;
+  padding-left:12px !important; text-shadow:0 2px 10px rgba(0,0,0,.9) !important;
+}
+body.hud-v21.tekken-v30 .hud-drill-row .game-btn.active,
+body.hud-v21.tekken-v30 .hud-balloon-row .game-btn.active,
+body.hud-v21.tekken-v30 .hud-sparring-row .game-btn.active{
+  color:#fff !important; border-left-color:var(--arcade-red) !important;
+  text-shadow:0 2px 12px rgba(0,0,0,.95),0 0 14px rgba(255,48,79,.78) !important;
+}
+
+/* 발차기 탭: 하단 캐릭터 커맨드 바 */
+body.hud-v21.tekken-v30 .mode-row.hud-kick-row,
+body.hud-v21.tekken-v30 .mode-row.hud-kick-tabs{
+  left:50% !important; bottom:24px !important; transform:translateX(-50%) !important;
+  width:auto !important; max-width:none !important; gap:22px !important; z-index:80 !important;
+  display:flex !important; align-items:flex-end !important; justify-content:center !important;
+}
+body.hud-v21.tekken-v30 .mode-row.hud-kick-row .drill-btn,
+body.hud-v21.tekken-v30 .mode-row.hud-kick-tabs .drill-btn{
+  flex:0 0 auto !important; min-width:42px !important; width:auto !important; height:28px !important; min-height:28px !important;
+  padding:0 0 6px !important; border:0 !important; border-bottom:2px solid rgba(255,255,255,.22) !important; border-radius:0 !important;
+  background:transparent !important; box-shadow:none !important; color:rgba(255,255,255,.58) !important;
+  font-size:16px !important; font-weight:1000 !important; line-height:1 !important; letter-spacing:-.4px !important;
+  text-shadow:0 3px 12px rgba(0,0,0,.95) !important;
+}
+body.hud-v21.tekken-v30 .mode-row.hud-kick-row .drill-btn.active,
+body.hud-v21.tekken-v30 .mode-row.hud-kick-tabs .drill-btn.active{
+  color:#fff !important; border-bottom-color:var(--arcade-gold) !important;
+  text-shadow:0 3px 14px rgba(0,0,0,.95),0 0 18px rgba(255,209,90,.9),0 0 28px rgba(255,48,79,.35) !important;
+}
+body.hud-v21.tekken-v30.playing-ui .mode-row.hud-kick-row{opacity:.22 !important;}
+
+/* 시작 영역: 작은 폼이 아니라 FIGHT 버튼 */
+body.hud-v21.tekken-v30 #drillCountArea,
+body.hud-v21.tekken-v30 #gameArea{
+  left:22px !important; bottom:22px !important; width:220px !important; z-index:82 !important;
+  padding:0 !important; gap:8px !important; border:0 !important; border-radius:0 !important;
+  background:transparent !important; box-shadow:none !important; backdrop-filter:none !important;
+}
+body.hud-v21.tekken-v30 .drill-count-row{gap:8px !important; align-items:center !important;}
+body.hud-v21.tekken-v30 .drill-count-row label{
+  color:rgba(255,255,255,.58) !important; font-size:12px !important; font-weight:1000 !important; text-shadow:0 2px 8px rgba(0,0,0,.95) !important;
+}
+body.hud-v21.tekken-v30 .drill-count-row select{
+  height:28px !important; border:0 !important; border-bottom:2px solid rgba(255,255,255,.28) !important; border-radius:0 !important;
+  background:rgba(0,0,0,.22) !important; color:#fff !important; font-size:14px !important; font-weight:1000 !important;
+  box-shadow:none !important; outline:none !important;
+}
+body.hud-v21.tekken-v30 .panel .primary-start{
+  width:190px !important; height:54px !important; min-height:54px !important; padding:0 !important;
+  border:0 !important; border-radius:0 !important;
+  clip-path:polygon(10% 0,100% 0,90% 100%,0 100%);
+  background:linear-gradient(90deg,#ff304f,#ff8b37) !important; color:#fff !important;
+  font-size:0 !important; box-shadow:0 0 24px rgba(255,48,79,.55),0 8px 22px rgba(0,0,0,.50) !important;
+}
+
+
+
+/* 하단 보조 버튼은 관람 방해 최소화 */
+body.hud-v21.tekken-v30 .btns{
+  right:22px !important; bottom:22px !important; gap:24px !important; z-index:82 !important;
+}
+body.hud-v21.tekken-v30 .btns button{
+  height:24px !important; min-height:24px !important; color:rgba(255,255,255,.42) !important;
+  font-size:13px !important; font-weight:1000 !important; text-shadow:0 2px 10px rgba(0,0,0,.95) !important;
+}
+body.hud-v21.tekken-v30 .btns button:hover{color:#fff !important;}
+
+/* 겨루기 HP: 대전 게임 체력바 */
+body.hud-v21.tekken-v30 #enemyHpWrap{
+  top:82px !important; left:50% !important; transform:translateX(-50%) !important;
+  width:min(620px,58vw) !important; height:38px !important; padding:0 !important; border:0 !important;
+  border-radius:0 !important; background:transparent !important; box-shadow:none !important; z-index:72 !important;
+}
+body.hud-v21.tekken-v30 #enemyName{
+  position:absolute; left:0; top:-20px; font-size:12px !important; color:rgba(255,255,255,.62) !important; font-weight:1000 !important; letter-spacing:1px;
+}
+body.hud-v21.tekken-v30 #enemyHpTrack{
+  position:absolute; left:0; right:70px; top:8px; width:auto !important; height:18px !important;
+  border:2px solid rgba(255,255,255,.55) !important; background:rgba(0,0,0,.58) !important; border-radius:0 !important;
+  box-shadow:0 0 18px rgba(255,48,79,.25), inset 0 2px 6px rgba(0,0,0,.6) !important;
+  clip-path:polygon(2% 0,100% 0,98% 100%,0 100%);
+}
+body.hud-v21.tekken-v30 #enemyHpFill{
+  background:linear-gradient(90deg,#51ff9d,#ffd15a,#ff304f) !important; box-shadow:0 0 14px rgba(81,255,157,.55) !important;
+}
+body.hud-v21.tekken-v30 #enemyHpText{
+  position:absolute; right:0; top:3px; min-width:62px; font-size:18px !important; color:#fff !important; font-weight:1000 !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.95),0 0 12px rgba(255,48,79,.65) !important;
+}
+body.hud-v21.tekken-v30 #comboBadge{
+  top:126px !important; right:22px !important; min-width:150px !important;
+  padding:0 !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important;
+  color:var(--arcade-gold) !important; font-size:28px !important; font-weight:1000 !important; text-align:right !important;
+  text-shadow:0 3px 14px rgba(0,0,0,.95),0 0 18px rgba(255,209,90,.8) !important;
+}
+
+/* 겨루기 타겟 더 게임 오브젝트처럼 */
+body.hud-v21.tekken-v30 #enemyTarget{
+  width:288px !important; height:455px !important; opacity:.96 !important;
+  transform:translate(-50%,-42%) perspective(560px) rotateY(-7deg) scale(1.03) !important;
+  filter:drop-shadow(0 0 34px rgba(49,183,255,.50)) drop-shadow(0 0 30px rgba(255,48,79,.35)) drop-shadow(0 30px 28px rgba(0,0,0,.62)) !important;
+}
+body.hud-v21.tekken-v30 #enemyTarget .enemyHead,
+body.hud-v21.tekken-v30 #enemyTarget .enemyBody{
+  backdrop-filter:blur(3px); font-size:13px !important; font-weight:1000 !important;
+}
+body.hud-v21.tekken-v30 #enemyTarget .enemyHead{border-width:3px !important; box-shadow:0 0 32px rgba(255,48,79,.72), inset 0 0 28px rgba(255,48,79,.20) !important;}
+body.hud-v21.tekken-v30 #enemyTarget .enemyBody{border-width:3px !important; box-shadow:0 0 32px rgba(49,183,255,.70), inset 0 0 28px rgba(49,183,255,.18) !important;}
+body.hud-v21.tekken-v30 #damagePopup{
+  border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important;
+  font-size:46px !important; font-weight:1000 !important; color:#fff !important;
+  text-shadow:0 5px 16px rgba(0,0,0,.95),0 0 22px rgba(255,48,79,.85) !important;
+}
+
+/* 점수/결과 팝업: 아케이드 판정 */
+body.hud-v21.tekken-v30 #popScore{
+  font-size:152px !important; font-weight:1000 !important; color:var(--arcade-gold) !important;
+  text-shadow:0 8px 24px rgba(0,0,0,.96),0 0 40px rgba(255,209,90,.95),0 0 70px rgba(255,48,79,.35) !important;
+}
+body.hud-v21.tekken-v30 .popGrade{
+  font-size:54px !important; color:#fff !important; text-shadow:0 5px 18px rgba(0,0,0,.95),0 0 26px rgba(49,183,255,.88) !important;
+}
+body.hud-v21.tekken-v30 #readyOverlay{
+  background:rgba(0,0,0,.48) !important; backdrop-filter:blur(2px) !important;
+}
+body.hud-v21.tekken-v30 #readyNum{
+  color:#fff !important; font-size:172px !important; font-weight:1000 !important;
+  text-shadow:0 8px 24px rgba(0,0,0,.95),0 0 45px rgba(255,48,79,.85) !important;
+}
+body.hud-v21.tekken-v30 #readySub{font-size:24px !important; font-weight:1000 !important; color:var(--arcade-gold) !important;}
+body.hud-v21.tekken-v30 #drillResultText{font-size:64px !important; font-weight:1000 !important;}
+
+/* 설정 패널은 열었을 때만 기존 기능 확인용 */
+body.hud-v21.tekken-v30.settings-open .height-box,
+body.hud-v21.tekken-v30.settings-open .ctrl{
+  right:22px !important; width:320px !important; border:1px solid rgba(255,255,255,.24) !important;
+  background:rgba(0,0,0,.55) !important; box-shadow:0 8px 24px rgba(0,0,0,.50) !important;
+}
+
+@media (orientation:landscape) and (max-width:1220px){
+  body.hud-v21.tekken-v30 #modeBadge{font-size:30px !important; min-width:300px !important;}
+  body.hud-v21.tekken-v30 .stats-row{width:188px !important; top:124px !important;}
+  body.hud-v21.tekken-v30 .stat-num{font-size:48px !important;}
+  body.hud-v21.tekken-v30 .mode-row.hud-kick-row,
+  body.hud-v21.tekken-v30 .mode-row.hud-kick-tabs{gap:18px !important; bottom:18px !important;}
+  body.hud-v21.tekken-v30 .mode-row.hud-kick-row .drill-btn,
+  body.hud-v21.tekken-v30 .mode-row.hud-kick-tabs .drill-btn{font-size:14px !important; min-width:36px !important;}
+  body.hud-v21.tekken-v30 #enemyHpWrap{width:min(500px,54vw) !important;}
+  body.hud-v21.tekken-v30 #enemyTarget{transform:translate(-50%,-42%) perspective(560px) rotateY(-7deg) scale(.92) !important;}
+}
+</style>
+
+
+<script id="fix4-start-stop-text-helper">
+(function(){
+  function setStartStopText(){
+    const playing = document.body.classList.contains('playing-ui');
+    ['startBtn','startBtn2'].forEach(function(id){
+      const btn=document.getElementById(id);
+      if(!btn) return;
+      btn.textContent = playing ? '■ 중지' : '▶ 시작!';
+    });
+  }
+  window.addEventListener('DOMContentLoaded', function(){
+    setStartStopText();
+    const obs = new MutationObserver(setStartStopText);
+    obs.observe(document.body, {attributes:true, attributeFilter:['class']});
+    document.addEventListener('click', function(){ setTimeout(setStartStopText, 0); setTimeout(setStartStopText, 80); }, true);
+  });
+})();
+</script>
 
 </body>
 </html>
