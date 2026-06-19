@@ -436,6 +436,127 @@ body.hud-v21.tekken-v30.playing-ui .primary-start{
 }
 </style>
 
+
+<style id="fix6-hud-clean-hp-gradient">
+/* 1) 오른쪽 점수/HUD 탭 블러 배경 제거: 숫자와 라벨만 보이게 */
+body.hud-v21.tekken-v30 .stats-row .stat-box,
+body.hud-v21.tekken-v30 .stat-box,
+body.hud-v21.tekken-v30 .score-box,
+body.hud-v21.tekken-v30 .count-box,
+body.hud-v21.tekken-v30 .avg-box{
+  background:transparent !important;
+  background-image:none !important;
+  border:none !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  filter:none !important;
+}
+
+/* 숫자 가독성은 유지 */
+body.hud-v21.tekken-v30 .stat-label{
+  text-shadow:0 2px 8px rgba(0,0,0,.85) !important;
+}
+body.hud-v21.tekken-v30 .stat-num{
+  text-shadow:0 3px 14px rgba(0,0,0,.9) !important;
+}
+
+/* 2) 왼쪽 모드 선택 파란 라인 제거 */
+body.hud-v21.tekken-v30 .hud-drill-row .game-btn,
+body.hud-v21.tekken-v30 .hud-balloon-row .game-btn,
+body.hud-v21.tekken-v30 .hud-sparring-row .game-btn{
+  border-bottom:none !important;
+  box-shadow:none !important;
+}
+body.hud-v21.tekken-v30 .hud-drill-row .game-btn::before,
+body.hud-v21.tekken-v30 .hud-drill-row .game-btn::after,
+body.hud-v21.tekken-v30 .hud-balloon-row .game-btn::before,
+body.hud-v21.tekken-v30 .hud-balloon-row .game-btn::after,
+body.hud-v21.tekken-v30 .hud-sparring-row .game-btn::before,
+body.hud-v21.tekken-v30 .hud-sparring-row .game-btn::after{
+  content:none !important;
+  display:none !important;
+  border:none !important;
+  background:none !important;
+  box-shadow:none !important;
+}
+
+body.hud-v21.tekken-v30 .hud-drill-row .game-btn.active,
+body.hud-v21.tekken-v30 .hud-balloon-row .game-btn.active,
+body.hud-v21.tekken-v30 .hud-sparring-row .game-btn.active{
+  border-bottom:none !important;
+  box-shadow:none !important;
+}
+
+/* 3) 겨루기 체력 게이지 방향 수정: 가득 차면 초록, 0에 가까우면 빨강 */
+body.hud-v21.tekken-v30 #enemyHpFill,
+#enemyHpFill{
+  background:linear-gradient(90deg,#D92B3A 0%, #E8A020 45%, #2ecc71 100%) !important;
+}
+</style>
+
+
+<style id="fix7-hp-dynamic-color-css">
+/* Fix7: HP 게이지는 남은 체력 비율에 따라 전체 색이 변하게 처리 */
+body.hud-v21.tekken-v30 #enemyHpFill,
+#enemyHpFill{
+  background:#2ecc71 !important;
+  transition:width .25s ease, background .25s ease !important;
+}
+</style>
+
+<script id="fix7-hp-dynamic-color-js">
+(function(){
+  function hpPercentFromDom(){
+    const fill=document.getElementById('enemyHpFill');
+    const text=document.getElementById('enemyHpText');
+    if(!fill) return 100;
+
+    let hp=null;
+    if(text){
+      const m=(text.textContent||'').match(/(\d+)/);
+      if(m) hp=parseInt(m[1],10);
+    }
+    if(Number.isFinite(hp)){
+      return Math.max(0,Math.min(100,(hp/250)*100));
+    }
+
+    const w=parseFloat(fill.style.width || '100');
+    return Number.isFinite(w) ? Math.max(0,Math.min(100,w)) : 100;
+  }
+
+  function applyHpColor(){
+    const fill=document.getElementById('enemyHpFill');
+    if(!fill) return;
+
+    const pct=hpPercentFromDom();
+
+    if(pct > 65){
+      fill.style.setProperty('background','#2ecc71','important'); // 초록
+    }else if(pct > 35){
+      fill.style.setProperty('background','#E8A020','important'); // 노랑/주황
+    }else{
+      fill.style.setProperty('background','#D92B3A','important'); // 빨강
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded',function(){
+    applyHpColor();
+    const fill=document.getElementById('enemyHpFill');
+    const text=document.getElementById('enemyHpText');
+
+    if(fill){
+      new MutationObserver(applyHpColor).observe(fill,{attributes:true,attributeFilter:['style','class']});
+    }
+    if(text){
+      new MutationObserver(applyHpColor).observe(text,{childList:true,characterData:true,subtree:true});
+    }
+
+    setInterval(applyHpColor,250);
+  });
+})();
+</script>
+
 </head>
 <body class="hud-v21 tekken-v30">
 
