@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 발차기 챌린지 v2.6.5 Clean CSS</title>
+<title>AI 발차기 챌린지 v2.7.1 Difficulty</title>
 <style>
   :root{ --red:#D92B3A; --navy:#0A1628; --gold:#E8A020; --green:#2ecc71; --blue:#4ca3ff;}
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -166,7 +166,7 @@
 
 
 /* ─────────────────────────────────────────────
-   v2.6.5 CLEAN HUD CSS
+   v2.7.1 CLEAN HUD CSS
    기준: 기존 v2.6 기능 유지 + 누적 HUD 스타일 단일화
    ───────────────────────────────────────────── */
 body.hud-v21 .stage{
@@ -399,6 +399,12 @@ body.hud-v21 #drillResultSub{font-size:20px; color:#cdd8e8; font-weight:700;}
     <div class="title"><span class="title-text">AI 발차기 챌린지<small>TAEKWONDO TRAINING</small></span></div>
     <button id="hudSettingsBtn" class="hud-settings-btn" type="button" onclick="toggleHudSettings()">⚙ 설정</button>
 
+    <div id="difficultyPanel" class="difficulty-panel" aria-label="난이도 선택">
+      <button type="button" class="diff-btn" data-diff="easy" onclick="setDifficulty('easy')">쉬움</button>
+      <button type="button" class="diff-btn active" data-diff="normal" onclick="setDifficulty('normal')">보통</button>
+      <button type="button" class="diff-btn" data-diff="hard" onclick="setDifficulty('hard')">어려움</button>
+    </div>
+
     <div class="section-label">— 연습 모드</div>
     <div class="mode-row hud-kick-row hud-kick-row1">
       <button class="drill-btn active" id="m_apcha_r" onclick="setMode('apcha_r')">앞R</button>
@@ -555,6 +561,30 @@ const MIN_FOOT_SPEED=0.0012; // 너무 천천히 드는 발은 발차기로 덜 
 let currentMode='apcha_r';
 let running=false, gameTimer=null, gameRemain=0, popTimer=null;
 let readyTimer=null, readyToken=0;
+
+const DIFFICULTY_CFG={
+  easy:{label:'쉬움', balloonRadius:1.22, balloonSize:1.14, balloonScore:1.10, damage:1.15, hitZone:1.18, successScore:70},
+  normal:{label:'보통', balloonRadius:1.00, balloonSize:1.00, balloonScore:1.00, damage:1.00, hitZone:1.00, successScore:80},
+  hard:{label:'어려움', balloonRadius:0.82, balloonSize:0.90, balloonScore:0.85, damage:0.85, hitZone:0.82, successScore:90}
+};
+let difficulty='normal';
+function diffCfg(){ return DIFFICULTY_CFG[difficulty] || DIFFICULTY_CFG.normal; }
+window.setDifficulty=(level)=>{
+  if(!DIFFICULTY_CFG[level]) return;
+  difficulty=level;
+  try{ localStorage.setItem('tkd_difficulty',level); }catch(e){}
+  document.querySelectorAll('.diff-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.diff===level));
+  if(typeof statusEl!=='undefined') statusEl.textContent='난이도: '+diffCfg().label;
+  if(typeof renderStats==='function') renderStats();
+};
+function initDifficulty(){
+  let saved='normal';
+  try{ saved=localStorage.getItem('tkd_difficulty') || 'normal'; }catch(e){}
+  if(!DIFFICULTY_CFG[saved]) saved='normal';
+  difficulty=saved;
+  document.querySelectorAll('.diff-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.diff===saved));
+}
+
 
 let lastScore=null, lastGrade='', lastColor='var(--gold)';
 let balloons=[], balloonCount=0;
@@ -1185,7 +1215,7 @@ function sparringHitZone(){
   if(trajX.length && head && body){
     const headRect=head.getBoundingClientRect();
     const bodyRect=body.getBoundingClientRect();
-    const gap=Math.max(18, camWrap.clientWidth*0.018);
+    const gap=Math.max(18, camWrap.clientWidth*0.018)*diffCfg().hitZone;
     for(let i=0;i<trajX.length;i++){
       const pt=footPointToViewport(trajX[i],trajY[i]);
       if(rectHit(pt,headRect,gap)) return 'head';
@@ -1211,7 +1241,7 @@ function handleSparringKick(peak){
   sparringLastHitT=now;
   sparringMaxCombo=Math.max(sparringMaxCombo,sparringCombo);
   const comboMul=sparringCombo>=5?1.45:sparringCombo>=3?1.25:sparringCombo>=2?1.12:1.0;
-  let dmg=Math.round(base*zoneMul*comboMul*motion.quality + motion.bonus);
+  let dmg=Math.round((base*zoneMul*comboMul*motion.quality + motion.bonus)*diffCfg().damage);
   if(peak>=95 && motion.confidence>=0.35) dmg+=2;
   if(motion.type==='unknown') dmg=Math.max(4,Math.round(dmg*0.8));
   sparringHp=Math.max(0,sparringHp-dmg);
@@ -1254,6 +1284,7 @@ function spawnBalloon(){
   const left=15+Math.random()*70, top=42+Math.random()*40;
   b.style.left=left+'%'; b.style.top=top+'%';
   b.dataset.left=left; b.dataset.top=top;
+  b.style.fontSize=(64*diffCfg().balloonSize)+'px';
   b.textContent=['🎈','🎈','🎈','🎉','🎊'][Math.floor(Math.random()*5)];
   camWrap.appendChild(b); balloons.push(b);
 }
@@ -1327,7 +1358,15 @@ function setPlayingUi(on){
 function setGrResult(text){ gameResult.textContent=text; gameResult2.textContent=text; }
 
 window.startGame=()=>{
-  if(running) return; ensureAudio();
+  if(running){
+    stopGame();
+    setStartBtn(false,'▶ 시작!');
+    setGrResult('중단됨');
+    statusEl.textContent='중단했습니다. 다시 시작하려면 시작 버튼을 누르세요.';
+    renderStats(); renderCamRank();
+    return;
+  }
+  ensureAudio();
   resetCounters(); setGrResult('');
   const startMode=currentMode;
   setStartBtn(true,'준비 중…');
@@ -1346,7 +1385,7 @@ window.startGame=()=>{
       drillTarget=parseInt(drillCountSel.value);
       drillDone=0; drillScores=[];
     }
-    setStartBtn(true,'진행 중…'); renderStats();
+    setStartBtn(false,'■ 종료'); renderStats();
   });
 };
 
@@ -1372,6 +1411,7 @@ function stopGame(){
   clearBalloons();
   drillResult.classList.remove('show'); sparringHud?.classList.remove('show');
   if(drillResultTimer){ clearTimeout(drillResultTimer); drillResultTimer=null; }
+  renderStats();
 }
 
 window.toggleHudSettings=()=>{
@@ -1569,10 +1609,232 @@ function loop(){
 // 초기 UI 세팅: 자유모드는 게임버튼 숨김
 drillCountArea.style.display='flex';
 gameArea.style.display='none';
+initDifficulty();
 updateModeBadge();
 renderStats(); renderCamRank(); updateModeBadge();
 (async()=>{ await initModel(); await startCamera(); loop(); })();
 </script>
+
+
+<style id="v265c-layout-fix">
+/* v2.7.1: clean final layout fix for mode buttons and kick buttons */
+
+/* Left mode buttons */
+body.hud-v21 .hud-drill-row,
+body.hud-v21 .hud-balloon-row,
+body.hud-v21 .hud-sparring-row{
+  position:absolute !important;
+  left:14px !important;
+  width:132px !important;
+  display:flex !important;
+  z-index:40 !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
+body.hud-v21 .hud-drill-row{ top:128px !important; }
+body.hud-v21 .hud-balloon-row{ top:168px !important; }
+body.hud-v21 .hud-sparring-row{ top:208px !important; }
+
+body.hud-v21 .hud-drill-row .game-btn,
+body.hud-v21 .hud-balloon-row .game-btn,
+body.hud-v21 .hud-sparring-row .game-btn{
+  width:100% !important;
+  min-height:32px !important;
+  display:block !important;
+  padding:6px 8px !important;
+  font-size:11px !important;
+  border-radius:10px !important;
+}
+
+/* Center kick buttons: two rows. Do NOT put bottom on common selector. */
+body.hud-v21 .mode-row.hud-kick-row{
+  position:absolute !important;
+  left:50% !important;
+  transform:translateX(-50%) !important;
+  width:420px !important;
+  max-width:42vw !important;
+  min-width:280px !important;
+  display:flex !important;
+  gap:8px !important;
+  z-index:45 !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
+
+body.hud-v21 .mode-row.hud-kick-row1{
+  bottom:64px !important;
+}
+body.hud-v21 .mode-row.hud-kick-row2{
+  bottom:18px !important;
+}
+
+body.hud-v21 .mode-row.hud-kick-row .drill-btn{
+  display:block !important;
+  flex:1 1 0 !important;
+  min-height:38px !important;
+  padding:8px 10px !important;
+  border-radius:12px !important;
+  font-size:14px !important;
+  font-weight:900 !important;
+  line-height:1.1 !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
+
+/* Prevent helper buttons from covering kick rows */
+body.hud-v21 .btns{
+  z-index:35 !important;
+}
+body.hud-v21 #drillCountArea,
+body.hud-v21 #gameArea{
+  z-index:35 !important;
+}
+
+/* If playing, do not hide kick buttons completely */
+body.hud-v21.playing-ui .mode-row.hud-kick-row{
+  opacity:.35 !important;
+  pointer-events:none !important;
+}
+
+@media (orientation:landscape) and (max-width:1200px){
+  body.hud-v21 .mode-row.hud-kick-row{
+    width:350px !important;
+    max-width:40vw !important;
+  }
+  body.hud-v21 .mode-row.hud-kick-row1{ bottom:60px !important; }
+  body.hud-v21 .mode-row.hud-kick-row2{ bottom:16px !important; }
+  body.hud-v21 .mode-row.hud-kick-row .drill-btn{
+    min-height:34px !important;
+    font-size:12px !important;
+    padding:6px 8px !important;
+  }
+}
+</style>
+
+
+<style id="v266-stop-button-style">
+body.hud-v21.playing-ui #startBtn,
+body.hud-v21.playing-ui #startBtn2{
+  background:linear-gradient(180deg,#ff6b78,#D92B3A) !important;
+  color:#fff !important;
+  box-shadow:0 0 22px rgba(217,43,58,.34) !important;
+}
+</style>
+
+
+<style id="v27-difficulty-style">
+body.hud-v21 .difficulty-panel{
+  position:absolute !important;
+  top:14px !important;
+  right:104px !important;
+  z-index:44 !important;
+  display:flex !important;
+  gap:5px !important;
+  padding:5px !important;
+  border-radius:14px !important;
+  background:rgba(5,14,29,.58) !important;
+  border:1px solid rgba(120,170,255,.34) !important;
+  box-shadow:0 10px 24px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  backdrop-filter:blur(10px) saturate(1.12);
+}
+body.hud-v21 .diff-btn{
+  min-width:54px !important;
+  min-height:30px !important;
+  padding:5px 8px !important;
+  border-radius:10px !important;
+  border:1px solid rgba(130,178,255,.28) !important;
+  background:rgba(6,16,31,.50) !important;
+  color:#d6e7ff !important;
+  font-size:11px !important;
+  font-weight:900 !important;
+  font-family:inherit !important;
+  cursor:pointer !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 6px 14px rgba(0,0,0,.14) !important;
+}
+body.hud-v21 .diff-btn.active{
+  color:#061326 !important;
+  background:linear-gradient(180deg,#ffe36b,#E8A020) !important;
+  border-color:rgba(255,244,190,.95) !important;
+  box-shadow:0 0 20px rgba(232,160,32,.38), inset 0 1px 0 rgba(255,255,255,.35) !important;
+}
+body.hud-v21.playing-ui .difficulty-panel{
+  opacity:.35 !important;
+  pointer-events:none !important;
+}
+@media (orientation:landscape) and (max-width:1200px){
+  body.hud-v21 .difficulty-panel{
+    top:58px !important;
+    right:14px !important;
+  }
+  body.hud-v21 .diff-btn{
+    min-width:48px !important;
+    font-size:10px !important;
+    padding:4px 6px !important;
+  }
+}
+</style>
+
+
+<style id="v271-bugfix-layout">
+/* v2.7.1 bugfix: status message no longer covers mode buttons */
+body.hud-v21 #status{
+  top:82px !important;
+  left:14px !important;
+  max-width:310px !important;
+  padding:8px 12px !important;
+  font-size:13px !important;
+  line-height:1.35 !important;
+  z-index:38 !important;
+}
+body.hud-v21 .hud-drill-row{ top:150px !important; }
+body.hud-v21 .hud-balloon-row{ top:192px !important; }
+body.hud-v21 .hud-sparring-row{ top:234px !important; }
+
+/* Keep difficulty selector compact near settings */
+body.hud-v21 .difficulty-panel{
+  position:absolute !important;
+  top:14px !important;
+  right:104px !important;
+  z-index:44 !important;
+  display:flex !important;
+  gap:5px !important;
+  padding:5px !important;
+  border-radius:14px !important;
+  background:rgba(5,14,29,.58) !important;
+  border:1px solid rgba(120,170,255,.34) !important;
+  box-shadow:0 10px 24px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  backdrop-filter:blur(10px) saturate(1.12);
+}
+body.hud-v21 .diff-btn{
+  min-width:54px !important;
+  min-height:30px !important;
+  padding:5px 8px !important;
+  border-radius:10px !important;
+  border:1px solid rgba(130,178,255,.28) !important;
+  background:rgba(6,16,31,.50) !important;
+  color:#d6e7ff !important;
+  font-size:11px !important;
+  font-weight:900 !important;
+  font-family:inherit !important;
+  cursor:pointer !important;
+}
+body.hud-v21 .diff-btn.active{
+  color:#061326 !important;
+  background:linear-gradient(180deg,#ffe36b,#E8A020) !important;
+  border-color:rgba(255,244,190,.95) !important;
+  box-shadow:0 0 20px rgba(232,160,32,.38), inset 0 1px 0 rgba(255,255,255,.35) !important;
+}
+@media (orientation:landscape) and (max-width:1200px){
+  body.hud-v21 .difficulty-panel{
+    top:58px !important;
+    right:14px !important;
+  }
+}
+</style>
+
 </body>
 </html>
 
