@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 발차기 챌린지 v2.5.2 Hit Zone Gap</title>
+<title>AI 발차기 챌린지 v2.6 Kick Type Bonus</title>
 <style>
   :root{ --red:#D92B3A; --navy:#0A1628; --gold:#E8A020; --green:#2ecc71; --blue:#4ca3ff;}
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -2921,7 +2921,7 @@ function renderStats(){
     const best=loadRank('balloon')[0]; lblC.textContent='오늘 1등'; valC.textContent=(best?best.v+'개':'—');
   } else if(currentMode==='sparring'){
     lblA.textContent='총 데미지'; valA.textContent=sparringDamage;
-    lblB.textContent='남은 HP'; valB.textContent=Math.max(0,Math.round(sparringHp)); valB.style.color='var(--gold)';
+    lblB.textContent='남은 HP'; valB.textContent=(sparringHp<=0?'K.O.':Math.max(0,Math.round(sparringHp))); valB.style.color='var(--gold)';
     lblC.textContent='콤보'; valC.textContent=sparringCombo;
   } else if(isDrillMode()){
     lblA.textContent='횟수'; valA.textContent=drillDone+'/'+drillTarget;
@@ -3038,6 +3038,54 @@ function analyzeTraj(){
     else msg='🔄 더 높이!';
     return {score,ok,msg};
   }
+}
+
+// ── v2.6 발차기 성향 분석: 앞차기/돌려차기 자동 구별용 ──
+function trajStats(){
+  if(trajX.length<4) return null;
+  const startY=trajY[0], minY=Math.min(...trajY);
+  const riseY=startY-minY;
+  const startX=trajX[0];
+  const endX=trajX[trajX.length-1];
+  const hip0=trajHipX[0] ?? smHipX ?? 0.5;
+  const side=(startX<hip0)?-1:1;
+  const extremeX = side<0 ? Math.min(...trajX) : Math.max(...trajX);
+  const outward = Math.max(0, side*(extremeX-startX));
+  let maxAbsDX=0;
+  trajX.forEach(x=>{ maxAbsDX=Math.max(maxAbsDX, Math.abs(x-startX)); });
+  const travel=Math.hypot(endX-startX, trajY[trajY.length-1]-startY);
+  return {startY,minY,riseY,startX,endX,hip0,side,outward,absDX:maxAbsDX,travel};
+}
+function classifyKickMotion(){
+  const s=trajStats();
+  if(!s || s.riseY<=0.015) return {type:'unknown',label:'판정 어려움',quality:0.80,bonus:0,confidence:0,reason:'궤적 짧음'};
+  const heightNorm=Math.max(0,Math.min(1,s.riseY/0.20));
+  const straightNorm=Math.max(0,Math.min(1,1-(s.absDX/Math.max(s.riseY*1.35,0.025))));
+  const curveNorm=Math.max(0,Math.min(1,s.outward/0.105));
+  const frontScore=heightNorm*0.62 + straightNorm*0.38;
+  const roundScore=heightNorm*0.48 + curveNorm*0.52;
+  let type='front', label='앞차기 성향', reason='직선 궤적';
+  if(roundScore>frontScore+0.08 && curveNorm>0.28){ type='round'; label='돌려차기 성향'; reason='휘어 들어간 궤적'; }
+  const confidence=Math.min(1,Math.abs(roundScore-frontScore)+0.35);
+  let quality=Math.max(0.72, Math.min(1.18, type==='round' ? (0.86+curveNorm*0.32) : (0.86+straightNorm*0.20)));
+  let bonus=0;
+  if(type==='round'){
+    bonus=Math.round(8+curveNorm*14);   // 회전/곡선 보너스
+    quality+=0.10;
+  } else if(straightNorm<0.35){
+    quality-=0.10;                      // 애매하게 휘거나 흔들린 앞차기 감점
+    reason='궤적 흔들림';
+  }
+  quality=Math.max(0.65,Math.min(1.30,quality));
+  return {type,label,quality,bonus,confidence,reason,heightNorm,straightNorm,curveNorm};
+}
+function footPointToViewport(x,y){
+  const rect=camWrap.getBoundingClientRect();
+  const mirrored=camWrap.classList.contains('mirrored');
+  return {x:rect.left+(mirrored?1-x:x)*rect.width, y:rect.top+y*rect.height};
+}
+function rectHit(pt,rect,gap=0){
+  return pt.x>=rect.left-gap && pt.x<=rect.right+gap && pt.y>=rect.top-gap && pt.y<=rect.bottom+gap;
 }
 // 궤적을 캔버스에 그리기
 function drawDrillTrail(){
@@ -3393,7 +3441,24 @@ function enemyHitMotion(kind='body'){
   setTimeout(()=>target.classList.remove('hit-body','hit-head','hit-critical'),520);
 }
 function sparringHitZone(){
-  // v2.5.2: 머리/몸통 타격존 간격을 넓힌 만큼, 머리 판정도 더 높은 킥에서만 나오도록 조정
+  // v2.6: 실제 화면의 머리/몸통 타격존과 발 궤적이 겹치는지 먼저 확인
+  const target=document.getElementById('enemyTarget');
+  const head=target?.querySelector('.enemyHead');
+  const body=target?.querySelector('.enemyBody');
+  if(trajX.length && head && body){
+    const headRect=head.getBoundingClientRect();
+    const bodyRect=body.getBoundingClientRect();
+    const gap=Math.max(18, camWrap.clientWidth*0.018);
+    for(let i=0;i<trajX.length;i++){
+      const pt=footPointToViewport(trajX[i],trajY[i]);
+      if(rectHit(pt,headRect,gap)) return 'head';
+    }
+    for(let i=0;i<trajX.length;i++){
+      const pt=footPointToViewport(trajX[i],trajY[i]);
+      if(rectHit(pt,bodyRect,gap)) return 'body';
+    }
+  }
+  // fallback: 기존 높이 기준
   if(trajY.length && Math.min(...trajY)<0.27) return 'head';
   if(peakPct>=90) return 'head';
   return 'body';
@@ -3401,6 +3466,7 @@ function sparringHitZone(){
 function handleSparringKick(peak){
   if(!running || currentMode!=='sparring') return;
   const zone=sparringHitZone();
+  const motion=classifyKickMotion();
   const base=Math.max(6,Math.round(peak/10));
   const zoneMul=zone==='head'?1.55:1.0;
   const now=performance.now();
@@ -3408,15 +3474,18 @@ function handleSparringKick(peak){
   sparringLastHitT=now;
   sparringMaxCombo=Math.max(sparringMaxCombo,sparringCombo);
   const comboMul=sparringCombo>=5?1.45:sparringCombo>=3?1.25:sparringCombo>=2?1.12:1.0;
-  let dmg=Math.round(base*zoneMul*comboMul);
-  if(peak>=95) dmg+=3;
+  let dmg=Math.round(base*zoneMul*comboMul*motion.quality + motion.bonus);
+  if(peak>=95 && motion.confidence>=0.35) dmg+=2;
+  if(motion.type==='unknown') dmg=Math.max(4,Math.round(dmg*0.8));
   sparringHp=Math.max(0,sparringHp-dmg);
   sparringDamage+=dmg;
-  updateSparringHud();
+  updateSparringHud(); renderStats();
   const label=zone==='head'?'머리 공격':'몸통 공격';
-  showDamage('-'+dmg+' '+label+(sparringCombo>=2?' · '+sparringCombo+'콤보':''), zone);
+  const tech=(motion.type==='round'?' · 회전보너스 +'+motion.bonus:(motion.type==='front'?' · 앞차기':' · 판정애매'));
+  showDamage('-'+dmg+' '+label+tech+(sparringCombo>=2?' · '+sparringCombo+'콤보':''), zone);
   enemyHitMotion(zone);
-  popup(dmg+' 데미지', zone==='head'?'#ff4d6d':'#4ca3ff');
+  popup(dmg+' 데미지<br><span style="font-size:28px">'+motion.label+'</span>', zone==='head'?'#ff4d6d':'#4ca3ff');
+  trajX=[]; trajY=[]; trajHipX=[]; trajActive=false; drillSide=0;
   if(sparringHp<=0) setTimeout(finishSparring,500);
 }
 function startSparring(){
@@ -3627,7 +3696,7 @@ function runKick(pct,m=null){
       aboveFrames++;
       if(aboveFrames>=ABOVE_REQ){
         kicking=true; peakPct=pct; belowFrames=0; trajActive=true;
-        if(isDrillMode() && m){
+        if(m){
           drillSide=(m.footX < m.hipX)?-1:1;
           trajX=[]; trajY=[]; trajHipX=[];
         }
@@ -3731,8 +3800,8 @@ function loop(){
           if(running) runKick(m.pct,m);
           else { kicking=false; aboveFrames=0; belowFrames=0; peakPct=0; trajActive=false; }
 
-          // 연습 모드: 궤적 수집
-          if(isDrillMode()&&running&&trajActive){
+          // 발차기 궤적 수집: 연습/겨루기 공통
+          if((isDrillMode()||currentMode==='sparring')&&running&&trajActive){
             const MAX_TRAJ=40;
             trajX.push(m.footX); trajY.push(m.footY); trajHipX.push(m.hipX);
             if(trajX.length>MAX_TRAJ){ trajX.shift(); trajY.shift(); trajHipX.shift(); }
@@ -3741,7 +3810,7 @@ function loop(){
           if(drillKickType()==='apcha') drawApchaGuide();
           if(drillKickType()==='dollo') drawDolloGuide();
           // 궤적 표시
-          if(isDrillMode()&&trajX.length>1) drawDrillTrail();
+          if((isDrillMode()||currentMode==='sparring')&&trajX.length>1) drawDrillTrail();
 
           if(currentMode==='balloon'&&running) checkBalloons(fx,fy);
         }
@@ -3771,3 +3840,11 @@ renderStats(); renderCamRank(); updateModeBadge();
 </html>
 
 <style>#camRank{top:300px !important;}</style>
+
+<style>
+/* v2.6 patch */
+#camRank{top:318px !important;}
+body.hud-v21.sparring-mode #camRank{display:none !important;}
+body.hud-v21 #damagePopup{max-width:560px;text-align:center;line-height:1.15;}
+body.hud-v21.sparring-mode #enemyHpText{min-width:56px;text-align:right;}
+</style>
