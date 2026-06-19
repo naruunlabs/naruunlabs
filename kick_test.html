@@ -2829,7 +2829,7 @@ let trajX=[], trajY=[], trajHipX=[], trajActive=false, drillSide=0; // drillSide
 
 // 연습 모드 상태
 let drillTarget=10, drillDone=0, drillScores=[], drillResultTimer=null;
-let sparringHp=100, sparringDamage=0, sparringCombo=0, sparringMaxCombo=0;
+let sparringHp=250, sparringDamage=0, sparringCombo=0, sparringMaxCombo=0;
 let sparringLastHitT=0;
 const SPARRING_COMBO_WINDOW=1400;
 let sparringTime=20;
@@ -3370,8 +3370,8 @@ function finishDrill(){
 
 /* ── 겨루기 모드 ── */
 function updateSparringHud(){
-  if(enemyHpFill) enemyHpFill.style.width=Math.max(0,sparringHp)+'%';
-  if(enemyHpText) enemyHpText.textContent='HP '+Math.max(0,Math.round(sparringHp));
+  if(enemyHpFill) enemyHpFill.style.width=Math.max(0,(sparringHp/250)*100)+'%';
+  if(enemyHpText) enemyHpText.textContent=(sparringHp<=0?'K.O.':'HP '+Math.max(0,Math.round(sparringHp)));
   if(comboBadge){
     comboBadge.textContent=sparringCombo>0 ? sparringCombo+' COMBO' : '0 COMBO';
     comboBadge.classList.toggle('hot', sparringCombo>=3);
@@ -3420,7 +3420,7 @@ function handleSparringKick(peak){
   if(sparringHp<=0) setTimeout(finishSparring,500);
 }
 function startSparring(){
-  sparringHp=100; sparringDamage=0; sparringCombo=0; sparringMaxCombo=0; sparringLastHitT=0;
+  sparringHp=250; sparringDamage=0; sparringCombo=0; sparringMaxCombo=0; sparringLastHitT=0;
   updateSparringHud();
   sparringHud?.classList.add('show');
   const sec=parseInt(sparringTimeSel?.value||'30'); startTimed(sec,finishSparring);
@@ -3434,7 +3434,7 @@ function finishSparring(){
   setGrResult('결과: 총 데미지 '+sparringDamage+' · 최고 '+sparringMaxCombo+'콤보');
   setStartBtn(false,'🔁 다시!');
   drillResultIcon.textContent=sparringHp<=0?'🏆':'🥋';
-  drillResultText.textContent=sparringHp<=0?'KO 승리!':'수련 완료!';
+  drillResultText.textContent=sparringHp<=0?'K.O.!':'수련 완료!';
   drillResultText.style.color=sparringHp<=0?'#E8A020':'#4ca3ff';
   drillResultSub.textContent='총 데미지 '+sparringDamage+' · 최고 '+sparringMaxCombo+'콤보';
   drillResult.classList.add('show');
@@ -3548,7 +3548,7 @@ function resetCounters(){
   lastScore=null; lastGrade=''; lastColor='var(--gold)';
   balloonCount=0;
   drillDone=0; drillScores=[];
-  sparringHp=100; sparringDamage=0; sparringCombo=0; sparringMaxCombo=0; sparringLastHitT=0;
+  sparringHp=250; sparringDamage=0; sparringCombo=0; sparringMaxCombo=0; sparringLastHitT=0;
   updateSparringHud();
   kicking=false; aboveFrames=0; belowFrames=0; peakPct=0; lastRankTs=null;
   trajX=[]; trajY=[]; trajHipX=[]; trajActive=false; drillSide=0;
@@ -3769,3 +3769,5 @@ renderStats(); renderCamRank(); updateModeBadge();
 </script>
 </body>
 </html>
+
+<style>#camRank{top:300px !important;}</style>
