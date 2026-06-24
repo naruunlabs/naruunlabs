@@ -277,18 +277,46 @@ body.hud-v21 .cr-item .crv{font-size:15px; color:#fff;}
 body.hud-v21 .cr-item.me .crv{color:var(--gold);}
 body.hud-v21 #timerBadge, body.hud-v21 #timerBadge.show{display:none !important;}
 
-/* 설정 패널 */
-body.hud-v21 .height-box, body.hud-v21 .ctrl{
-  position:absolute; right:14px; width:340px; display:none; padding:14px 16px; border-radius:16px;
-  background:rgba(5,14,29,.70); border:1px solid rgba(120,170,255,.36); box-shadow:0 10px 28px rgba(0,0,0,.22); backdrop-filter:blur(10px); z-index:9;
-}
-body.hud-v21.settings-open .height-box{display:block; top:70px;}
-body.hud-v21.settings-open .ctrl{display:block; top:154px;}
-body.hud-v21.settings-open .stats-row{top:236px;}
-body.hud-v21.settings-open.sparring-mode .stats-row{top:352px;}
-body.hud-v21.settings-open.sparring-mode #comboBadge{top:286px;}
-body.hud-v21 .height-box h3, body.hud-v21 .ctrl label{font-size:13px; color:#dcecff; font-weight:800;}
+/* 설정 패널 - 모달 방식 */
+body.hud-v21 .height-box, body.hud-v21 .ctrl{ display:none !important; }
 body.hud-v21 .bar-track{height:18px;}
+
+/* 설정 모달 */
+#settingsModal{
+  display:none; position:fixed; inset:0; z-index:99990;
+  background:rgba(0,0,0,0.72);
+  align-items:center; justify-content:center;
+}
+#settingsModal.show{ display:flex; }
+.settings-modal-box{
+  background:#0d1c30;
+  border:1.5px solid rgba(76,163,255,0.35);
+  border-radius:20px; padding:28px 26px;
+  width:340px; max-width:92vw;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6);
+}
+.settings-modal-box h3{
+  font-size:16px; font-weight:900; color:#fff;
+  margin-bottom:20px; display:flex; align-items:center; justify-content:space-between;
+}
+.settings-modal-box h3 span{ color:var(--gold); }
+.settings-close-btn{
+  background:rgba(255,255,255,0.08); border:none; border-radius:8px;
+  color:#aaa; font-size:14px; padding:5px 10px; cursor:pointer; font-weight:900;
+}
+.settings-close-btn:hover{ color:#fff; }
+.settings-section{ margin-bottom:16px; }
+.settings-label{ font-size:13px; color:#dcecff; font-weight:800; margin-bottom:6px; display:flex; justify-content:space-between; }
+.settings-divider{ border:none; border-top:1px solid rgba(76,163,255,0.15); margin:16px 0; }
+.settings-pw-btn{
+  width:100%; padding:12px; border-radius:11px; border:none;
+  background:rgba(76,163,255,0.12); color:var(--blue);
+  font-size:14px; font-weight:900; cursor:pointer;
+}
+.settings-pw-btn:hover{ background:rgba(76,163,255,0.22); }
+/* 모달 안 bar-track */
+#settingsModal .bar-track{ position:relative; height:18px; background:#0a1220; border-radius:9px; overflow:hidden; border:1px solid #1d3050; }
+#settingsModal .bar-fill{ height:100%; width:0%; background:linear-gradient(90deg,var(--gold),var(--red)); border-radius:9px; transition:width .06s linear; }
 
 /* 보조 버튼 */
 body.hud-v21 .btns{position:absolute; right:14px; bottom:14px; width:300px; display:flex; gap:7px; z-index:8;}
@@ -2183,12 +2211,7 @@ body.hud-v21.akm-ui #readyNum{
 body.hud-v21.akm-ui #readySub{font-size:24px !important; font-weight:1000 !important; color:var(--arcade-gold) !important;}
 body.hud-v21.akm-ui #drillResultText{font-size:64px !important; font-weight:1000 !important;}
 
-/* 설정 패널은 열었을 때만 기존 기능 확인용 */
-body.hud-v21.akm-ui.settings-open .height-box,
-body.hud-v21.akm-ui.settings-open .ctrl{
-  right:22px !important; width:320px !important; border:1px solid rgba(255,255,255,.24) !important;
-  background:rgba(0,0,0,.55) !important; box-shadow:0 8px 24px rgba(0,0,0,.50) !important;
-}
+/* 설정 패널 모달 방식으로 변경 - akm-ui override 불필요 */
 
 @media (orientation:landscape) and (max-width:1220px){
   body.hud-v21.akm-ui #modeBadge{font-size:30px !important; min-width:300px !important;}
@@ -2781,6 +2804,45 @@ body.hud-v21.akm-ui #enemyTarget{
 .login-footer {
   font-size: 11px; color: #3a4a5a; margin-top: 28px;
 }
+.login-changepw {
+  font-size: 12px; color: #4ca3ff; margin-top: 16px;
+  cursor: pointer; text-decoration: underline; font-weight: 700;
+}
+.login-changepw:hover { color: #7ec3ff; }
+
+/* 비밀번호 변경 모달 */
+#pwChangeModal {
+  display: none; position: fixed; inset: 0; z-index: 99999;
+  background: rgba(0,0,0,0.75);
+  align-items: center; justify-content: center;
+}
+#pwChangeModal.show { display: flex; }
+.pwchange-box {
+  background: #0f1e35;
+  border: 1.5px solid rgba(76,163,255,0.3);
+  border-radius: 20px; padding: 36px 32px;
+  width: 360px; max-width: 92vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.pwchange-box h3 { font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 6px; }
+.pwchange-box h3 span { color: var(--gold); }
+.pwchange-sub { font-size: 12px; color: #6a7a8a; margin-bottom: 22px; }
+.pwchange-label { font-size: 12px; color: #9aadc5; font-weight: 800; display: block; margin-bottom: 6px; }
+.pwchange-input {
+  width: 100%; margin-bottom: 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(76,163,255,0.2);
+  border-radius: 11px; padding: 13px 16px;
+  color: #fff; font-size: 15px; outline: none;
+}
+.pwchange-input:focus { border-color: var(--blue); }
+.pwchange-err { color: var(--red); font-size: 13px; min-height: 18px; margin-bottom: 10px; }
+.pwchange-btns { display: flex; gap: 10px; }
+.pwchange-btns button { flex: 1; padding: 13px; border-radius: 10px; border: none; font-size: 14px; font-weight: 900; cursor: pointer; }
+.pwchange-cancel { background: rgba(255,255,255,0.08); color: #aaa; }
+.pwchange-save { background: var(--blue); color: #fff; }
+
+/* 로그인 후 설정 버튼 - 설정 모달로 통합됨 */
 </style>
 </head>
 <body class="hud-v21 akm-ui">
@@ -2794,9 +2856,34 @@ body.hud-v21.akm-ui #enemyTarget{
     <input id="loginPass" class="login-field" type="password" placeholder="비밀번호" />
     <button class="login-btn" onclick="doLogin()">로그인</button>
     <div class="login-error" id="loginError"></div>
+    <div class="login-changepw" onclick="openPwChangeModal()">🔑 비밀번호 변경</div>
     <div class="login-footer">© AI KICK MASTER · 라이선스 문의: aikickmaster.kr</div>
   </div>
 </div>
+
+<!-- ===== 비밀번호 변경 모달 ===== -->
+<div id="pwChangeModal">
+  <div class="pwchange-box">
+    <h3>🔑 비밀번호 <span>변경</span></h3>
+    <div class="pwchange-sub">아이디와 현재 비밀번호를 먼저 확인합니다.</div>
+    <label class="pwchange-label">아이디</label>
+    <input id="pcUser" class="pwchange-input" type="text" placeholder="아이디" autocomplete="off" />
+    <label class="pwchange-label">현재 비밀번호</label>
+    <input id="pcCurrent" class="pwchange-input" type="password" placeholder="현재 비밀번호" />
+    <label class="pwchange-label">새 비밀번호</label>
+    <input id="pcNew" class="pwchange-input" type="password" placeholder="새 비밀번호 (6자 이상)" />
+    <label class="pwchange-label">새 비밀번호 확인</label>
+    <input id="pcConfirm" class="pwchange-input" type="password" placeholder="새 비밀번호 재입력" />
+    <div class="pwchange-err" id="pcErr"></div>
+    <div class="pwchange-btns">
+      <button class="pwchange-cancel" onclick="closePwChangeModal()">취소</button>
+      <button class="pwchange-save" onclick="doChangePw()">변경</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 로그인 후 설정 버튼 ===== -->
+
 
 <div class="rotate-msg">
   <div class="icon">🔄</div>
@@ -2935,24 +3022,35 @@ body.hud-v21.akm-ui #enemyTarget{
       </div>
     </div>
 
-    <div class="height-box">
-      <h3>발 높이 (실시간)</h3>
+    <div class="btns">
+      <button class="btn-new" id="newBtn">👤 다음 아이</button>
+      <button class="btn-flip" id="flipBtn">📷 카메라 전환</button>
+      <button class="btn-flip" id="fsBtn" onclick="toggleFullscreen()">⛶ 전체화면</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 설정 모달 ===== -->
+<div id="settingsModal">
+  <div class="settings-modal-box">
+    <h3>⚙ <span>설정</span> <button class="settings-close-btn" onclick="toggleHudSettings()">닫기</button></h3>
+
+    <div class="settings-section">
+      <div class="settings-label">발 높이 (실시간)</div>
       <div class="bar-track">
         <div class="bar-fill" id="barFill"></div>
         <div class="bar-thresh" id="barThresh"></div>
       </div>
     </div>
 
-    <div class="ctrl">
-      <label>민감도 (기준 높이) <span id="sensVal">50%</span></label>
-      <input type="range" id="sens" min="25" max="85" value="50">
+    <div class="settings-section">
+      <div class="settings-label">민감도 (기준 높이) <span id="sensVal">50%</span></div>
+      <input type="range" id="sens" min="25" max="85" value="50" style="width:100%;accent-color:var(--gold);">
     </div>
 
-    <div class="btns">
-      <button class="btn-new" id="newBtn">👤 다음 아이</button>
-      <button class="btn-flip" id="flipBtn">📷 카메라 전환</button>
-      <button class="btn-flip" id="fsBtn" onclick="toggleFullscreen()">⛶ 전체화면</button>
-    </div>
+    <hr class="settings-divider">
+
+    <button class="settings-pw-btn" onclick="toggleHudSettings(); openPwChangeModal();">🔑 비밀번호 변경</button>
   </div>
 </div>
 
@@ -3866,8 +3964,13 @@ function stopGame(){
 }
 
 window.toggleHudSettings=()=>{
-  document.body.classList.toggle('settings-open');
+  const modal = document.getElementById('settingsModal');
+  modal.classList.toggle('show');
 };
+// 설정 모달 바깥 클릭 시 닫기
+document.getElementById('settingsModal').addEventListener('click', function(e){
+  if(e.target === this) this.classList.remove('show');
+});
 function updateKickButtonVisibility(){
   const show=isDrillMode();
   document.querySelectorAll('.mode-row.hud-kick-row, .mode-row.hud-kick-row1, .mode-row.hud-kick-row2, .mode-row.hud-kick-tabs').forEach(row=>{
@@ -4225,6 +4328,7 @@ async function doLogin() {
     // 로그인 성공
     sessionStorage.setItem('akm_auth', JSON.stringify({ dojang_name, expires_at, username }));
     document.getElementById('loginScreen').classList.add('hidden');
+    
     if (window.__startApp) window.__startApp();
 
   } catch(e) {
@@ -4249,11 +4353,77 @@ document.addEventListener('keydown', function(e) {
       const today = new Date().toISOString().slice(0,10);
       if (expires_at >= today) {
         document.getElementById('loginScreen').classList.add('hidden');
+        
         if (window.__startApp) window.__startApp();
       }
     } catch(e) {}
   }
 })();
+
+// ===== 비밀번호 변경 =====
+function openPwChangeModal() {
+  ['pcUser','pcCurrent','pcNew','pcConfirm'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('pcErr').textContent = '';
+  document.getElementById('pwChangeModal').classList.add('show');
+}
+function closePwChangeModal() {
+  document.getElementById('pwChangeModal').classList.remove('show');
+}
+async function doChangePw() {
+  const username = document.getElementById('pcUser').value.trim();
+  const current  = document.getElementById('pcCurrent').value.trim();
+  const newPw    = document.getElementById('pcNew').value.trim();
+  const confirm  = document.getElementById('pcConfirm').value.trim();
+  const errEl    = document.getElementById('pcErr');
+
+  if (!username || !current || !newPw || !confirm) {
+    errEl.textContent = '모든 항목을 입력해주세요.'; return;
+  }
+  if (newPw.length < 6) {
+    errEl.textContent = '새 비밀번호는 6자 이상으로 입력해주세요.'; return;
+  }
+  if (newPw !== confirm) {
+    errEl.textContent = '새 비밀번호가 일치하지 않습니다.'; return;
+  }
+
+  errEl.textContent = '확인 중...';
+
+  try {
+    // 현재 아이디/비번 확인
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/dojangs?username=eq.${encodeURIComponent(username)}&password=eq.${encodeURIComponent(current)}&is_active=eq.true&select=id`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    );
+    const data = await res.json();
+
+    if (!data || data.length === 0) {
+      errEl.textContent = '아이디 또는 현재 비밀번호가 올바르지 않습니다.'; return;
+    }
+
+    const id = data[0].id;
+
+    // 비밀번호 업데이트
+    await fetch(
+      `${SUPABASE_URL}/rest/v1/dojangs?id=eq.${id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ password: newPw })
+      }
+    );
+
+    closePwChangeModal();
+    alert('✅ 비밀번호가 변경되었습니다.\n다음 로그인부터 새 비밀번호를 사용하세요.');
+
+  } catch(e) {
+    errEl.textContent = '네트워크 오류가 발생했습니다. 다시 시도해주세요.';
+  }
+}
 </script>
 
 </body>

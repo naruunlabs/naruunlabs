@@ -409,8 +409,8 @@ function openAddModal() {
   document.getElementById('editId').value = '';
   ['mDojang','mOwner','mPhone','mUser','mPass'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('mUser').disabled = false;
-  document.getElementById('passLabel').textContent = '비밀번호 *';
-  document.getElementById('passHelp').textContent = '고객에게 전달할 임시 비밀번호를 입력하세요.';
+  document.getElementById('passLabel').textContent = '임시 비밀번호 *';
+  document.getElementById('passHelp').textContent = '관장님께 전달할 임시 비밀번호입니다. 관장님이 로그인 후 직접 변경하게 됩니다.';
   document.getElementById('mExpiry').value = addMonths(todayStr(), 12);
   document.getElementById('modalErr').textContent = '';
   document.getElementById('modalBg').classList.add('show');
@@ -425,8 +425,8 @@ function openEditModal(encoded) {
   document.getElementById('mUser').value = d.username || '';
   document.getElementById('mUser').disabled = true;
   document.getElementById('mPass').value = '';
-  document.getElementById('passLabel').textContent = '새 비밀번호';
-  document.getElementById('passHelp').textContent = '비워두면 기존 비밀번호가 유지됩니다. 변경할 때만 새 비밀번호를 입력하세요.';
+  document.getElementById('passLabel').textContent = '임시 비밀번호로 초기화';
+  document.getElementById('passHelp').textContent = '비워두면 기존 비밀번호 유지. 관장님이 비번을 잊었을 때 여기서 초기화해주세요.';
   document.getElementById('mExpiry').value = d.expires_at || todayStr();
   document.getElementById('modalErr').textContent = '';
   document.getElementById('modalBg').classList.add('show');
@@ -500,7 +500,7 @@ async function deleteDojang(id, name) {
 }
 async function copyAccount(encoded) {
   const d = JSON.parse(decodeURIComponent(encoded));
-  const msg = `[AI KICK MASTER 이용 안내]\n\n도장명: ${d.dojang_name}\n아이디: ${d.username}\n비밀번호: ${d.password || '(관리자에게 문의)'}\n접속 링크: ${LOGIN_URL}\n사용 만료일: ${d.expires_at}\n\n크롬 또는 삼성인터넷에서 접속 후 로그인해서 사용하시면 됩니다.`;
+  const msg = `[AI KICK MASTER 이용 안내]\n\n도장명: ${d.dojang_name}\n아이디: ${d.username}\n임시 비밀번호: ${d.password || '(관리자에게 문의)'}\n접속 링크: ${LOGIN_URL}\n사용 만료일: ${d.expires_at}\n\n✅ 접속 후 비밀번호를 본인이 원하는 것으로 변경해 주세요.\n(로그인 화면 하단 🔑 비밀번호 변경 클릭)\n\n크롬 또는 삼성인터넷에서 접속하시면 됩니다.`;
   try {
     await navigator.clipboard.writeText(msg);
     alert('카톡 전달용 안내문을 복사했습니다.');
