@@ -2721,8 +2721,82 @@ body.hud-v21.akm-ui #enemyTarget{
 })();
 </script>
 
+
+<style>
+/* =========================================================
+   LOGIN SCREEN
+   ========================================================= */
+#loginScreen {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Gothic A1','Noto Sans KR',system-ui,sans-serif;
+}
+#loginScreen.hidden { display: none; }
+
+.login-box {
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(76,163,255,0.25);
+  border-radius: 24px;
+  padding: 48px 44px 40px;
+  width: 380px;
+  max-width: 92vw;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.5);
+  text-align: center;
+}
+.login-logo {
+  font-size: 28px; font-weight: 900; color: #fff;
+  letter-spacing: -0.5px; margin-bottom: 4px;
+}
+.login-logo span { color: var(--gold); }
+.login-sub {
+  font-size: 12px; color: #7a90aa; margin-bottom: 36px; font-weight: 600;
+}
+.login-field {
+  width: 100%; margin-bottom: 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(76,163,255,0.2);
+  border-radius: 12px;
+  padding: 14px 18px;
+  color: #fff; font-size: 15px; font-weight: 600;
+  outline: none; box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+.login-field:focus { border-color: var(--blue); }
+.login-field::placeholder { color: #4a5a6a; }
+.login-btn {
+  width: 100%; padding: 15px;
+  background: linear-gradient(135deg, var(--blue), #2255cc);
+  border: none; border-radius: 12px;
+  color: #fff; font-size: 16px; font-weight: 900;
+  cursor: pointer; margin-top: 6px;
+  transition: opacity 0.2s, transform 0.1s;
+}
+.login-btn:hover { opacity: 0.9; }
+.login-btn:active { transform: scale(0.98); }
+.login-error {
+  color: var(--red); font-size: 13px; font-weight: 700;
+  margin-top: 14px; min-height: 20px;
+}
+.login-footer {
+  font-size: 11px; color: #3a4a5a; margin-top: 28px;
+}
+</style>
 </head>
 <body class="hud-v21 akm-ui">
+
+<!-- ===== 로그인 화면 ===== -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">AI <span>KICK</span> MASTER</div>
+    <div class="login-sub">태권도 AI 발차기 훈련 시스템</div>
+    <input id="loginUser" class="login-field" type="text" placeholder="아이디" autocomplete="off" />
+    <input id="loginPass" class="login-field" type="password" placeholder="비밀번호" />
+    <button class="login-btn" onclick="doLogin()">로그인</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-footer">© AI KICK MASTER · 라이선스 문의: aikickmaster.kr</div>
+  </div>
+</div>
 
 <div class="rotate-msg">
   <div class="icon">🔄</div>
@@ -4099,6 +4173,80 @@ body.hud-v21.akm-ui.ready-ui .panel .primary-start{
   window.addEventListener('orientationchange', function(){ setTimeout(setAkmViewportHeight, 250); }, {passive:true});
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', setAkmViewportHeight, {passive:true});
+  }
+})();
+</script>
+
+<!-- ===== 로그인 로직 ===== -->
+<script>
+const SUPABASE_URL = 'https://ebgoolsymyzkftvavpyj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_378Ep28vw4J9Sia2OsN6-Q_gqnu5OQJ';
+
+async function doLogin() {
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value.trim();
+  const errorEl = document.getElementById('loginError');
+  const btn = document.querySelector('.login-btn');
+
+  if (!username || !password) {
+    errorEl.textContent = '아이디와 비밀번호를 입력해주세요.';
+    return;
+  }
+
+  btn.textContent = '확인 중...';
+  btn.disabled = true;
+  errorEl.textContent = '';
+
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/dojangs?username=eq.${encodeURIComponent(username)}&password=eq.${encodeURIComponent(password)}&is_active=eq.true&select=dojang_name,expires_at`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    );
+    const data = await res.json();
+
+    if (!data || data.length === 0) {
+      errorEl.textContent = '아이디 또는 비밀번호가 올바르지 않습니다.';
+      btn.textContent = '로그인'; btn.disabled = false;
+      return;
+    }
+
+    const { dojang_name, expires_at } = data[0];
+    const today = new Date().toISOString().slice(0,10);
+
+    if (expires_at < today) {
+      errorEl.textContent = `이용 기간이 만료되었습니다. (만료일: ${expires_at})`;
+      btn.textContent = '로그인'; btn.disabled = false;
+      return;
+    }
+
+    // 로그인 성공
+    sessionStorage.setItem('akm_auth', JSON.stringify({ dojang_name, expires_at, username }));
+    document.getElementById('loginScreen').classList.add('hidden');
+
+  } catch(e) {
+    errorEl.textContent = '네트워크 오류가 발생했습니다. 다시 시도해주세요.';
+    btn.textContent = '로그인'; btn.disabled = false;
+  }
+}
+
+// 엔터키 로그인
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !document.getElementById('loginScreen').classList.contains('hidden')) {
+    doLogin();
+  }
+});
+
+// 이미 로그인된 세션 확인
+(function() {
+  const auth = sessionStorage.getItem('akm_auth');
+  if (auth) {
+    try {
+      const { expires_at } = JSON.parse(auth);
+      const today = new Date().toISOString().slice(0,10);
+      if (expires_at >= today) {
+        document.getElementById('loginScreen').classList.add('hidden');
+      }
+    } catch(e) {}
   }
 })();
 </script>
