@@ -4572,7 +4572,8 @@ document.addEventListener('keydown', function(e) {
 });
 
 // 앱 시작 시 캐시 자동 확인 (30일 오프라인 사용)
-(async function() {
+// __startApp 정의 후 실행되도록 지연
+window.addEventListener('load', async function() {
   const cache = _getLicenseCache();
   if (!cache) return;
 
@@ -4612,7 +4613,7 @@ document.addEventListener('keydown', function(e) {
       });
     }
   } catch(e) { /* 네트워크 오류 시 캐시로 계속 사용 */ }
-})();
+});
 </script>
 
 </body>
