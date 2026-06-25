@@ -193,7 +193,6 @@ body.hud-v21 .panel *, body.hud-v21 .panel button, body.hud-v21 .panel select, b
 body.hud-v21 .section-label{display:none;}
 
 /* 상단 HUD */
-body.hud-v21 .title,
 body.hud-v21 #modeBadge,
 body.hud-v21 .hud-settings-btn,
 body.hud-v21 #status,
@@ -207,6 +206,13 @@ body.hud-v21 #comboBadge{
   border:1px solid rgba(120,170,255,.32) !important;
   box-shadow:0 10px 28px rgba(0,0,0,.22), 0 0 18px rgba(76,163,255,.10), inset 0 1px 0 rgba(255,255,255,.10) !important;
   backdrop-filter:blur(10px) saturate(1.12);
+}
+/* .title: 패널 내 통합 - blur/border 없음 */
+body.hud-v21 .title{
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
 }
 body.hud-v21 .title{position:relative; top:auto; left:auto; min-width:0; padding:10px 12px 8px; border-radius:14px; font-size:13px; line-height:1.2; color:#fff; font-weight:900; display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px;}
 body.hud-v21 .title small{display:block; margin-top:2px; font-size:10px; color:#7a90aa; font-weight:600;}
