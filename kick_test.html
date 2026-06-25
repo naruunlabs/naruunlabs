@@ -2016,10 +2016,23 @@ body.hud-v21.akm-ui #modeBadge::after{left:100%;}
 
 /* 상태 문구는 작게. 화면 주인공에서 제외 */
 body.hud-v21.akm-ui #status{
-  top:58px !important; left:22px !important; max-width:280px !important;
-  padding:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important;
-  color:rgba(255,255,255,.58) !important; font-size:12px !important; line-height:1.25 !important;
+  top:80px !important;
+  left:50% !important; transform:translateX(-50%) !important;
+  right:auto !important;
+  max-width:420px !important;
+  padding:5px 16px !important;
+  border:0 !important;
+  background:rgba(0,0,0,0.38) !important;
+  box-shadow:none !important;
+  color:rgba(255,255,255,.82) !important;
+  font-size:13px !important;
+  font-weight:700 !important;
+  line-height:1.4 !important;
+  text-align:center !important;
   text-shadow:0 2px 8px rgba(0,0,0,.95) !important;
+  border-radius:20px !important;
+  transition:opacity .3s !important;
+  z-index:9 !important;
 }
 
 /* 난이도: 우상단 CPU LEVEL 느낌 */
@@ -2525,7 +2538,7 @@ body.hud-v21 .panel{
   body.hud-v21 #modeBadge{top:9px !important; transform:translateX(-50%) scale(.88) !important; transform-origin:top center !important;}
   body.hud-v21 .difficulty-panel{top:10px !important; right:92px !important; transform:scale(.88) !important; transform-origin:top right !important;}
   /* hud-settings-btn: 패널 내 인라인 배치로 변경됨 */
-  body.hud-v21 #status{top:66px !important; left:12px !important; font-size:11px !important; max-width:260px !important; padding:6px 9px !important;}
+  body.hud-v21 #status{top:76px !important; left:50% !important; transform:translateX(-50%) !important; font-size:11px !important; max-width:320px !important; padding:4px 12px !important;}
 
   body.hud-v21 .hud-drill-row{top:126px !important; left:12px !important;}
   body.hud-v21 .hud-balloon-row{top:162px !important; left:12px !important;}
