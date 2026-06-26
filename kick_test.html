@@ -2058,15 +2058,15 @@ body.hud-v21.akm-ui .diff-btn.active{
   text-shadow:0 2px 9px rgba(0,0,0,.95),0 0 13px rgba(255,209,90,.95) !important;
 }
 
-/* 설정 버튼 */
-/* 설정버튼: 패널 타이틀 안에 인라인 배치 */
+/* 설정 버튼 - title-left 안에 위치, 작은 버튼 */
 body.hud-v21.akm-ui .hud-settings-btn{
   position:relative !important; top:auto !important; right:auto !important;
-  min-width:34px !important; min-height:30px !important; padding:4px 8px !important;
+  display:inline-flex !important; align-items:center !important; gap:4px !important;
+  width:auto !important; min-height:24px !important; padding:4px 10px !important; margin-top:4px !important;
   border:none !important; border-radius:8px !important;
   background:transparent !important; box-shadow:none !important;
-  color:rgba(255,255,255,.5) !important; font-size:14px !important; font-weight:900 !important;
-  text-shadow:none !important; flex-shrink:0 !important;
+  color:#9fb0c8 !important; font-size:11px !important; font-weight:800 !important;
+  cursor:pointer !important;
 }
 body.hud-v21.akm-ui .hud-settings-btn:hover{color:#fff !important;}
 
@@ -3051,8 +3051,8 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
         <div class="title-dojang" id="panelDojangName">AI KICK MASTER</div>
         <div class="title-auth" id="panelAuth"></div>
         <div class="title-version" id="panelVersion"></div>
+        <button id="hudSettingsBtn" class="hud-settings-btn" type="button" onclick="toggleHudSettings()">⚙ 설정</button>
       </div>
-      <button id="hudSettingsBtn" class="hud-settings-btn" type="button" onclick="toggleHudSettings()">⚙</button>
     </div>
 
     <div id="difficultyPanel" class="difficulty-panel" aria-label="난이도 선택">
@@ -3162,6 +3162,7 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
     <hr class="settings-divider">
 
     <button class="settings-pw-btn" onclick="toggleHudSettings(); openPwChangeModal();">🔑 비밀번호 변경</button>
+    <button class="settings-pw-btn" onclick="logoutLicense()" style="margin-top:8px;background:rgba(217,43,58,0.15);color:#ff8795;border-color:rgba(217,43,58,0.3);">🚪 라이선스 로그아웃</button>
   </div>
 </div>
 
@@ -4078,6 +4079,13 @@ function stopGame(){
 window.toggleHudSettings=()=>{
   const modal = document.getElementById('settingsModal');
   modal.classList.toggle('show');
+};
+window.logoutLicense=()=>{
+  if(!confirm('라이선스 로그아웃 하시겠습니까? 다음 실행 시 라이선스 키를 다시 입력해야 합니다.')) return;
+  localStorage.removeItem('akm_license_key');
+  localStorage.removeItem('akm_license_cache');
+  localStorage.removeItem('akm_verified_until');
+  location.reload();
 };
 // 설정 모달 바깥 클릭 시 닫기
 document.getElementById('settingsModal').addEventListener('click', function(e){
