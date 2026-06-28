@@ -4452,7 +4452,7 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
 const _AKM_LS_KEY   = 'akm_license_v1';
 const _AKM_CACHE_DAYS = 7;
 
-(function(){
+window.addEventListener('load', function(){
   try{
     const cache = JSON.parse(localStorage.getItem(_AKM_LS_KEY)||'null');
     if(!cache){ location.replace('home.html'); return; }
@@ -4473,7 +4473,7 @@ const _AKM_CACHE_DAYS = 7;
     document.getElementById('loginScreen').classList.add('hidden');
     if(window.__startApp) window.__startApp();
   }catch(e){ location.replace('home.html'); }
-})();
+});
 
 window.logoutLicense=()=>{
   try{ localStorage.removeItem(_AKM_LS_KEY); }catch(e){}
