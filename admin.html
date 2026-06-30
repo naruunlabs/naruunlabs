@@ -943,6 +943,21 @@ table{width:100%;border-collapse:collapse}th{background:#fafafa;padding:15px 14p
 .login-brand-meta .akm-powered{color:#707783;font-size:11px}
 @media(max-width:760px){.top-bar{height:auto}.akm-powered{font-size:10px}}
 
+
+
+/* AKM sidebar logo final fix — real SVG logo, no fake icon/text */
+@media (min-width:981px){
+  .tab-bar{padding-top:30px !important;}
+  .tab-bar:before{content:none !important;display:none !important;}
+  .tab-bar .tab-btn:first-child:before,
+  .tab-bar .tab-btn:first-child:after{content:none !important;display:none !important;}
+  .sidebar-brand{display:flex !important;flex-direction:column;align-items:flex-start;gap:6px;margin:2px 6px 30px 6px;padding:0 4px 22px;border-bottom:1px solid rgba(255,255,255,.10);}
+  .sidebar-brand img{display:block;width:184px;max-width:100%;height:auto;object-fit:contain;}
+  .sidebar-brand span{display:block;font-size:11px;font-weight:750;line-height:1;color:rgba(255,255,255,.58);letter-spacing:.1px;}
+  .tab-btn{margin-top:0 !important;}
+}
+@media (max-width:980px){.sidebar-brand{display:none !important;}}
+
 </style>
 </head>
 <body>
@@ -979,6 +994,7 @@ table{width:100%;border-collapse:collapse}th{background:#fafafa;padding:15px 14p
 
   <!-- 탭 -->
   <div class="tab-bar">
+    <div class="sidebar-brand"><img src="logo-white.svg" alt="AI KICK MASTER"><span>Powered by Google MediaPipe</span></div>
     <button class="tab-btn active" onclick="switchTab('license')">📋 라이선스 관리</button>
     <button class="tab-btn" onclick="switchTab('home')">🏠 홈페이지 편집</button>
   </div>
