@@ -85,6 +85,18 @@ body{
 .search:focus,.select:focus,.input:focus{border-color:#111318;background:#fff;box-shadow:0 0 0 4px rgba(0,0,0,.05)}
 .select{background:#fff;font-size:13px;min-width:128px}
 .student-list{padding:16px 18px 20px;display:grid;grid-template-columns:1fr;gap:8px;max-height:430px;overflow:auto}
+.selected-roster-bar{margin:0 18px;padding:12px 12px;border-radius:16px;background:#fff7f2;border:1px solid rgba(229,38,38,.22);display:none}
+.selected-roster-bar.show{display:block}
+.selected-roster-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+.selected-roster-head b{font-size:12px;font-weight:800;color:#c91515}
+.selected-roster-clear{height:26px;padding:0 10px;border-radius:999px;background:#fff;border:1px solid var(--line2);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer}
+.selected-roster-clear:hover{border-color:var(--red);color:var(--red)}
+.selected-roster-chips{display:flex;flex-wrap:wrap;gap:7px;max-height:120px;overflow:auto}
+.roster-chip{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 8px 0 4px;border-radius:999px;background:#111318;color:#fff;font-size:12px;font-weight:700;border:0;cursor:pointer}
+.roster-chip-num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;font-size:10px;font-weight:800;flex-shrink:0}
+.roster-chip-x{color:#9aa1ad;font-size:13px;line-height:1}
+.roster-chip:hover .roster-chip-x{color:#fff}
+.student-select-num{position:absolute;top:8px;right:8px;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;font-weight:800;box-shadow:0 4px 10px rgba(229,38,38,.35)}
 .student{position:relative;height:66px;border-radius:16px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;gap:12px;padding:0 12px 0 16px;cursor:pointer;transition:.16s ease;text-align:left;overflow:hidden}
 .student:before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:999px;background:transparent;transition:.16s ease}
 .student:hover{border-color:#111318;transform:translateY(-1px);box-shadow:0 10px 28px rgba(0,0,0,.07)}
@@ -292,6 +304,13 @@ body{
         <select id="classFilter" class="select" onchange="renderStudents()">
           <option value="all">전체 반</option>
         </select>
+      </div>
+      <div id="selectedRosterBar" class="selected-roster-bar">
+        <div class="selected-roster-head">
+          <b id="selectedRosterLabel">선택된 수련생</b>
+          <button class="selected-roster-clear" onclick="clearAllStudents()">전체 해제</button>
+        </div>
+        <div id="selectedRosterChips" class="selected-roster-chips"></div>
       </div>
       <div id="studentList" class="student-list"></div>
       <div class="summary">
@@ -1215,11 +1234,17 @@ function renderStudents(){
   const q=(document.getElementById('studentSearch').value||'').trim().toLowerCase();
   const cls=document.getElementById('classFilter').value || 'all';
   const students=state.students.filter(s=>(cls==='all'||s.className===cls) && (!q||s.name.toLowerCase().includes(q)));
-  if(!students.length){ list.innerHTML='<div class="empty-state">등록된 학생이 없습니다.<br>학생 관리에서 등록하세요.</div>'; return; }
-  list.innerHTML=students.map(s=>`<button class="student ${(state.selectedStudentIds||[]).includes(s.id)?'active':''}" onclick="toggleStudent('${s.id}')">
-    <div class="student-info"><b>${escapeHtml(s.name)}</b><span>${escapeHtml(s.className||'반 없음')} · ${escapeHtml(s.belt||'띠 없음')}</span></div>
-  </button>`).join('');
   const selectedIds = state.selectedStudentIds || [];
+  renderSelectedRosterBar();
+  if(!students.length){ list.innerHTML='<div class="empty-state">등록된 학생이 없습니다.<br>학생 관리에서 등록하세요.</div>'; return; }
+  list.innerHTML=students.map(s=>{
+    const idx=selectedIds.indexOf(s.id);
+    const isSelected=idx!==-1;
+    return `<button class="student ${isSelected?'active':''}" onclick="toggleStudent('${s.id}')">
+    ${isSelected?`<span class="student-select-num">${idx+1}</span>`:''}
+    <div class="student-info"><b>${escapeHtml(s.name)}</b><span>${escapeHtml(s.className||'반 없음')} · ${escapeHtml(s.belt||'띠 없음')}</span></div>
+  </button>`;
+  }).join('');
   const links=[document.getElementById('startKickLink'), document.getElementById('bottomStartKickLink')].filter(Boolean);
   const bottomLink=document.getElementById('bottomStartKickLink');
   if(selectedIds.length){
@@ -1232,6 +1257,29 @@ function renderStudents(){
     links.forEach(link=>link.href='aikickmaster.html');
     if(bottomLink){ bottomLink.classList.add('is-disabled'); bottomLink.textContent = '수련생 선택 후 실행'; }
   }
+}
+function renderSelectedRosterBar(){
+  const bar=document.getElementById('selectedRosterBar');
+  const chipsBox=document.getElementById('selectedRosterChips');
+  const label=document.getElementById('selectedRosterLabel');
+  const selectedIds = state.selectedStudentIds || [];
+  if(!bar||!chipsBox) return;
+  if(!selectedIds.length){ bar.classList.remove('show'); chipsBox.innerHTML=''; return; }
+  bar.classList.add('show');
+  if(label) label.textContent = `선택된 수련생 (${selectedIds.length}명)`;
+  chipsBox.innerHTML = selectedIds.map((id,idx)=>{
+    const s=state.students.find(x=>x.id===id);
+    const name = s ? s.name : '이름 없음';
+    return `<button type="button" class="roster-chip" onclick="toggleStudent('${id}')" title="탭하면 선택 해제">
+      <span class="roster-chip-num">${idx+1}</span>${escapeHtml(name)}<span class="roster-chip-x">✕</span>
+    </button>`;
+  }).join('');
+}
+function clearAllStudents(){
+  if(!(state.selectedStudentIds||[]).length) return;
+  state.selectedStudentIds=[];
+  persist(); render();
+  showToast('선택을 모두 해제했습니다.');
 }
 function toggleStudent(id){
   state.selectedStudentIds = state.selectedStudentIds || [];

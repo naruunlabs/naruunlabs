@@ -220,6 +220,28 @@ body.hud-v21 .title-left{flex:1; min-width:0;}
 body.hud-v21 .title-dojang{font-size:13px; font-weight:900; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 body.hud-v21 .title-auth{font-size:10px; color:#2ecc71; font-weight:800; margin-top:1px;}
 body.hud-v21 .title-version{font-size:10px; color:#5a7a9a; margin-top:1px;}
+body.hud-v21 .title-student-line{font-size:11px; color:#ffd76b; font-weight:900; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+body.hud-v21 #studentRosterBar{
+  position:absolute; top:204px; left:14px; width:132px; max-height:104px; overflow-y:auto;
+  display:flex; flex-direction:column; gap:5px; z-index:8; padding:2px;
+}
+body.hud-v21 .roster-chip{
+  display:flex; align-items:center; gap:6px; width:100%; min-height:26px; padding:4px 8px; border-radius:9px;
+  font-size:11px; font-weight:800; text-align:left; color:#d6e7ff;
+  background:rgba(6,16,31,.66); border:1px solid rgba(130,178,255,.28);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 6px 14px rgba(0,0,0,.16);
+}
+body.hud-v21 .roster-chip span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+body.hud-v21 .roster-chip .rc-num{
+  flex-shrink:0; display:inline-flex; align-items:center; justify-content:center;
+  width:16px; height:16px; border-radius:50%; background:rgba(130,178,255,.28); font-size:9px;
+}
+body.hud-v21 .roster-chip.current{
+  color:#fff; background:linear-gradient(180deg,rgba(67,155,255,.85),rgba(22,74,145,.68));
+  border-color:rgba(210,235,255,.82); box-shadow:0 0 16px rgba(76,163,255,.42), inset 0 1px 0 rgba(255,255,255,.28);
+}
+body.hud-v21 .roster-chip.current .rc-num{background:#fff; color:#164a91;}
+body.hud-v21 .roster-chip.done:not(.current){color:#7fe3a8; border-color:rgba(46,204,113,.35);}
 body.hud-v21 #modeBadge{top:14px; left:50%; transform:translateX(-50%); min-width:320px; padding:10px 22px; border-radius:16px; font-size:22px; font-weight:900; color:#fff; text-align:center; z-index:8;}
 body.hud-v21 #modeBadge small{display:block; margin-top:2px; font-size:11px; color:#dbeaff;}
 body.hud-v21 .hud-settings-btn{position:relative; top:auto; right:auto; min-width:44px; min-height:34px; padding:5px 10px; border-radius:10px; color:#9fb0c8; font-size:13px; font-weight:900; flex-shrink:0;}
@@ -3067,12 +3089,15 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
         <div class="title-dojang" id="panelDojangName">AI KICK MASTER</div>
         <div class="title-auth" id="panelAuth"></div>
         <div class="title-version" id="panelVersion"></div>
+        <div id="titleStudentLine" class="title-student-line" style="display:none;"></div>
         <div class="akm-hud-meta">
           <span class="akm-powered">Powered by Google MediaPipe</span>
         </div>
         <button id="hudSettingsBtn" class="hud-settings-btn" type="button" onclick="toggleHudSettings()">⚙ 설정</button>
       </div>
     </div>
+
+    <div id="studentRosterBar" style="display:none;"></div>
 
     <div id="difficultyPanel" class="difficulty-panel" aria-label="난이도 선택">
       <button type="button" class="diff-btn" data-diff="easy" onclick="setDifficulty('easy')">쉬움</button>
@@ -3377,31 +3402,93 @@ function akmModeLabel(mode){
   if(mode==='sparring') return '겨루기 모드';
   return mode || '측정';
 }
+
+/* ── 수련생 순서(현재 차례) 관리 ── */
+let akmCurrentStudentIdx = 0;
+const akmRecordedStudents = new Set();
+function akmEscapeHtml(str){ return String(str||'').replace(/[&<>'"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch])); }
+function akmRosterList(){
+  const ids = akmActiveStudentIds();
+  const st = akmReadHomeState();
+  const students = Array.isArray(st.students) ? st.students : [];
+  return ids.map(function(id){
+    const s = students.find(function(x){ return x && x.id===id; }) || {};
+    return { id:id, name:s.name || '이름 없음', className:s.className || '', belt:s.belt || '' };
+  });
+}
+function akmCurrentStudent(){
+  const roster = akmRosterList();
+  if(!roster.length) return null;
+  if(akmCurrentStudentIdx >= roster.length) akmCurrentStudentIdx = roster.length - 1;
+  if(akmCurrentStudentIdx < 0) akmCurrentStudentIdx = 0;
+  return roster[akmCurrentStudentIdx];
+}
+function akmSetCurrentStudent(idx){
+  const roster = akmRosterList();
+  if(!roster.length) return;
+  akmCurrentStudentIdx = Math.max(0, Math.min(idx, roster.length-1));
+  akmRenderStudentUI();
+}
+window.akmSetCurrentStudent = akmSetCurrentStudent;
+function akmNextStudent(){
+  const roster = akmRosterList();
+  if(roster.length <= 1) return;
+  akmCurrentStudentIdx = (akmCurrentStudentIdx >= roster.length - 1) ? 0 : (akmCurrentStudentIdx + 1);
+  akmRenderStudentUI();
+}
+function akmRenderStudentUI(){
+  const roster = akmRosterList();
+  const lineEl = document.getElementById('titleStudentLine');
+  const barEl = document.getElementById('studentRosterBar');
+  if(!roster.length){
+    if(lineEl) lineEl.style.display='none';
+    if(barEl) barEl.style.display='none';
+    return;
+  }
+  const cur = akmCurrentStudent();
+  if(lineEl){
+    lineEl.style.display='block';
+    lineEl.textContent = '🥋 현재: ' + cur.name + ' (' + (akmCurrentStudentIdx+1) + '/' + roster.length + ')';
+  }
+  if(barEl){
+    if(roster.length > 1){
+      barEl.style.display='flex';
+      barEl.innerHTML = roster.map(function(r,i){
+        const cls=['roster-chip'];
+        if(i===akmCurrentStudentIdx) cls.push('current');
+        if(akmRecordedStudents.has(r.id)) cls.push('done');
+        const mark = akmRecordedStudents.has(r.id) ? ' ✓' : '';
+        return '<button type="button" class="'+cls.join(' ')+'" onclick="akmSetCurrentStudent('+i+')"><span class="rc-num">'+(i+1)+'</span><span>'+akmEscapeHtml(r.name)+mark+'</span></button>';
+      }).join('');
+    } else {
+      barEl.style.display='none';
+    }
+  }
+}
+
 function akmSaveRecord(kind, data){
+  const cur = akmCurrentStudent();
+  if(!cur) return;
   const st=akmReadHomeState();
   st.records=Array.isArray(st.records)?st.records:[];
-  const ids=akmActiveStudentIds();
-  if(!ids.length) return;
-  const students=Array.isArray(st.students)?st.students:[];
-  ids.forEach(function(studentId){
-    const student=students.find(s=>s && s.id===studentId) || {id:studentId,name:'이름 없음'};
-    st.records.push({
-      id:'r'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
-      studentId:studentId,
-      studentName:student.name || '이름 없음',
-      className:student.className || '',
-      belt:student.belt || '',
-      kind:kind,
-      mode:currentMode,
-      modeLabel:akmModeLabel(currentMode),
-      difficulty:difficulty,
-      createdAt:new Date().toISOString(),
-      ...data
-    });
+  st.records.push({
+    id:'r'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+    studentId:cur.id,
+    studentName:cur.name,
+    className:cur.className,
+    belt:cur.belt,
+    kind:kind,
+    mode:currentMode,
+    modeLabel:akmModeLabel(currentMode),
+    difficulty:difficulty,
+    createdAt:new Date().toISOString(),
+    ...data
   });
   // 태블릿 localStorage 용량 방지: 최신 1000개만 유지
   st.records=st.records.slice(-1000);
   akmWriteHomeState(st);
+  akmRecordedStudents.add(cur.id);
+  akmRenderStudentUI();
 }
 
 function addRank(mode,value){
@@ -4198,6 +4285,7 @@ document.getElementById('newBtn').onclick=()=>{
   stopGame(); resetCounters();
   setStartBtn(false,'▶ 시작!'); setGrResult('');
   renderStats(); renderCamRank();
+  akmNextStudent();
   const isDrill=MODE_CFG[currentMode].isDrill;
   if(isDrill) statusEl.textContent='시작 버튼을 눌러 '+MODE_CFG[currentMode].label+' 연습을 시작하세요';
   else statusEl.textContent='시작 버튼을 누르세요';
@@ -4377,7 +4465,7 @@ gameArea.style.display='none';
 initDifficulty();
 updateModeBadge();
 updateKickButtonVisibility();
-renderStats(); renderCamRank(); updateModeBadge();
+renderStats(); renderCamRank(); updateModeBadge(); akmRenderStudentUI();
 // 로그인 후 카메라 시작
 window.__startApp = async function() {
   await initModel(); await startCamera(); loop();
