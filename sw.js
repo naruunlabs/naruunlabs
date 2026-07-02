@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akm-v5-20260702-sparring-home';
+const CACHE_NAME = 'akm-v6-20260702-record-stability';
 const ASSETS = [
   './',
   'home.html',

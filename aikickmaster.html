@@ -2833,6 +2833,26 @@ body.hud-v21.sparring-live #enemyHpWrap,
 body.hud-v21.sparring-live #comboBadge{display:block;}
 body.hud-v21 .sparring-type-panel .diff-btn{min-width:78px !important;}
 
+
+
+/* =========================================================
+   AKM record save confirmation + roster count
+   ========================================================= */
+#akmSaveToast{
+  position:absolute; left:50%; bottom:92px; transform:translateX(-50%) translateY(18px);
+  z-index:9999; opacity:0; pointer-events:none;
+  padding:12px 22px; border-radius:999px;
+  background:rgba(5,14,29,.82); border:1px solid rgba(81,255,157,.45);
+  color:#fff; font-size:16px; font-weight:1000; letter-spacing:-.3px;
+  box-shadow:0 16px 44px rgba(0,0,0,.32), 0 0 26px rgba(81,255,157,.18);
+  transition:opacity .25s ease, transform .25s ease;
+}
+#akmSaveToast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+body.hud-v21 .roster-chip .rc-save-count{
+  margin-left:auto; padding-right:8px; color:#51ff9d; font-size:11px; font-weight:1000;
+  text-shadow:0 0 12px rgba(81,255,157,.55);
+}
+
 </style>
 
 
@@ -3464,7 +3484,30 @@ function akmReadHomeState(){
   try{ return JSON.parse(localStorage.getItem(AKM_HOME_STATE_KEY)||'{}') || {}; }catch(e){ return {}; }
 }
 function akmWriteHomeState(st){
-  try{ localStorage.setItem(AKM_HOME_STATE_KEY, JSON.stringify(st)); }catch(e){}
+  try{ localStorage.setItem(AKM_HOME_STATE_KEY, JSON.stringify(st)); return true; }
+  catch(e){
+    console.warn('AKM record save failed', e);
+    akmShowSaveToast('기록 저장 실패 · 저장공간 확인');
+    return false;
+  }
+}
+function akmNormalizeKeyPart(v){
+  return String(v||'').trim().replace(/\s+/g,'').toLowerCase();
+}
+function akmStudentKey(s){
+  return [akmNormalizeKeyPart(s && s.name), akmNormalizeKeyPart(s && s.className), akmNormalizeKeyPart(s && s.belt)].join('|');
+}
+function akmShowSaveToast(msg){
+  let el=document.getElementById('akmSaveToast');
+  if(!el){
+    el=document.createElement('div');
+    el.id='akmSaveToast';
+    (document.getElementById('camWrap')||document.body).appendChild(el);
+  }
+  el.textContent=msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>el.classList.remove('show'),1500);
 }
 function akmActiveStudentIds(){
   try{
@@ -3489,6 +3532,7 @@ function akmModeLabel(mode){
 /* ── 수련생 순서(현재 차례) 관리 ── */
 let akmCurrentStudentIdx = 0;
 const akmRecordedStudents = new Set();
+const akmRecordedCounts = new Map();
 function akmEscapeHtml(str){ return String(str||'').replace(/[&<>'"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch])); }
 function akmRosterList(){
   const ids = akmActiveStudentIds();
@@ -3532,36 +3576,51 @@ function akmRenderStudentUI(){
       const cls=['roster-chip'];
       if(i===akmCurrentStudentIdx) cls.push('current');
       if(akmRecordedStudents.has(r.id)) cls.push('done');
-      const mark = akmRecordedStudents.has(r.id) ? ' ✓' : '';
-      return '<button type="button" class="'+cls.join(' ')+'" onclick="akmSetCurrentStudent('+i+')"><span class="rc-num">'+(i+1)+'.</span><span>'+akmEscapeHtml(r.name)+mark+'</span></button>';
+      const savedCount = akmRecordedCounts.get(r.id) || 0;
+      const mark = savedCount ? '<span class="rc-save-count">'+savedCount+'회</span>' : '';
+      return '<button type="button" class="'+cls.join(' ')+'" onclick="akmSetCurrentStudent('+i+')"><span class="rc-num">'+(i+1)+'.</span><span>'+akmEscapeHtml(r.name)+'</span>'+mark+'</button>';
     }).join('');
   }
 }
 
 function akmSaveRecord(kind, data){
   const cur = akmCurrentStudent();
-  if(!cur) return;
+  if(!cur){
+    akmShowSaveToast('수련생 선택 없음 · 기록 미저장');
+    return;
+  }
   const st=akmReadHomeState();
   st.records=Array.isArray(st.records)?st.records:[];
-  st.records.push({
+  const now=new Date();
+  const record={
     id:'r'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
     studentId:cur.id,
     studentName:cur.name,
     className:cur.className,
     belt:cur.belt,
+    studentKey:akmStudentKey(cur),
     kind:kind,
     mode:currentMode,
     modeLabel:akmModeLabel(currentMode),
     difficulty:difficulty,
-    createdAt:new Date().toISOString(),
+    createdAt:now.toISOString(),
+    dateKey:now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0'),
+    savedAtMs:Date.now(),
     ...data
-  });
-  // 태블릿 localStorage 용량 방지: 최신 1000개만 유지
-  st.records=st.records.slice(-1000);
-  akmWriteHomeState(st);
-  akmRecordedStudents.add(cur.id);
-  akmRenderStudentUI();
+  };
+  st.records.push(record);
+  // 태블릿 localStorage 용량 방지: 최신 1500개만 유지
+  st.records=st.records.slice(-1500);
+  const ok=akmWriteHomeState(st);
+  if(ok){
+    akmRecordedStudents.add(cur.id);
+    akmRecordedCounts.set(cur.id,(akmRecordedCounts.get(cur.id)||0)+1);
+    akmRenderStudentUI();
+    akmShowSaveToast(cur.name+' 기록 저장됨');
+    console.info('AKM record saved', record);
+  }
 }
+
 
 function addRank(mode,value){
   let s=loadRank(mode); const entry={v:value,ts:Date.now()};

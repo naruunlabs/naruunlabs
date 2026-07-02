@@ -1193,6 +1193,7 @@ if(!state[DOJANGPRO_IMPORT_KEY]){
   }
 }
 let manageTab = 'records';
+let recordRange = 'all';
 let editingStudentId = null;
 
 function loadState(){
@@ -1224,6 +1225,44 @@ function normalizeRecord(r){
   }
   return {...r, studentName, kickName, score, combo, dateText, dateKey};
 }
+function normalizeMatchPart(v){ return String(v||'').trim().replace(/\s+/g,'').toLowerCase(); }
+function studentKeyOf(s){ return [normalizeMatchPart(s&&s.name), normalizeMatchPart(s&&s.className), normalizeMatchPart(s&&s.belt)].join('|'); }
+function recordStudentKey(r){ return r.studentKey || [normalizeMatchPart(r.studentName||r.name), normalizeMatchPart(r.className), normalizeMatchPart(r.belt)].join('|'); }
+function recordMatchesStudent(r, student){
+  if(!student) return false;
+  if(r.studentId && student.id && r.studentId===student.id) return true;
+  if(recordStudentKey(r) === studentKeyOf(student)) return true;
+  // 기존 기록 호환: 이름만 저장된 예전 기록도 놓치지 않음
+  if(normalizeMatchPart(r.studentName||r.name) && normalizeMatchPart(r.studentName||r.name)===normalizeMatchPart(student.name)) return true;
+  return false;
+}
+function filterRecordsForSelection(records, selectedIds){
+  const selectedStudents=(selectedIds||[]).map(id=>state.students.find(s=>s.id===id)).filter(Boolean);
+  if(!selectedStudents.length) return records;
+  return records.filter(r=>selectedStudents.some(s=>recordMatchesStudent(r,s)));
+}
+function setRecordRange(range){
+  recordRange = range || 'all';
+  renderManageContent();
+}
+window.setRecordRange = setRecordRange;
+function runRecordDiagnostic(){
+  const records=getRecords().map(normalizeRecord);
+  const selectedIds=state.selectedStudentIds||[];
+  const selectedRecords=filterRecordsForSelection(records,selectedIds);
+  const latest=records.slice().sort((a,b)=>String(b.date||b.createdAt||'').localeCompare(String(a.date||a.createdAt||'')))[0];
+  const selectedNames=selectedIds.map(getStudentNameById).filter(Boolean).join(', ') || '선택 없음';
+  alert([
+    '기록 진단',
+    '전체 저장 기록: '+records.length+'개',
+    '선택 수련생: '+selectedNames,
+    '선택 수련생 매칭 기록: '+selectedRecords.length+'개',
+    '최근 기록 날짜: '+(latest ? (latest.dateText || latest.createdAt || '-') : '기록 없음'),
+    '최근 기록 학생: '+(latest ? latest.studentName : '-'),
+    '저장소 키: '+STORAGE_KEY
+  ].join('\n'));
+}
+window.runRecordDiagnostic = runRecordDiagnostic;
 function calcDashboard(){
   const records = getRecords().map(normalizeRecord);
   const today = records.filter(r=>r.dateKey===todayKey());
@@ -1341,9 +1380,14 @@ function renderManageContent(){
 function renderRecordsTab(box){
   const selectedIds = state.selectedStudentIds || [];
   const all = getRecords().map(normalizeRecord).sort((a,b)=>String(b.date||b.createdAt||'').localeCompare(String(a.date||a.createdAt||'')));
-  const selectedNames = selectedIds.map(getStudentNameById).filter(Boolean);
-  const source = selectedIds.length ? all.filter(r=>selectedIds.includes(r.studentId) || selectedNames.includes(r.studentName)) : all;
-  const today = source.filter(r=>r.dateKey===todayKey());
+  const sourceAll = filterRecordsForSelection(all, selectedIds);
+  const todayAll = sourceAll.filter(r=>r.dateKey===todayKey());
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate()-6);
+  const source = recordRange==='today' ? todayAll : (recordRange==='7d' ? sourceAll.filter(r=>{
+    const d=new Date(r.createdAt||r.date||r.time||0); return !isNaN(d.getTime()) && d >= new Date(sevenDaysAgo.getFullYear(), sevenDaysAgo.getMonth(), sevenDaysAgo.getDate());
+  }) : sourceAll);
+  const today = todayAll;
   const scoreOf = r => Number(r.score || r.damage || r.count || 0) || 0;
   const labelOf = r => {
     if(r.kind==='sparring_practice') return '겨루기 연습';
@@ -1374,7 +1418,12 @@ function renderRecordsTab(box){
   const recentRows = source.slice(0,10);
   const chartRows = source.slice(0,12).reverse();
   const mvp = ranks[0];
-  box.innerHTML=`<div class="manage-top"><div><h3>기록 · 그래프</h3><p>실제 플레이 기록만 모아 성장 리포트처럼 보여줍니다.</p></div></div>
+  box.innerHTML=`<div class="manage-top"><div><h3>기록 · 그래프</h3><p>실제 플레이 기록만 모아 성장 리포트처럼 보여줍니다.</p></div><button class="btn btn-light" style="height:40px;padding:0 14px;border-radius:13px;font-size:12px;font-weight:800" onclick="runRecordDiagnostic()">기록 진단</button></div>
+    <div class="record-filter-row">
+      <button class="record-filter ${recordRange==='all'?'active':''}" onclick="setRecordRange('all')">전체 기록</button>
+      <button class="record-filter ${recordRange==='today'?'active':''}" onclick="setRecordRange('today')">오늘 기록</button>
+      <button class="record-filter ${recordRange==='7d'?'active':''}" onclick="setRecordRange('7d')">최근 7일</button>
+    </div>
     <div class="record-showcase">
       <div class="record-hero-card">
         <div class="record-hero-kicker">TODAY AI KICK REPORT</div>
