@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akm-v4-20260702-fieldfix';
+const CACHE_NAME = 'akm-v5-20260702-sparring-home';
 const ASSETS = [
   './',
   'home.html',

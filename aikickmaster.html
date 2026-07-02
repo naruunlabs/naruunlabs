@@ -2816,6 +2816,23 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
 .login-brand-meta .akm-powered{color:rgba(255,255,255,.72);font-size:11px}
 @media (orientation:landscape) and (max-height:760px){.akm-hud-meta{margin-top:2px}.akm-powered{font-size:8px}}
 
+
+/* =========================================================
+   AKM v20260702 sparring split
+   - 격파: 기존 쉬움/보통/어려움 유지
+   - 겨루기: 연습모드/실전모드 분리
+   ========================================================= */
+body.hud-v21:not(.sparring-mode) #sparringTypePanel{display:none !important;}
+body.hud-v21.sparring-mode #difficultyPanel{display:none !important;}
+body.hud-v21.sparring-mode #sparringTypePanel{display:flex !important;}
+body.hud-v21.sparring-practice #enemyTarget,
+body.hud-v21.sparring-practice #enemyHpWrap,
+body.hud-v21.sparring-practice #comboBadge{display:none !important;}
+body.hud-v21.sparring-live #enemyTarget,
+body.hud-v21.sparring-live #enemyHpWrap,
+body.hud-v21.sparring-live #comboBadge{display:block;}
+body.hud-v21 .sparring-type-panel .diff-btn{min-width:78px !important;}
+
 </style>
 
 
@@ -3102,6 +3119,11 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
       <button type="button" class="diff-btn" data-diff="hard" onclick="setDifficulty('hard')">어려움</button>
     </div>
 
+    <div id="sparringTypePanel" class="difficulty-panel sparring-type-panel" aria-label="겨루기 방식 선택">
+      <button type="button" class="diff-btn sparring-type-btn active" data-sparring-type="practice" onclick="setSparringMode('practice')">연습모드</button>
+      <button type="button" class="diff-btn sparring-type-btn" data-sparring-type="live" onclick="setSparringMode('live')">실전모드</button>
+    </div>
+
     <div class="section-label">— 연습 모드</div>
     <div class="mode-row hud-kick-row hud-kick-row1 hud-kick-tabs">
       <button class="drill-btn active" id="m_apcha_r" onclick="setMode('apcha_r')">앞R</button>
@@ -3258,8 +3280,30 @@ const MODE_CFG={
   dollo_l:  {rank:false, isDrill:true,  label:'돌려차기 왼발',   kick:'dollo', foot:'left'},
 };
 function isDrillMode(){ return MODE_CFG[currentMode]?.isDrill===true; }
-function drillKickType(){ return MODE_CFG[currentMode]?.kick || ''; }
-function selectedFoot(){ return MODE_CFG[currentMode]?.foot || null; }
+function currentGuideMode(){
+  if(currentMode==='sparring' && sparringMode==='practice' && sparringMission) return sparringMission.mode;
+  return currentMode;
+}
+function drillKickType(){
+  if(currentMode==='sparring' && sparringMode==='practice' && sparringMission) return sparringMission.kick;
+  return MODE_CFG[currentMode]?.kick || '';
+}
+function selectedFoot(){
+  if(currentMode==='sparring' && sparringMode==='practice' && sparringMission) return sparringMission.foot;
+  return MODE_CFG[currentMode]?.foot || null;
+}
+function guideTargetPct(){
+  if(currentMode==='sparring' && sparringMode==='practice' && sparringMission) return sparringMission.targetPct;
+  return Math.min(94, Math.max(60, threshPct+28));
+}
+function setSparringTargetVisible(on){
+  const target=document.getElementById('enemyTarget');
+  if(target) target.style.display=on?'block':'none';
+  const hp=document.getElementById('enemyHpWrap');
+  if(hp) hp.style.display=on?'block':'none';
+  const combo=document.getElementById('comboBadge');
+  if(combo) combo.style.display=on?'block':'none';
+}
 
 /* ── 상태 ── */
 let poseLandmarker=null, drawingUtils=null, lastVideoTime=-1;
@@ -3314,6 +3358,49 @@ let lastKickCompleteT=0;
 const KICK_COOLDOWN_MS=320; // 한 번 찬 발이 내려오며 중복 인식되는 것을 막는 잠금 시간
 const SPARRING_COMBO_WINDOW=1400;
 let sparringTime=20;
+let sparringMode='practice'; // practice: 랜덤 발차기 연습, live: 기존 전투형 실전
+let sparringMission=null;
+let sparringPracticeScores=[];
+let sparringPracticeDone=0;
+const SPARRING_MISSIONS=[
+  {mode:'apcha_r', kick:'apcha', foot:'right', label:'앞차기 오른발'},
+  {mode:'apcha_l', kick:'apcha', foot:'left', label:'앞차기 왼발'},
+  {mode:'dollo_r', kick:'dollo', foot:'right', label:'돌려차기 오른발'},
+  {mode:'dollo_l', kick:'dollo', foot:'left', label:'돌려차기 왼발'}
+];
+window.setSparringMode=(type)=>{
+  if(type!=='practice' && type!=='live') return;
+  sparringMode=type;
+  try{ localStorage.setItem('akm_sparring_mode', type); }catch(e){}
+  document.querySelectorAll('.sparring-type-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.sparringType===type));
+  document.body.classList.toggle('sparring-practice', type==='practice');
+  document.body.classList.toggle('sparring-live', type==='live');
+  if(currentMode==='sparring'){
+    stopGame();
+    sparringMission=null;
+    updateModeBadge();
+    renderStats();
+    statusEl.style.opacity='1';
+    statusEl.textContent=type==='practice' ? '연습모드: 랜덤 화살표 미션을 보고 차세요' : '실전모드: 키에 맞춰 나오는 타겟을 공격하세요';
+  }
+};
+function initSparringMode(){
+  let saved='practice';
+  try{ saved=localStorage.getItem('akm_sparring_mode') || 'practice'; }catch(e){}
+  if(saved!=='practice' && saved!=='live') saved='practice';
+  sparringMode=saved;
+  document.querySelectorAll('.sparring-type-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.sparringType===saved));
+  document.body.classList.toggle('sparring-practice', saved==='practice');
+  document.body.classList.toggle('sparring-live', saved==='live');
+}
+function nextSparringMission(){
+  const base=SPARRING_MISSIONS[Math.floor(Math.random()*SPARRING_MISSIONS.length)];
+  const targetPct=68+Math.round(Math.random()*24); // 키 기준 계산에 들어가는 목표 높이
+  sparringMission={...base,targetPct};
+  updateModeBadge();
+  return sparringMission;
+}
+function sparringModeLabel(){ return sparringMode==='practice' ? '연습모드' : '실전모드'; }
 
 /* ── 사운드 ── */
 let audioCtx=null;
@@ -3509,9 +3596,16 @@ function renderStats(){
     lblB.textContent='남은 시간'; valB.textContent=(running?gameRemain+'초':'—'); valB.style.color='var(--gold)';
     const best=loadRank('balloon')[0]; lblC.textContent='오늘 1등'; valC.textContent=(best?best.v+'장':'—');
   } else if(currentMode==='sparring'){
-    lblA.textContent='총 데미지'; valA.textContent=sparringDamage;
-    lblB.textContent='남은 HP'; valB.textContent=(sparringHp<=0?'K.O.':Math.max(0,Math.round(sparringHp))); valB.style.color='var(--gold)';
-    lblC.textContent='최고콤보'; valC.textContent=sparringMaxCombo;
+    if(sparringMode==='practice'){
+      lblA.textContent='성공 횟수'; valA.textContent=sparringPracticeDone;
+      lblB.textContent='이번 점수'; valB.textContent=(lastScore==null?'—':lastScore); valB.style.color=lastColor;
+      scoreGrade.style.display='block'; scoreGrade.textContent=lastGrade; scoreGrade.style.color=lastColor;
+      lblC.textContent='평균'; valC.textContent=(avgOf(sparringPracticeScores)??'—');
+    }else{
+      lblA.textContent='총 데미지'; valA.textContent=sparringDamage;
+      lblB.textContent='남은 HP'; valB.textContent=(sparringHp<=0?'K.O.':Math.max(0,Math.round(sparringHp))); valB.style.color='var(--gold)';
+      lblC.textContent='최고콤보'; valC.textContent=sparringMaxCombo;
+    }
     if(sparringTimeBox){
       sparringTimeBox.style.display=running?'block':'none';
       valTime.textContent=running?Math.max(0,gameRemain):'—';
@@ -3549,16 +3643,20 @@ function angleDeg(a,b,c){
   return Math.acos(Math.max(-1,Math.min(1,dot/mag)))*180/Math.PI;
 }
 function modeTitleText(){
+  if(currentMode==='sparring'){
+    if(sparringMode==='practice'){
+      const mission=sparringMission;
+      return ['겨루기 연습모드', mission ? '화살표 미션 · '+mission.label : '랜덤 발차기 화살표 미션'];
+    }
+    return ['겨루기 실전모드','키에 맞춰 나오는 머리/몸통 타겟 공격'];
+  }
   if(currentMode==='apcha_r') return ['앞차기 오른발','오른발로 중앙선 위로 곧게 차기'];
   if(currentMode==='apcha_l') return ['앞차기 왼발','왼발로 중앙선 위로 곧게 차기'];
-  if(currentMode==='dollo_r') return ['돌려차기 오른발','오른발: 바깥쪽으로 휘었다가 위로 차기'];
-  if(currentMode==='dollo_l') return ['돌려차기 왼발','왼발: 바깥쪽으로 휘었다가 위로 차기'];
-  if(currentMode==='balloon') return ['격파 모드',''];
-  if(currentMode==='sparring') return ['겨루기 모드','상대 몸통과 머리를 발차기로 공격하세요'];
-  return ['발차기 연습','전신이 보이게 서주세요'];
+  if(currentMode==='dollo_r') return ['돌려차기 오른발','오른발 화살표를 따라 회전'];
+  if(currentMode==='dollo_l') return ['돌려차기 왼발','왼발 화살표를 따라 회전'];
+  if(currentMode==='balloon') return ['격파 모드', diffCfg().label+' · '+(diffCfg().targetEmoji||'🎈')+' 타겟 격파'];
+  return ['AI KICK MASTER','태권도 AI 발차기 훈련'];
 }
-
-// mirrored canvas에서도 글자가 뒤집히지 않게 표시
 function drawReadableText(text,x,y,font,fill,align='center'){
   const mirrored=camWrap.classList.contains('mirrored');
   ctx.save();
@@ -3726,7 +3824,7 @@ function drawApchaGuide(){
 
   // canvas/영상이 CSS로 같이 좌우반전되므로 raw landmark X를 그대로 사용해야 몸과 같은 방향으로 따라간다.
   const bodyX=smHipX*W;
-  const targetPct=Math.min(94, Math.max(60, threshPct+28));
+  const targetPct=guideTargetPct();
   const liftRatio=(targetPct/100)*1.6-0.8;
   const targetY=Math.max(H*0.12,(smHipY - liftRatio*smTorso)*H - H*0.035);
   const startY=Math.min(H*0.90, smHipY*H + H*0.13);
@@ -3799,7 +3897,7 @@ function drawDolloGuide(){
   const rawBodyX=smHipX*W;
   const visualBodyX=mirrored ? W-rawBodyX : rawBodyX;
   const toCanvasX=(visualX)=> mirrored ? W-visualX : visualX;
-  const visualSide = (currentMode==='dollo_r') ? 1 : -1;
+  const visualSide = (currentGuideMode()==='dollo_r') ? 1 : -1;
 
   const faceY=Math.max(H*0.14, Math.min(H*0.46, (smHipY - smTorso*0.98)*H));
   const topY=faceY;
@@ -3936,6 +4034,40 @@ function finishDrill(){
 }
 
 /* ── 겨루기 모드 ── */
+
+function updateAdaptiveSparringTarget(){
+  if(smHipY==null || smTorso==null) return;
+  const target=document.getElementById('enemyTarget');
+  if(!target) return;
+  const H=camWrap.clientHeight || window.innerHeight || 720;
+  const shoulderY=smHipY-smTorso;
+  const headY=Math.max(0.10, shoulderY-smTorso*0.38);
+  const bodyY=Math.min(0.84, smHipY-smTorso*0.05);
+  const centerY=((headY+bodyY)/2)*100;
+  const scale=Math.max(0.72, Math.min(1.18, smTorso/0.25));
+  target.style.top=centerY+'%';
+  target.style.transform='translate(-50%,-43%) perspective(520px) rotateY(-8deg) scale('+scale.toFixed(2)+')';
+}
+function handleSparringPracticeKick(peak){
+  if(!running || currentMode!=='sparring' || sparringMode!=='practice') return;
+  const result=analyzeTraj();
+  let score=result.score || Math.max(40, Math.min(100, Math.round(peak)));
+  const mission=sparringMission || nextSparringMission();
+  const bonus=Math.max(0, Math.round((mission.targetPct-70)/8));
+  score=Math.max(40, Math.min(100, score+bonus));
+  lastScore=score;
+  lastColor=score>=90?'#4ca3ff':(score>=75?'#E8A020':'#D92B3A');
+  lastGrade=score>=95?'PERFECT':score>=88?'GREAT':score>=75?'GOOD':'TRY';
+  sparringPracticeDone++;
+  sparringPracticeScores.push(score);
+  drillScores=sparringPracticeScores;
+  drillDone=sparringPracticeDone;
+  renderStats();
+  popup(String(score), lastColor);
+  sndScore(score);
+  nextSparringMission();
+  trajX=[]; trajY=[]; trajHipX=[]; trajActive=false; drillSide=0;
+}
 function updateSparringHud(){
   if(enemyHpFill) enemyHpFill.style.width=Math.max(0,(sparringHp/250)*100)+'%';
   if(enemyHpText) enemyHpText.textContent=(sparringHp<=0?'K.O.':'HP '+Math.max(0,Math.round(sparringHp)));
@@ -4005,6 +4137,7 @@ function sparringHitZone(){
 }
 function handleSparringKick(peak){
   if(!running || currentMode!=='sparring') return;
+  if(sparringMode==='practice'){ handleSparringPracticeKick(peak); return; }
   const zone=sparringHitZone();
   const motion=classifyKickMotion();
   const base=Math.max(6,Math.round(peak/10));
@@ -4014,7 +4147,7 @@ function handleSparringKick(peak){
   sparringLastHitT=now;
   sparringMaxCombo=Math.max(sparringMaxCombo,sparringCombo);
   const comboMul=sparringCombo>=5?1.45:sparringCombo>=3?1.25:sparringCombo>=2?1.12:1.0;
-  let dmg=Math.round((base*zoneMul*comboMul*motion.quality + motion.bonus)*diffCfg().damage);
+  let dmg=Math.round((base*zoneMul*comboMul*motion.quality + motion.bonus));
   if(peak>=95 && motion.confidence>=0.35) dmg+=2;
   if(motion.type==='unknown') dmg=Math.max(4,Math.round(dmg*0.8));
   sparringHp=Math.max(0,sparringHp-dmg);
@@ -4031,7 +4164,17 @@ function handleSparringKick(peak){
   if(sparringHp<=0) setTimeout(finishSparring,500);
 }
 function startSparring(){
+  if(sparringMode==='practice'){
+    sparringPracticeScores=[]; sparringPracticeDone=0; drillScores=[]; drillDone=0; lastScore=null; lastGrade='';
+    nextSparringMission();
+    setSparringTargetVisible(false);
+    sparringHud?.classList.add('show');
+    const sec=parseInt(sparringTimeSel?.value||'30');
+    startTimed(sec,finishSparring);
+    return;
+  }
   sparringHp=250; sparringDamage=0; sparringCombo=0; sparringMaxCombo=0; sparringLastHitT=0;
+  setSparringTargetVisible(true);
   updateSparringHud();
   sparringHud?.classList.add('show');
   const sec=parseInt(sparringTimeSel?.value||'30'); startTimed(sec,finishSparring);
@@ -4041,7 +4184,24 @@ function finishSparring(){
   running=false; setPlayingUi(false);
   if(gameTimer){ clearInterval(gameTimer); gameTimer=null; }
   timerBadge.classList.remove('show');
-  sparringHud?.classList.remove('show');
+  sparringHud?.classList.remove('show'); setSparringTargetVisible(false);
+  if(sparringMode==='practice'){
+    const avg=avgOf(sparringPracticeScores)??0;
+    const best=sparringPracticeScores.length?Math.max(...sparringPracticeScores):0;
+    setGrResult('결과: '+sparringPracticeDone+'회 · 평균 '+avg+'점 · 최고 '+best+'점');
+    setStartBtn(false,'다시!');
+    drillResultIcon.textContent='훈련 완료';
+    drillResultText.textContent='랜덤 미션 완료!';
+    drillResultText.style.color='#4ca3ff';
+    drillResultSub.textContent=sparringPracticeDone+'회 · 평균 '+avg+'점 · 최고 '+best+'점';
+    drillResult.classList.add('show');
+    setTimeout(()=>drillResult.classList.remove('show'),2800);
+    akmSaveRecord('sparring_practice',{score:best,average:avg,count:sparringPracticeDone,modeType:'practice',modeLabel:'겨루기 연습모드'});
+    sparringMission=null;
+    updateModeBadge();
+    return;
+  }
+  setSparringTargetVisible(false);
   setGrResult('결과: 총 데미지 '+sparringDamage+' · 최고 '+sparringMaxCombo+'콤보');
   setStartBtn(false,'다시!');
   drillResultIcon.textContent=sparringHp<=0?'K.O.':'완료';
@@ -4051,7 +4211,7 @@ function finishSparring(){
   drillResult.classList.add('show');
   if(sparringHp<=0){ confetti(true); sndRecord(); }
   setTimeout(()=>drillResult.classList.remove('show'),2800);
-  akmSaveRecord('sparring',{damage:sparringDamage,maxCombo:sparringMaxCombo,ko:sparringHp<=0,remainHp:Math.max(0,Math.round(sparringHp))});
+  akmSaveRecord('sparring',{score:sparringDamage,damage:sparringDamage,maxCombo:sparringMaxCombo,ko:sparringHp<=0,remainHp:Math.max(0,Math.round(sparringHp)),modeType:'live',modeLabel:'겨루기 실전모드'});
 }
 
 /* ── 격파 모드: 기존 풍선 로직 유지, 난이도별 이모지 타겟 표시 ── */
@@ -4184,7 +4344,7 @@ window.startGame=()=>{
   setStartBtn(true,'⏳ 준비중...');
   const subTexts={
     balloon:'',
-    sparring:'상대를 발차기로 공격하세요!',
+    sparring:(sparringMode==='practice'?'랜덤 화살표 미션을 보고 차세요!':'키에 맞춘 타겟을 공격하세요!'),
     apcha_r:'앞차기 오른발 — 위로 쭉 차올려요!', apcha_l:'앞차기 왼발 — 위로 쭉 차올려요!',
     dollo_r:'돌려차기 오른발 — 화살표 방향으로 차요!', dollo_l:'돌려차기 왼발 — 화살표 방향으로 차요!'
   };
@@ -4252,8 +4412,17 @@ function updateKickButtonVisibility(){
   });
 }
 window.setMode=(mode)=>{
-  try{ document.body.classList.toggle('balloon-mode', mode==='balloon'); document.body.classList.toggle('sparring-mode', mode==='sparring'); }catch(e){}
+  try{
+    document.body.classList.toggle('balloon-mode', mode==='balloon');
+    document.body.classList.toggle('sparring-mode', mode==='sparring');
+    document.body.classList.toggle('sparring-practice', mode==='sparring' && sparringMode==='practice');
+    document.body.classList.toggle('sparring-live', mode==='sparring' && sparringMode==='live');
+  }catch(e){}
   ensureAudio(); stopGame(); currentMode=mode; updateModeBadge(); updateKickButtonVisibility();
+  const diffPanel=document.getElementById('difficultyPanel');
+  const sparPanel=document.getElementById('sparringTypePanel');
+  if(diffPanel) diffPanel.style.display=(mode==='sparring')?'none':'flex';
+  if(sparPanel) sparPanel.style.display=(mode==='sparring')?'flex':'none';
   const all=['apcha_r','apcha_l','dollo_r','dollo_l','balloon','sparring'];
   all.forEach(m=>{ const el=document.getElementById('m_'+m); if(el) el.classList.toggle('active',m===mode); });
   const isDrill=MODE_CFG[mode].isDrill;
@@ -4265,6 +4434,7 @@ window.setMode=(mode)=>{
   resetCounters(); renderStats(); renderCamRank();
   statusEl.style.opacity='1';
   if(isDrill) statusEl.textContent='시작 버튼을 눌러 '+MODE_CFG[mode].label+' 연습을 시작하세요';
+  else if(mode==='sparring') statusEl.textContent=sparringMode==='practice'?'연습모드: 랜덤 화살표 미션을 시작하세요':'실전모드: 키에 맞춘 타겟을 공격하세요';
   else statusEl.textContent='시작 버튼을 누르세요';
 };
 
@@ -4360,7 +4530,7 @@ function computeMetrics(lm){
   const R=sideMetrics(lm,'right',hipY,hipX,torso);
   // 연습 모드는 사용자가 선택한 발만 추적. 반대발 움직임 때문에 인식이 꼬이는 것을 줄임.
   const sf=selectedFoot();
-  if(isDrillMode() && sf){
+  if((isDrillMode() || (currentMode==='sparring' && sparringMode==='practice')) && sf){
     const chosen = sf==='left' ? L : R;
     if(chosen) return chosen;
   }
@@ -4424,8 +4594,9 @@ function loop(){
             if(trajX.length>MAX_TRAJ){ trajX.shift(); trajY.shift(); trajHipX.shift(); }
           }
           // 연습 가이드 라인
-          if(drillKickType()==='apcha') drawApchaGuide();
-          if(drillKickType()==='dollo') drawDolloGuide();
+          if((isDrillMode() || (currentMode==='sparring' && sparringMode==='practice')) && drillKickType()==='apcha') drawApchaGuide();
+          if((isDrillMode() || (currentMode==='sparring' && sparringMode==='practice')) && drillKickType()==='dollo') drawDolloGuide();
+          if(currentMode==='sparring' && sparringMode==='live') updateAdaptiveSparringTarget();
           // 발 궤적 표시는 현재 비활성화.
           // 점수/겨루기 판정에는 trajX/trajY를 그대로 사용하되, 화면에는 그리지 않는다.
           // if((isDrillMode()||currentMode==='sparring')&&trajX.length>1) drawDrillTrail();
@@ -4451,6 +4622,8 @@ function loop(){
 drillCountArea.style.display='flex';
 gameArea.style.display='none';
 initDifficulty();
+initSparringMode();
+document.getElementById('sparringTypePanel')?.style.setProperty('display','none','important');
 updateModeBadge();
 updateKickButtonVisibility();
 renderStats(); renderCamRank(); updateModeBadge(); akmRenderStudentUI();
