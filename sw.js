@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akm-v6-20260702-record-ui';
+const CACHE_NAME = 'akm-v7-20260703-graph-css-clean';
 const ASSETS = [
   './',
   'home.html',

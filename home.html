@@ -317,6 +317,56 @@ body{
 @media(max-width:1050px){.record-top-grid-v2{grid-template-columns:1fr}.report-metrics-v2{grid-template-columns:repeat(2,1fr)}.record-summary.akm-premium-summary{grid-template-columns:repeat(2,1fr)!important}.record-rank-list.akm-rank-premium{grid-template-columns:1fr}}
 @media(max-width:640px){.empty-steps-v2{grid-template-columns:1fr}.report-metrics-v2{grid-template-columns:1fr}.record-report-v2 h3{font-size:24px}}
 
+
+
+/* =========================================================
+   RECORD DASHBOARD v3 — growth analytics upgrade
+   - line SVG trend, mode distribution, growth delta card
+   - designed for tablet/laptop presentation screens
+   ========================================================= */
+.record-dashboard-v3{display:grid;gap:16px}
+.record-top-grid-v3{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(310px,.85fr);gap:16px;align-items:stretch}
+.record-report-v3{position:relative;overflow:hidden;border-radius:30px;background:linear-gradient(135deg,#070707 0%,#171821 56%,#080808 100%);color:#fff;padding:28px;min-height:258px;box-shadow:0 30px 90px rgba(0,0,0,.22)}
+.record-report-v3:before{content:"";position:absolute;right:-130px;top:-170px;width:390px;height:390px;border-radius:50%;background:radial-gradient(circle,rgba(229,38,38,.38),rgba(229,38,38,.08) 58%,transparent 72%)}
+.record-report-v3:after{content:"";position:absolute;left:28px;right:28px;bottom:24px;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.26),transparent)}
+.report-kicker-v3{position:relative;z-index:1;font-size:12px;font-weight:950;color:#ff7676;letter-spacing:1px;margin-bottom:10px}
+.record-report-v3 h3{position:relative;z-index:1;font-size:31px;line-height:1.15;font-weight:950;letter-spacing:-1.25px;margin-bottom:8px}
+.report-sub-v3{position:relative;z-index:1;font-size:13px;color:#c4c8d1;font-weight:700;margin-bottom:22px}
+.report-metrics-v3{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.report-metric-v3{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);border-radius:20px;padding:16px 14px;backdrop-filter:blur(10px)}
+.report-metric-v3 b{display:block;font-size:31px;line-height:1;font-weight:950;letter-spacing:-.9px;color:#fff}
+.report-metric-v3 span{display:block;margin-top:8px;font-size:11px;color:#c8cbd2;font-weight:850}
+.report-metric-v3.red b{color:#ff6767}.report-metric-v3.gold b{color:#f7c15c}.report-metric-v3.green b{color:#62d69c}.report-metric-v3.blue b{color:#86b7ff}
+.record-insight-v3{border:1px solid var(--line);border-radius:30px;background:#fff;padding:24px;box-shadow:0 22px 64px rgba(0,0,0,.06);display:grid;gap:14px;align-content:space-between}
+.insight-head-v3{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.insight-head-v3 span{font-size:12px;color:var(--red);font-weight:950;letter-spacing:.5px}
+.insight-head-v3 b{display:block;font-size:27px;line-height:1.15;font-weight:950;letter-spacing:-1.1px;margin-top:8px;color:#111318}
+.insight-pill-v3{height:34px;padding:0 12px;border-radius:999px;background:#f4f5f7;border:1px solid var(--line);font-size:11px;font-weight:950;color:#707783;white-space:nowrap;display:flex;align-items:center}
+.insight-list-v3{display:grid;gap:9px}
+.insight-row-v3{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border:1px solid #edf0f4;border-radius:16px;padding:12px 14px;background:#fafafa}
+.insight-row-v3 span{font-size:12px;color:#707783;font-weight:850}.insight-row-v3 b{font-size:14px;color:#111318;font-weight:950;text-align:right}
+.record-summary.akm-premium-summary{grid-template-columns:repeat(4,1fr)!important;gap:12px!important;margin:2px 0 0!important}
+.record-mini{border-radius:22px!important;padding:18px!important;box-shadow:0 14px 38px rgba(0,0,0,.045)}
+.record-mini b{font-size:30px!important;font-weight:950!important}.record-mini span{font-weight:850!important}
+.akm-analytics-grid-v3{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr);gap:16px}
+.akm-chart-card-v3,.akm-mode-card-v3{border:1px solid var(--line);border-radius:28px;background:#fff;padding:22px;box-shadow:0 22px 62px rgba(0,0,0,.055)}
+.akm-chart-head-v3{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.akm-chart-head-v3 b{font-size:16px;font-weight:950;letter-spacing:-.4px}.akm-chart-head-v3 span{display:block;margin-top:4px;font-size:11px;color:var(--muted);font-weight:800}
+.akm-trend-badge-v3{height:32px;padding:0 11px;border-radius:999px;background:#111318;color:#fff;font-size:11px;font-weight:950;display:flex;align-items:center;white-space:nowrap}
+.akm-trend-badge-v3.up{background:#eafaf2;color:#0c8d54}.akm-trend-badge-v3.down{background:#fff1f2;color:#dc2626}.akm-trend-badge-v3.flat{background:#f4f5f7;color:#707783}
+.akm-svg-chart-v3{position:relative;height:236px;border:1px solid #edf0f4;border-radius:22px;background:linear-gradient(180deg,#fff,#f6f7f9);overflow:hidden;padding:8px}
+.akm-svg-chart-v3 svg{width:100%;height:100%;display:block;overflow:visible}
+.akm-svg-chart-v3 .grid-line{stroke:#e9edf3;stroke-width:1}.akm-svg-chart-v3 .area{fill:rgba(229,38,38,.11)}.akm-svg-chart-v3 .line{fill:none;stroke:#e52626;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.akm-svg-chart-v3 .dot{fill:#fff;stroke:#e52626;stroke-width:4}.akm-svg-chart-v3 .dot.best{fill:#e52626;stroke:#111318}.akm-svg-labels-v3{display:flex;justify-content:space-between;gap:6px;margin-top:10px;color:#8a929e;font-size:10px;font-weight:850}.akm-svg-labels-v3 span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+.akm-mode-list-v3{display:grid;gap:11px;margin-top:6px}.akm-mode-row-v3{display:grid;grid-template-columns:72px 1fr 44px;gap:10px;align-items:center}.akm-mode-row-v3 span{font-size:12px;color:#555b66;font-weight:900;white-space:nowrap}.akm-mode-track-v3{height:11px;background:#f0f2f5;border-radius:999px;overflow:hidden}.akm-mode-fill-v3{height:100%;border-radius:999px;background:linear-gradient(90deg,#111318,#e52626)}.akm-mode-row-v3 b{font-size:12px;font-weight:950;text-align:right;color:#111318}
+.record-rank-list.akm-rank-premium{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}.record-rank-item{border-radius:20px!important;box-shadow:0 12px 34px rgba(0,0,0,.035)}
+.record-rank-item.mvp{border-color:rgba(229,38,38,.35);background:linear-gradient(135deg,#fff,#fff7f7)}
+.record-table{border-radius:24px!important;box-shadow:0 18px 50px rgba(0,0,0,.045)}
+.record-row{grid-template-columns:1.05fr 1fr .65fr .8fr!important;min-height:48px}.record-row.head{font-weight:950!important}
+.empty-report-v3{border:1px solid var(--line);border-radius:28px;background:linear-gradient(135deg,#fff,#fafafa);padding:30px;box-shadow:0 22px 60px rgba(0,0,0,.05)}
+.empty-report-v3 b{display:block;font-size:26px;font-weight:950;letter-spacing:-1px;margin-bottom:8px;color:#111318}.empty-report-v3 p{font-size:14px;line-height:1.7;color:#707783;font-weight:650;margin-bottom:18px}.empty-steps-v3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.empty-step-v3{border:1px solid #edf0f4;border-radius:18px;background:#fff;padding:16px}.empty-step-v3 strong{display:block;font-size:13px;font-weight:950;color:#111318;margin-bottom:5px}.empty-step-v3 span{font-size:12px;color:#8a929e;font-weight:700;line-height:1.45}
+@media(max-width:1100px){.record-top-grid-v3,.akm-analytics-grid-v3{grid-template-columns:1fr}.report-metrics-v3{grid-template-columns:repeat(2,1fr)}.record-summary.akm-premium-summary{grid-template-columns:repeat(2,1fr)!important}.record-rank-list.akm-rank-premium{grid-template-columns:1fr}}
+@media(max-width:640px){.empty-steps-v3{grid-template-columns:1fr}.report-metrics-v3{grid-template-columns:1fr}.record-report-v3 h3{font-size:24px}.akm-mode-row-v3{grid-template-columns:64px 1fr 38px}}
+
 </style>
 </head>
 <body>
@@ -1454,9 +1504,16 @@ function renderRecordsTab(box){
     if(r.mode==='balloon' || r.kind==='balloon') return (r.count ?? r.score ?? 0)+'개';
     return (r.score ?? 0)+'점';
   };
+  const dateLabelOf = r => {
+    const raw = r.dateText || String(r.createdAt||r.date||'').slice(0,10) || '';
+    const m = raw.match(/(\d{1,2})[-./월 ]+(\d{1,2})/);
+    if(m) return `${m[1]}/${m[2]}`;
+    return raw.slice(5,10) || '기록';
+  };
   const total = source.length;
-  const avg = total ? Math.round(source.reduce((sum,r)=>sum+scoreOf(r),0)/total) : '-';
-  const best = total ? Math.max(...source.map(scoreOf)) : '-';
+  const scoreValues = source.map(scoreOf);
+  const avg = total ? Math.round(scoreValues.reduce((sum,v)=>sum+v,0)/total) : '-';
+  const best = total ? Math.max(...scoreValues) : '-';
   const bestCombo = total ? Math.max(...source.map(comboOf)) : '-';
   const todayBest = today.length ? Math.max(...today.map(scoreOf)) : '-';
   const byStudent = {};
@@ -1468,9 +1525,34 @@ function renderRecordsTab(box){
     byStudent[nm].best = Math.max(byStudent[nm].best, scoreOf(r));
     byStudent[nm].combo = Math.max(byStudent[nm].combo, comboOf(r));
   });
-  const ranks = Object.values(byStudent).map(x=>({...x,avg:Math.round(x.total/x.count)})).sort((a,b)=>b.best-a.best).slice(0,6);
+  const ranks = Object.values(byStudent).map(x=>({...x,avg:Math.round(x.total/x.count)})).sort((a,b)=>b.best-a.best || b.avg-a.avg).slice(0,6);
   const recentRows = source.slice(0,10);
-  const chartRows = source.slice(0,12).reverse();
+  const chartRows = source.slice(0,14).reverse();
+  const chartVals = chartRows.map(scoreOf);
+  const maxVal = Math.max(100, ...chartVals, 1);
+  const minVal = Math.min(0, ...chartVals);
+  const rangeVal = Math.max(1, maxVal-minVal);
+  const points = chartRows.map((r,i)=>{
+    const x = chartRows.length===1 ? 500 : Math.round(60 + i*(880/(chartRows.length-1)));
+    const y = Math.round(220 - ((scoreOf(r)-minVal)/rangeVal)*170);
+    return {x,y,v:scoreOf(r),label:dateLabelOf(r),best:scoreOf(r)===best};
+  });
+  const pointStr = points.map(p=>p.x+','+p.y).join(' ');
+  const areaStr = points.length ? `60,235 ${pointStr} ${points[points.length-1].x},235` : '';
+  const gridLines = [50,92,135,177,220].map(y=>`<line class="grid-line" x1="42" y1="${y}" x2="960" y2="${y}" />`).join('');
+  const trendSvg = points.length ? `<div class="akm-svg-chart-v3"><svg viewBox="0 0 1000 260" preserveAspectRatio="none" aria-label="최근 성장 흐름 그래프">${gridLines}<polygon class="area" points="${areaStr}"></polygon><polyline class="line" points="${pointStr}"></polyline>${points.map(p=>`<circle class="dot ${p.best?'best':''}" cx="${p.x}" cy="${p.y}" r="7"><title>${p.label} · ${p.v}</title></circle>`).join('')}</svg></div><div class="akm-svg-labels-v3">${points.map(p=>`<span>${escapeHtml(p.label)}</span>`).join('')}</div>` : '';
+  const firstHalf = chartVals.slice(0, Math.ceil(chartVals.length/2));
+  const secondHalf = chartVals.slice(Math.ceil(chartVals.length/2));
+  const avgArr = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : null;
+  const startAvg = avgArr(firstHalf);
+  const endAvg = avgArr(secondHalf.length ? secondHalf : firstHalf);
+  const delta = (startAvg!=null && endAvg!=null) ? endAvg - startAvg : 0;
+  const deltaText = chartVals.length < 2 ? '기록 누적 중' : (delta>0 ? `+${delta} 성장` : (delta<0 ? `${delta} 하락` : '변화 없음'));
+  const deltaClass = chartVals.length < 2 ? 'flat' : (delta>0 ? 'up' : (delta<0 ? 'down' : 'flat'));
+  const modeMap = {};
+  source.forEach(r=>{ const l=labelOf(r); modeMap[l]=(modeMap[l]||0)+1; });
+  const modes = Object.entries(modeMap).map(([name,count])=>({name,count,pct: total ? Math.round(count/total*100) : 0})).sort((a,b)=>b.count-a.count).slice(0,5);
+  const modeHtml = modes.length ? modes.map(m=>`<div class="akm-mode-row-v3"><span>${escapeHtml(m.name)}</span><div class="akm-mode-track-v3"><div class="akm-mode-fill-v3" style="width:${Math.max(6,m.pct)}%"></div></div><b>${m.count}회</b></div>`).join('') : '<div class="insight-row-v3"><span>종목 기록</span><b>대기</b></div>';
   const mvp = ranks[0];
   const selectedNames = selectedIds.map(getStudentNameById).filter(Boolean);
   const scopeTitle = selectedNames.length === 1 ? `${selectedNames[0]} 성장 리포트` : (selectedNames.length > 1 ? `선택 수련생 ${selectedNames.length}명 리포트` : '도장 전체 성장 리포트');
@@ -1480,31 +1562,33 @@ function renderRecordsTab(box){
   const storageState = all.length ? '저장소 정상' : '기록 없음';
   const emptyTitle = all.length ? '선택한 수련생의 기록이 아직 없습니다.' : '아직 저장된 측정 기록이 없습니다.';
   const emptyDesc = all.length ? '다른 학생 기록은 저장되어 있지만, 현재 선택한 수련생과 연결된 기록은 없습니다. AKM에서 이 수련생을 선택한 뒤 측정하면 이 화면에 바로 누적됩니다.' : '이 태블릿의 저장소에는 현재 훈련 기록이 0개입니다. 지금부터 측정한 기록은 이곳에 누적되어 성장 그래프로 표시됩니다.';
+  const rankHtml = ranks.map((r,i)=>`<div class="record-rank-item ${i===0?'mvp':''}"><div class="record-rank-no">${i+1}</div><div><div class="record-rank-name">${escapeHtml(r.name)}</div><div class="record-rank-meta">${r.count}회 측정 · 최고 ${r.best} · 콤보 ${r.combo}</div></div><strong>${r.avg}</strong></div>`).join('');
+  const tableHtml = recentRows.map(r=>`<div class="record-row"><span>${escapeHtml(r.studentName)}</span><span>${escapeHtml(labelOf(r))}${r.difficulty?' · '+escapeHtml(r.difficulty):''}</span><span class="record-score">${escapeHtml(valueText(r))}</span><span>${escapeHtml(r.dateText)}</span></div>`).join('');
   box.innerHTML=`<div class="manage-top"><div><h3>기록 · 그래프</h3><p>저장된 훈련 기록을 성장 리포트로 보여줍니다.</p></div></div>
     <div class="record-filter-row">
       <button class="record-filter ${recordRange==='all'?'active':''}" onclick="setRecordRange('all')">전체 기록</button>
       <button class="record-filter ${recordRange==='today'?'active':''}" onclick="setRecordRange('today')">오늘 기록</button>
       <button class="record-filter ${recordRange==='7d'?'active':''}" onclick="setRecordRange('7d')">최근 7일</button>
     </div>
-    <div class="record-dashboard-v2">
-      <div class="record-top-grid-v2">
-        <div class="record-report-v2">
-          <div class="report-kicker-v2">AI KICK MASTER REPORT</div>
+    <div class="record-dashboard-v3">
+      <div class="record-top-grid-v3">
+        <div class="record-report-v3">
+          <div class="report-kicker-v3">AI KICK MASTER REPORT</div>
           <h3>${escapeHtml(scopeTitle)}</h3>
-          <div class="report-sub-v2">${escapeHtml(scopeSub)}</div>
-          <div class="report-metrics-v2">
-            <div class="report-metric-v2 red"><b>${today.length}</b><span>오늘 훈련</span></div>
-            <div class="report-metric-v2 gold"><b>${todayBest}</b><span>오늘 최고</span></div>
-            <div class="report-metric-v2"><b>${total}</b><span>표시 기록</span></div>
-            <div class="report-metric-v2 green"><b>${bestCombo}</b><span>최고 콤보</span></div>
+          <div class="report-sub-v3">${escapeHtml(scopeSub)}</div>
+          <div class="report-metrics-v3">
+            <div class="report-metric-v3 red"><b>${today.length}</b><span>오늘 훈련</span></div>
+            <div class="report-metric-v3 gold"><b>${todayBest}</b><span>오늘 최고</span></div>
+            <div class="report-metric-v3 blue"><b>${avg}</b><span>평균 기록</span></div>
+            <div class="report-metric-v3 green"><b>${bestCombo}</b><span>최고 콤보</span></div>
           </div>
         </div>
-        <div class="record-status-v2">
-          <div class="status-title-v2"><div><span>기록 상태</span><b>${mvp ? escapeHtml(mvp.name) : storageState}</b></div><div class="status-pill-v2">${all.length ? '누적 중' : '대기'}</div></div>
-          <div class="status-list-v2">
-            <div class="status-row-v2"><span>전체 저장 기록</span><b>${all.length}개</b></div>
-            <div class="status-row-v2"><span>선택 수련생 기록</span><b>${sourceAll.length}개</b></div>
-            <div class="status-row-v2"><span>최근 저장 날짜</span><b>${escapeHtml(lastDate)}</b></div>
+        <div class="record-insight-v3">
+          <div class="insight-head-v3"><div><span>BEST PLAYER</span><b>${mvp ? escapeHtml(mvp.name) : storageState}</b></div><div class="insight-pill-v3">${all.length ? '누적 중' : '대기'}</div></div>
+          <div class="insight-list-v3">
+            <div class="insight-row-v3"><span>전체 저장 기록</span><b>${all.length}개</b></div>
+            <div class="insight-row-v3"><span>선택 수련생 기록</span><b>${sourceAll.length}개</b></div>
+            <div class="insight-row-v3"><span>최근 저장 날짜</span><b>${escapeHtml(lastDate)}</b></div>
           </div>
         </div>
       </div>
@@ -1512,11 +1596,11 @@ function renderRecordsTab(box){
         <div class="record-mini"><b>${total}</b><span>표시 기록</span></div>
         <div class="record-mini"><b>${avg}</b><span>평균 기록</span></div>
         <div class="record-mini"><b>${best}</b><span>최고 기록</span></div>
-        <div class="record-mini"><b>${bestCombo}</b><span>최고 콤보</span></div>
+        <div class="record-mini"><b>${deltaText}</b><span>최근 성장 변화</span></div>
       </div>
-      ${total ? `<div class="akm-chart-card"><div class="akm-chart-head"><b>최근 성장 흐름</b><span>최근 ${chartRows.length}개 기록</span></div><div class="akm-line-chart">${chartRows.map((r,i)=>{const v=scoreOf(r); const h=Math.max(12,Math.min(100,v)); return `<i style="height:${h}%"><span>${v}</span></i>`;}).join('')}</div></div>
-      <div class="record-rank-list akm-rank-premium">${ranks.map((r,i)=>`<div class="record-rank-item"><div class="record-rank-no">${i+1}</div><div><div class="record-rank-name">${escapeHtml(r.name)}</div><div class="record-rank-meta">${r.count}회 측정 · 최고 ${r.best} · 콤보 ${r.combo}</div></div><strong>${r.avg}</strong></div>`).join('')}</div>
-      <div class="record-table"><div class="record-row head"><span>학생</span><span>종목</span><span>기록</span><span>날짜</span></div>${recentRows.map(r=>`<div class="record-row"><span>${escapeHtml(r.studentName)}</span><span>${escapeHtml(labelOf(r))}${r.difficulty?' · '+escapeHtml(r.difficulty):''}</span><span class="record-score">${escapeHtml(valueText(r))}</span><span>${escapeHtml(r.dateText)}</span></div>`).join('')}</div>` : `<div class="empty-report-v2"><b>${escapeHtml(emptyTitle)}</b><p>${escapeHtml(emptyDesc)}</p><div class="empty-steps-v2"><div class="empty-step-v2"><strong>1. 수련생 선택</strong><span>왼쪽에서 학생을 선택합니다.</span></div><div class="empty-step-v2"><strong>2. AKM 실행</strong><span>발차기 시작 후 측정을 진행합니다.</span></div><div class="empty-step-v2"><strong>3. 자동 누적</strong><span>저장된 기록이 그래프로 표시됩니다.</span></div></div></div>`}
+      ${total ? `<div class="akm-analytics-grid-v3"><div class="akm-chart-card-v3"><div class="akm-chart-head-v3"><div><b>최근 성장 흐름</b><span>최근 ${chartRows.length}개 기록 기준</span></div><div class="akm-trend-badge-v3 ${deltaClass}">${deltaText}</div></div>${trendSvg}</div><div class="akm-mode-card-v3"><div class="akm-chart-head-v3"><div><b>훈련 종목 분포</b><span>표시 범위 내 기록</span></div></div><div class="akm-mode-list-v3">${modeHtml}</div></div></div>
+      <div class="record-rank-list akm-rank-premium">${rankHtml}</div>
+      <div class="record-table"><div class="record-row head"><span>학생</span><span>종목</span><span>기록</span><span>날짜</span></div>${tableHtml}</div>` : `<div class="empty-report-v3"><b>${escapeHtml(emptyTitle)}</b><p>${escapeHtml(emptyDesc)}</p><div class="empty-steps-v3"><div class="empty-step-v3"><strong>1. 수련생 선택</strong><span>왼쪽에서 학생을 선택합니다.</span></div><div class="empty-step-v3"><strong>2. AKM 실행</strong><span>발차기 시작 후 측정을 진행합니다.</span></div><div class="empty-step-v3"><strong>3. 자동 누적</strong><span>저장된 기록이 그래프로 표시됩니다.</span></div></div></div>`}
     </div>`;
 }
 
