@@ -1162,6 +1162,13 @@ table{width:100%;border-collapse:collapse}th{background:#fafafa;padding:15px 14p
       <label>메모</label>
       <textarea id="mMemo" class="f-textarea" placeholder="특이사항, 계약 조건 등"></textarea>
     </div>
+    <div class="modal-section" id="deviceSlotSection" style="display:none;">
+      <div class="modal-section-title">🖥 기기 슬롯</div>
+      <label>등록 가능 태블릿 수</label>
+      <input id="mMaxDevices" class="f-input" type="number" min="1" max="99" value="2" />
+      <div id="deviceSlotsBox" style="margin-top:10px;"></div>
+      <button type="button" class="btn-sm btn-toggle" style="margin-top:8px;" onclick="resetDeviceSlots()">전체 기기 초기화 (재발급 시 사용)</button>
+    </div>
     <div class="err-msg" id="modalErr"></div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal()">취소</button>
@@ -1371,7 +1378,7 @@ function renderTable() {
     const payDisplay = d.pay_amount ? `${formatMoney(d.pay_amount)}<span class="sub-text">${d.pay_date||''}</span>` : '-';
     const encoded = encodeURIComponent(JSON.stringify(d));
     return `<tr class="${rowCls}">
-      <td><strong>${escapeHtml(d.dojang_name)}</strong><span class="sub-text">등록 ${(d.created_at||'').slice(0,10)||'-'}</span>${d.phone?`<span class="sub-text">📞 ${escapeHtml(d.phone)}</span>`:''}${d.memo?`<span class="sub-text" title="${escapeHtml(d.memo)}">📝 ${escapeHtml(d.memo.length>20?d.memo.slice(0,20)+'…':d.memo)}</span>`:''}</td>
+      <td><strong>${escapeHtml(d.dojang_name)}</strong><span class="sub-text">등록 ${(d.created_at||'').slice(0,10)||'-'}</span>${d.phone?`<span class="sub-text">📞 ${escapeHtml(d.phone)}</span>`:''}${d.memo?`<span class="sub-text" title="${escapeHtml(d.memo)}">📝 ${escapeHtml(d.memo.length>20?d.memo.slice(0,20)+'…':d.memo)}</span>`:''}<span class="sub-text">🖥 기기 ${(d.device_slots||[]).length}/${d.max_devices||2}</span></td>
       <td><code style="font-size:12px">${escapeHtml(d.license_key)}</code></td>
       <td>${typeLabel}</td>
       <td style="font-size:13px">${payDisplay}</td>
@@ -1406,6 +1413,10 @@ function openAddModal() {
   document.getElementById('mPayMemo').value = '';
   document.getElementById('mPhone').value = '';
   document.getElementById('mMemo').value = '';
+  document.getElementById('mMaxDevices').value = 2;
+  currentEditDeviceSlots = [];
+  currentEditLicenseId = null;
+  document.getElementById('deviceSlotSection').style.display = 'none';
   document.getElementById('saveBtn').textContent = '발급';
   document.getElementById('modalErr').textContent = '';
   onTypeChange();
@@ -1426,12 +1437,59 @@ function openEditModal(encoded) {
   document.getElementById('mPayMemo').value = d.pay_memo || '';
   document.getElementById('mPhone').value = d.phone || '';
   document.getElementById('mMemo').value = d.memo || '';
+  document.getElementById('mMaxDevices').value = d.max_devices || 2;
+  currentEditDeviceSlots = Array.isArray(d.device_slots) ? d.device_slots : [];
+  currentEditLicenseId = d.id;
+  document.getElementById('deviceSlotSection').style.display = 'block';
+  renderDeviceSlotsUI();
   document.getElementById('saveBtn').textContent = '저장';
   document.getElementById('modalErr').textContent = '';
   onTypeChange();
   document.getElementById('modalBg').classList.add('show');
 }
 function closeModal() { document.getElementById('modalBg').classList.remove('show'); }
+
+let currentEditDeviceSlots = [];
+let currentEditLicenseId = null;
+
+function renderDeviceSlotsUI() {
+  const box = document.getElementById('deviceSlotsBox');
+  if (!box) return;
+  if (!currentEditDeviceSlots.length) {
+    box.innerHTML = '<div class="sub-text">아직 등록된 기기가 없습니다.</div>';
+    return;
+  }
+  box.innerHTML = currentEditDeviceSlots.map((s, i) => {
+    const dateStr = s.registered_at ? s.registered_at.slice(0,10) : '-';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;">
+      <span style="font-size:13px;">기기 ${i+1} · 등록일 ${dateStr}</span>
+      <button type="button" class="btn-sm btn-del" onclick="removeDeviceSlot(${i})">삭제</button>
+    </div>`;
+  }).join('');
+}
+
+async function removeDeviceSlot(idx) {
+  if (!currentEditLicenseId) return;
+  if (!confirm('이 기기 등록을 해제할까요? 해당 태블릿은 다시 로그인해야 합니다.')) return;
+  const newSlots = currentEditDeviceSlots.filter((_, i) => i !== idx);
+  try {
+    await edgeCall('UPDATE_LICENSE', { id: currentEditLicenseId, device_slots: newSlots });
+    currentEditDeviceSlots = newSlots;
+    renderDeviceSlotsUI();
+    await loadLicenses();
+  } catch (err) { alert('삭제 실패: ' + err.message); }
+}
+
+async function resetDeviceSlots() {
+  if (!currentEditLicenseId) return;
+  if (!confirm('등록된 기기를 전부 초기화할까요? 모든 태블릿에서 다시 로그인해야 합니다.')) return;
+  try {
+    await edgeCall('UPDATE_LICENSE', { id: currentEditLicenseId, device_slots: [] });
+    currentEditDeviceSlots = [];
+    renderDeviceSlotsUI();
+    await loadLicenses();
+  } catch (err) { alert('초기화 실패: ' + err.message); }
+}
 
 async function saveLicense() {
   const saveBtn = document.getElementById('saveBtn');
@@ -1447,10 +1505,11 @@ async function saveLicense() {
   const pay_memo = document.getElementById('mPayMemo').value.trim() || null;
   const phone = document.getElementById('mPhone').value.trim() || null;
   const memo = document.getElementById('mMemo').value.trim() || null;
+  const max_devices = Number(document.getElementById('mMaxDevices').value) || 2;
   if (!dojang_name) { errEl.textContent = '도장명은 필수입니다.'; return; }
   saveBtn.disabled = true; errEl.textContent = '';
   try {
-    const payload = { dojang_name, license_type, version, expire_date, pay_amount, pay_date, pay_memo, phone, memo };
+    const payload = { dojang_name, license_type, version, expire_date, pay_amount, pay_date, pay_memo, phone, memo, max_devices };
     if (id) { await edgeCall('UPDATE_LICENSE', { id, ...payload }); }
     else { await edgeCall('INSERT_LICENSE', { ...payload, license_key, is_active: true }); }
     closeModal(); await loadLicenses();
