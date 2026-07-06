@@ -463,6 +463,23 @@ body{
 .akm-bulk-danger{background:#fff1f2!important;color:#dc2626!important;border:1px solid #fecdd3!important}
 .akm-bulk-import-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
 
+
+/* ===== AKM v39 layout cleanup: left = select only, right = manage center ===== */
+.student-mode-tabs{display:none!important;}
+#studentPanel .panel-title h2:after{content:' 선택';font-weight:650;color:#707783;font-size:14px;margin-left:4px;}
+#studentPanel .student-tools{border-top:0!important;}
+#studentPanel .student-list{max-height:480px!important;}
+#studentPanel .student-info b{font-weight:720!important;}
+#studentPanel .student-info span{font-weight:480!important;}
+
+/* bulk manager readability: lighter, more Excel-like */
+.akm-bulk-table th{font-weight:700!important;font-size:12px!important;letter-spacing:-.15px!important;}
+.akm-bulk-input{font-weight:500!important;color:#20242b!important;border-color:#dde2eb!important;background:#fff!important;}
+.akm-bulk-input[readonly]{font-weight:500!important;color:#596170!important;background:#f8f9fb!important;}
+.akm-bulk-tools .btn{font-weight:700!important;}
+.akm-bulk-search{width:min(360px,100%);height:40px;border-radius:13px;border:1px solid var(--line2);outline:none;padding:0 13px;background:#fafafa;font-size:13px;font-weight:500;}
+.akm-bulk-search:focus{background:#fff;border-color:#111318;box-shadow:0 0 0 4px rgba(0,0,0,.05);}
+
 </style>
 </head>
 <body>
@@ -518,17 +535,11 @@ body{
           <h2>수련생</h2>
         </div>
       </div>
-      <div class="student-mode-tabs" role="tablist" aria-label="수련생 모드">
-        <button id="studentModeSelect" class="student-mode-btn active" onclick="setStudentPanelMode('select')">👦 선택</button>
-        <button id="studentModeManage" class="student-mode-btn" onclick="setStudentPanelMode('manage')">⚙ 관리</button>
-      </div>
       <div class="student-tools">
         <input id="studentSearch" class="search" type="search" placeholder="학생 이름 검색" oninput="renderStudents()" />
         <select id="classFilter" class="select" onchange="renderStudents()">
           <option value="all">전체 반</option>
         </select>
-        <button id="studentPanelAddBtn" class="student-panel-add hidden" onclick="beginAddStudentInPanel()">+ 학생 등록</button>
-        <button id="studentBulkBtn" class="student-panel-add hidden" onclick="openStudentBulkManager()">📋 명단 표 관리</button>
       </div>
       <div id="selectedRosterBar" class="selected-roster-bar">
         <div class="selected-roster-head">
@@ -1498,39 +1509,24 @@ function renderClassFilter(){
   filter.value = state.classes.includes(current) ? current : 'all';
 }
 function setStudentPanelMode(mode){
-  studentPanelMode = mode === 'manage' ? 'manage' : 'select';
+  studentPanelMode = 'select';
   editingStudentId = null;
-  const selectBtn=document.getElementById('studentModeSelect');
-  const manageBtn=document.getElementById('studentModeManage');
-  if(selectBtn) selectBtn.classList.toggle('active', studentPanelMode==='select');
-  if(manageBtn) manageBtn.classList.toggle('active', studentPanelMode==='manage');
   renderStudents();
 }
 function renderStudents(){
   const list=document.getElementById('studentList');
   const formBox=document.getElementById('studentPanelForm');
-  const addBtn=document.getElementById('studentPanelAddBtn');
-  const bulkBtn=document.getElementById('studentBulkBtn');
   const search=document.getElementById('studentSearch');
   const q=(search?.value||'').trim().toLowerCase();
   const cls=document.getElementById('classFilter').value || 'all';
-  const students=state.students.filter(s=>(cls==='all'||s.className===cls) && (!q||s.name.toLowerCase().includes(q)||String(s.className||'').toLowerCase().includes(q)||String(s.belt||'').toLowerCase().includes(q)));
+  const students=state.students.filter(s=>(cls==='all'||s.className===cls) && (!q||String(s.name||'').toLowerCase().includes(q)||String(s.className||'').toLowerCase().includes(q)||String(s.belt||'').toLowerCase().includes(q)));
   const selectedIds = state.selectedStudentIds || [];
-  const manageMode = studentPanelMode === 'manage';
-  document.getElementById('studentModeSelect')?.classList.toggle('active', !manageMode);
-  document.getElementById('studentModeManage')?.classList.toggle('active', manageMode);
-  if(addBtn) addBtn.classList.toggle('hidden', !manageMode);
-  if(bulkBtn) bulkBtn.classList.toggle('hidden', !manageMode);
-  if(search) search.placeholder = manageMode ? '학생 이름, 반, 띠 검색' : '학생 이름 검색';
+  studentPanelMode = 'select';
+  if(search) search.placeholder = '학생 이름 검색';
+  if(formBox) formBox.innerHTML = '';
   renderSelectedRosterBar();
-  if(formBox) formBox.innerHTML = manageMode && editingStudentId ? studentEditForm(editingStudentId) : '';
   if(!students.length){
-    list.innerHTML = manageMode ? '<div class="empty-state">등록된 학생이 없습니다.<br>+ 학생 등록을 눌러 추가하세요.</div>' : '<div class="empty-state">등록된 학생이 없습니다.<br>관리모드에서 등록하세요.</div>';
-  } else if(manageMode){
-    list.innerHTML=students.map(s=>`<div class="student student-manage-item">
-      <div class="student-info"><b>${escapeHtml(s.name)}</b><span>${escapeHtml(s.className||'반 없음')} · ${escapeHtml(s.belt||'띠 없음')}${s.birth?' · '+escapeHtml(s.birth):''}</span></div>
-      <div class="student-manage-actions"><button class="icon-btn" title="수정" onclick="beginEditStudentInPanel('${s.id}')">✏️</button><button class="icon-btn danger" title="삭제" onclick="deleteStudent('${s.id}')">🗑</button></div>
-    </div>`).join('');
+    list.innerHTML = '<div class="empty-state">등록된 학생이 없습니다.<br>오른쪽 명단 관리 탭에서 등록하세요.</div>';
   } else {
     list.innerHTML=students.map(s=>{
       const idx=selectedIds.indexOf(s.id);
@@ -1872,6 +1868,7 @@ function renderBulkStudentManager(){
     <div class="akm-bulk-tools">
       <button class="btn btn-dark" onclick="saveBulkStudents()">표 내용 저장</button>
       <button class="btn btn-light" onclick="addBulkRow()">+ 빈 줄 추가</button>
+      <input id="bulkStudentSearch" class="akm-bulk-search" type="search" placeholder="학생 이름·반·띠 검색" oninput="filterBulkRows()">
       <button class="btn btn-light" onclick="exportStudentsCsv()">학생 CSV 내보내기</button>
       <button class="btn btn-light" onclick="document.getElementById('bulkStudentCsvInput').click()">학생 CSV 불러오기</button>
       <button class="btn btn-light" onclick="exportRecordsCsv()">기록 CSV 내보내기</button>
@@ -1880,6 +1877,14 @@ function renderBulkStudentManager(){
     <div class="akm-bulk-table-wrap"><table class="akm-bulk-table" id="bulkStudentTable"><thead><tr><th>순번</th><th>이름</th><th>반</th><th>띠</th><th>생년월일</th><th>ID</th><th>삭제</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="akm-bulk-mini">CSV는 엑셀에서 열어 수정할 수 있습니다. ID는 기록 연결용이라 가능하면 그대로 두는 게 좋습니다. 새 학생은 ID를 비워두면 자동 생성됩니다.</div>`;
 }
+function filterBulkRows(){
+  const q=(document.getElementById('bulkStudentSearch')?.value||'').trim().toLowerCase();
+  document.querySelectorAll('#bulkStudentTable tbody tr').forEach(tr=>{
+    const text=[...tr.querySelectorAll('input')].map(i=>i.value||'').join(' ').toLowerCase();
+    tr.style.display = (!q || text.includes(q)) ? '' : 'none';
+  });
+}
+
 function addBulkRow(){
   const tbody=document.querySelector('#bulkStudentTable tbody');
   if(!tbody) return;
