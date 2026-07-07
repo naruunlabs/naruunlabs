@@ -225,10 +225,10 @@ button{font-family:inherit}
 .mode-intro{padding-top:10px}
 .mode-intro p{margin:18px 0 28px;color:var(--gray600);line-height:1.7}
 .outline-btn{display:inline-flex;align-items:center;gap:16px;padding:14px 22px;border:1px solid #111;border-radius:12px;font-weight:800}
-.mode-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 .mode-card{background:#fff;border:1px solid var(--gray200);border-radius:18px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.07);transition:.25s}
 .mode-card:hover{transform:translateY(-6px);box-shadow:0 30px 70px rgba(0,0,0,.12)}
-.mode-img{height:150px;background:linear-gradient(135deg,#111,#343844);position:relative}
+.mode-img{height:150px;background-image:linear-gradient(135deg,#111,#343844);background-size:cover;background-position:center;position:relative}
 .mode-img:after{content:attr(data-img);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:rgba(255,255,255,.55);font-size:12px;font-weight:800}
 .mode-card-body{padding:22px}
 .mode-card h3{font-size:18px;margin-bottom:9px}
@@ -391,25 +391,21 @@ button{font-family:inherit}
     <div class="mode-intro">
       <div class="label">PROGRAM MODE</div>
       <h2 class="h2" data-akm-html="modes_title">다양한 모드로<br>즐겁게 성장하세요</h2>
-      <p data-akm="modes_desc">겨루기, 품새, 기본동작, 미션게임까지 아이들의 수준과 목적에 맞는 모드를 제공합니다.</p>
+      <p data-akm="modes_desc">발차기모드, 격파모드, 겨루기모드까지 실제 수업에 바로 활용할 수 있는 핵심 모드를 제공합니다.</p>
       <a href="#contact" class="outline-btn">모든 모드 문의 →</a>
     </div>
     <div class="mode-grid">
       <div class="mode-card">
-        <div class="mode-img" data-img="/images/mode-sparring.jpg"></div>
-        <div class="mode-card-body"><h3>겨루기 모드</h3><p>실전 같은 겨루기로 반응 속도와 정확도 향상</p><div class="arrow">→</div></div>
+        <div class="mode-img" data-img="images/mode-kick.jpg" data-akm-mode-img="mode1_img"></div>
+        <div class="mode-card-body"><h3 data-akm="mode1_title">발차기 모드</h3><p data-akm="mode1_desc">AI가 발차기 높이와 정확도를 실시간 분석하며 게임처럼 즐겁게 훈련합니다.</p><div class="arrow">→</div></div>
       </div>
       <div class="mode-card">
-        <div class="mode-img" data-img="/images/mode-poomsae.jpg"></div>
-        <div class="mode-card-body"><h3>품새 모드</h3><p>정확한 동작 분석으로 품새 완성도 향상</p><div class="arrow">→</div></div>
+        <div class="mode-img" data-img="images/mode-break.jpg" data-akm-mode-img="mode2_img"></div>
+        <div class="mode-card-body"><h3 data-akm="mode2_title">격파 모드</h3><p data-akm="mode2_desc">날아오는 판을 정확하게 격파하며 순발력과 집중력을 함께 훈련합니다.</p><div class="arrow">→</div></div>
       </div>
       <div class="mode-card">
-        <div class="mode-img" data-img="/images/mode-basic.jpg"></div>
-        <div class="mode-card-body"><h3>기본동작 모드</h3><p>발차기 기본기를 재미있게 반복 훈련</p><div class="arrow">→</div></div>
-      </div>
-      <div class="mode-card">
-        <div class="mode-img" data-img="/images/mode-game.jpg"></div>
-        <div class="mode-card-body"><h3>미션 게임</h3><p>다양한 미션으로 즐겁게 실력 향상</p><div class="arrow">→</div></div>
+        <div class="mode-img" data-img="images/mode-sparring.jpg" data-akm-mode-img="mode3_img"></div>
+        <div class="mode-card-body"><h3 data-akm="mode3_title">겨루기 모드</h3><p data-akm="mode3_desc">AI 상대와 실전처럼 겨루며 반응 속도와 타이밍을 자연스럽게 익힙니다.</p><div class="arrow">→</div></div>
       </div>
     </div>
   </div>
@@ -482,7 +478,16 @@ const AKM_HOME_DEFAULT = {
   hero_img: '',
   why_title: '아이들의 성장을 더 빠르고, 더 재미있게',
   modes_title: '다양한 모드로<br>즐겁게 성장하세요',
-  modes_desc: '겨루기, 품새, 기본동작, 미션게임까지 아이들의 수준과 목적에 맞는 모드를 제공합니다.',
+  modes_desc: '발차기모드, 격파모드, 겨루기모드까지 실제 수업에 바로 활용할 수 있는 핵심 모드를 제공합니다.',
+  mode1_title: '발차기 모드',
+  mode1_desc: 'AI가 발차기 높이와 정확도를 실시간 분석하며 게임처럼 즐겁게 훈련합니다.',
+  mode1_img: 'images/mode-kick.jpg',
+  mode2_title: '격파 모드',
+  mode2_desc: '날아오는 판을 정확하게 격파하며 순발력과 집중력을 함께 훈련합니다.',
+  mode2_img: 'images/mode-break.jpg',
+  mode3_title: '겨루기 모드',
+  mode3_desc: 'AI 상대와 실전처럼 겨루며 반응 속도와 타이밍을 자연스럽게 익힙니다.',
+  mode3_img: 'images/mode-sparring.jpg',
   contact_title: '지금 바로 도장 수업에<br>AI 훈련을 더하세요.',
   contact_desc: 'AI KICK MASTER 도입 문의 및 무료 체험 상담을 신청하시면 도장 환경에 맞춰 안내해드립니다.',
   kakao_label: '바로 상담하기 →'
@@ -494,6 +499,14 @@ function applyHomeData(data){
   document.querySelectorAll('[data-akm-html]').forEach(el=>{ const k=el.dataset.akmHtml; if(k in d) el.innerHTML=safe(d[k]); });
   document.querySelectorAll('[data-akm-href]').forEach(el=>{ const k=el.dataset.akmHref; if(k in d && d[k]) el.setAttribute('href', d[k]); });
   if(d.hero_img){ document.documentElement.style.setProperty('--hero-img', `url('${String(d.hero_img).replace(/'/g,"%27")}')`); }
+  document.querySelectorAll('[data-akm-mode-img]').forEach(el=>{
+    const k = el.dataset.akmModeImg;
+    const img = d[k] || el.dataset.img || '';
+    if(img){
+      el.dataset.img = img;
+      el.style.backgroundImage = `linear-gradient(135deg,rgba(17,17,17,.62),rgba(52,56,68,.50)), url('${String(img).replace(/'/g,"%27")}')`;
+    }
+  });
 }
 async function loadHomeData(){
   try{

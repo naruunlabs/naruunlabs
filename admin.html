@@ -1082,6 +1082,28 @@ table{width:100%;border-collapse:collapse}th{background:#fafafa;padding:15px 14p
     </div>
 
     <div class="edit-section">
+      <h3>프로그램 모드 카드</h3>
+      <div class="field-row">
+        <div class="field-group"><div class="field-label">1번 모드 제목</div><input id="f_mode1_title" class="f-input" type="text" /></div>
+        <div class="field-group"><div class="field-label">1번 모드 이미지 URL</div><input id="f_mode1_img" class="f-input" type="text" placeholder="images/mode-kick.jpg" /></div>
+      </div>
+      <div class="field-row single"><div class="field-group"><div class="field-label">1번 모드 설명</div><textarea id="f_mode1_desc" class="f-textarea"></textarea></div></div>
+
+      <div class="field-row">
+        <div class="field-group"><div class="field-label">2번 모드 제목</div><input id="f_mode2_title" class="f-input" type="text" /></div>
+        <div class="field-group"><div class="field-label">2번 모드 이미지 URL</div><input id="f_mode2_img" class="f-input" type="text" placeholder="images/mode-break.jpg" /></div>
+      </div>
+      <div class="field-row single"><div class="field-group"><div class="field-label">2번 모드 설명</div><textarea id="f_mode2_desc" class="f-textarea"></textarea></div></div>
+
+      <div class="field-row">
+        <div class="field-group"><div class="field-label">3번 모드 제목</div><input id="f_mode3_title" class="f-input" type="text" /></div>
+        <div class="field-group"><div class="field-label">3번 모드 이미지 URL</div><input id="f_mode3_img" class="f-input" type="text" placeholder="images/mode-sparring.jpg" /></div>
+      </div>
+      <div class="field-row single"><div class="field-group"><div class="field-label">3번 모드 설명</div><textarea id="f_mode3_desc" class="f-textarea"></textarea></div></div>
+      <div class="field-hint">이미지는 GitHub에 올린 파일 경로를 넣으면 됩니다. 예: images/mode-kick.jpg</div>
+    </div>
+
+    <div class="edit-section">
       <h3>문의 / 푸터</h3>
       <div class="field-row single"><div class="field-group"><div class="field-label">문의 제목 HTML</div><textarea id="f_contact_title" class="f-textarea"></textarea></div></div>
       <div class="field-row single"><div class="field-group"><div class="field-label">문의 설명</div><textarea id="f_contact_desc" class="f-textarea"></textarea></div></div>
@@ -1624,7 +1646,16 @@ const HOME_DEFAULT = {
   hero_img: 'images/hero-kick.png',
   why_title: '아이들의 성장을 더 빠르고, 더 재미있게',
   modes_title: '다양한 모드로<br>즐겁게 성장하세요',
-  modes_desc: '겨루기, 품새, 기본동작, 미션게임까지 아이들의 수준과 목적에 맞는 모드를 제공합니다.',
+  modes_desc: '발차기모드, 격파모드, 겨루기모드까지 실제 수업에 바로 활용할 수 있는 핵심 모드를 제공합니다.',
+  mode1_title: '발차기 모드',
+  mode1_desc: 'AI가 발차기 높이와 정확도를 실시간 분석하며 게임처럼 즐겁게 훈련합니다.',
+  mode1_img: 'images/mode-kick.jpg',
+  mode2_title: '격파 모드',
+  mode2_desc: '날아오는 판을 정확하게 격파하며 순발력과 집중력을 함께 훈련합니다.',
+  mode2_img: 'images/mode-break.jpg',
+  mode3_title: '겨루기 모드',
+  mode3_desc: 'AI 상대와 실전처럼 겨루며 반응 속도와 타이밍을 자연스럽게 익힙니다.',
+  mode3_img: 'images/mode-sparring.jpg',
   contact_title: '지금 바로 도장 수업에<br>AI 훈련을 더하세요.',
   contact_desc: 'AI KICK MASTER 도입 문의 및 무료 체험 상담을 신청하시면 도장 환경에 맞춰 안내해드립니다.',
   kakao_label: '바로 상담하기 →'
