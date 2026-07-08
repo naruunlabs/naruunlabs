@@ -203,5 +203,46 @@
       <div>© 2026 NAREUN LABS. All rights reserved.</div>
     </div>
   </footer>
+
+  <script>
+  (function(){
+    const ADMIN_EDGE_URL = 'https://ebgoolsymyzkftvavpyj.supabase.co/functions/v1/clever-worker';
+    const logo = document.querySelector('header .brand .mark');
+    if(!logo) return;
+    let clickCount = 0;
+    let clickTimer = null;
+
+    logo.addEventListener('click', function(e){
+      e.preventDefault();
+      clickCount++;
+      clearTimeout(clickTimer);
+      clickTimer = setTimeout(()=>{ clickCount = 0; }, 1500);
+      if(clickCount >= 5){
+        clickCount = 0;
+        clearTimeout(clickTimer);
+        askAdminPassword();
+      }
+    });
+
+    async function askAdminPassword(){
+      const pw = prompt('관리자 비밀번호를 입력하세요');
+      if(!pw) return;
+      try{
+        const res = await fetch(ADMIN_EDGE_URL, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ action:'LOGIN', payload:{ password: pw } })
+        });
+        if(res.ok){
+          window.location.href = 'admin.html';
+        } else {
+          alert('비밀번호가 올바르지 않습니다.');
+        }
+      }catch(err){
+        alert('인증 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      }
+    }
+  })();
+  </script>
 </body>
 </html>
