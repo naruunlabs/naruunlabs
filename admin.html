@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI KICK MASTER · 관리자</title>
+<title>NAREUN LABS · 관리자</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
 <style>
@@ -968,7 +968,7 @@ table{width:100%;border-collapse:collapse}th{background:#fafafa;padding:15px 14p
 <div id="loginWrap">
   <div class="login-box">
     <img class="akm-admin-logo" src="logo.svg" alt="AI KICK MASTER">
-    <p>통합 관리자 페이지</p>
+    <p>NAREUN LABS 통합 관리자</p>
     <div class="login-brand-meta">
       <div class="akm-powered">Powered by Google MediaPipe</div>
     </div>
@@ -989,7 +989,7 @@ table{width:100%;border-collapse:collapse}th{background:#fafafa;padding:15px 14p
     </div>
     <div class="top-actions">
       <button class="btn-sm-act btn-ghost" onclick="openPwModal()">🔑 비밀번호 변경</button>
-      <button class="btn-sm-act btn-ghost" onclick="window.open('index.html','_blank')">👁 홈페이지 미리보기</button>
+      <button class="btn-sm-act btn-ghost" onclick="window.open('index.html','_blank')">👁 NAREUN LABS 미리보기</button>
       <button class="btn-sm-act btn-danger-soft" onclick="logoutAdmin()">로그아웃</button>
     </div>
   </div>
@@ -998,7 +998,7 @@ table{width:100%;border-collapse:collapse}th{background:#fafafa;padding:15px 14p
   <div class="tab-bar">
     <div class="sidebar-brand"><img src="logo-white.svg" alt="AI KICK MASTER"><span>Powered by Google MediaPipe</span></div>
     <button class="tab-btn active" onclick="switchTab('license')">📋 라이선스 관리</button>
-    <button class="tab-btn" onclick="switchTab('home')">🏠 홈페이지 편집</button>
+    <button class="tab-btn" onclick="switchTab('home')">🏠 메인 홈페이지 편집</button>
   </div>
 
   <!-- ===== 라이선스 탭 ===== -->
@@ -1045,7 +1045,7 @@ table{width:100%;border-collapse:collapse}th{background:#fafafa;padding:15px 14p
   <div class="tab-content" id="tab-home">
     <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:20px">
       <button class="btn-add btn-ghost" onclick="loadHomeFields()">↻ 불러오기</button>
-      <button class="btn-add btn-ghost" onclick="window.open('index.html','_blank')">👁 홈페이지 미리보기</button>
+      <button class="btn-add btn-ghost" onclick="window.open('index.html','_blank')">👁 NAREUN LABS 미리보기</button>
       <button class="btn-add btn-gold" onclick="saveHomeData()">💾 홈페이지 저장</button>
     </div>
 
@@ -1691,25 +1691,25 @@ const HOME_DEFAULT = {
   tel_url: 'tel:01000000000',
   phone: '010-0000-0000',
   hours: '평일 10:00 - 19:00',
-  copyright: '© 2026 AI KICK MASTER. All rights reserved.',
-  hero_eyebrow: 'AI 기술로 완성된 태권도 훈련의 새로운 기준',
-  hero_title: '발차기를 <strong>데이터</strong>로.<br>훈련을 <strong>게임</strong>으로.',
-  hero_desc: 'AI가 실시간으로 발차기를 분석하고 피드백하여 아이들의 실력을 빠르고 재미있게 성장시킵니다.',
-  hero_btn1: '프로그램 실행',
-  hero_btn2: '도입 문의',
+  copyright: '© 2026 NAREUN LABS. All rights reserved.',
+  hero_eyebrow: 'AI SPORTS EDUCATION PLATFORM',
+  hero_title: 'Learn with Joy.<br><strong>Grow with AI.</strong>',
+  hero_desc: 'NAREUN LABS는 AI 기술로 스포츠 교육을 더 즐겁고, 더 정확하고, 더 성장하는 경험으로 만듭니다.',
+  hero_btn1: 'AI KICK MASTER 보기',
+  hero_btn2: '문의하기',
   hero_img: 'images/hero-kick.png',
-  why_title: '아이들의 성장을 더 빠르고, 더 재미있게',
-  modes_title: '다양한 모드로<br>즐겁게 성장하세요',
-  modes_desc: '발차기모드, 격파모드, 겨루기모드까지 실제 수업에 바로 활용할 수 있는 핵심 모드를 제공합니다.',
-  mode1_title: '발차기 모드',
-  mode1_desc: 'AI가 발차기 높이와 정확도를 실시간 분석하며 게임처럼 즐겁게 훈련합니다.',
+  why_title: '즐거움에서 시작해 성장으로 이어집니다',
+  modes_title: 'NAREUN LABS 제품군',
+  modes_desc: '현재는 AI KICK MASTER를 공개 제품으로 운영하고, AI JUMP MASTER는 Coming Soon 상태로 준비합니다.',
+  mode1_title: 'AI KICK MASTER',
+  mode1_desc: '웹캠 기반 AI 자세 인식으로 발차기 훈련을 게임처럼 즐기는 태권도장 전용 프로그램입니다.',
   mode1_img: 'images/mode-kick.jpg',
-  mode2_title: '격파 모드',
-  mode2_desc: '날아오는 판을 정확하게 격파하며 순발력과 집중력을 함께 훈련합니다.',
-  mode2_img: 'images/mode-break.jpg',
-  mode3_title: '겨루기 모드',
-  mode3_desc: 'AI 상대와 실전처럼 겨루며 반응 속도와 타이밍을 자연스럽게 익힙니다.',
-  mode3_img: 'images/mode-sparring.jpg',
+  mode2_title: 'AI JUMP MASTER',
+  mode2_desc: '줄넘기 훈련을 AI 측정 경험으로 바꾸는 다음 제품입니다. 현재는 Coming Soon 상태입니다.',
+  mode2_img: 'images/mode-jump.jpg',
+  mode3_title: 'Coming Soon',
+  mode3_desc: '품새, 겨루기 등 추가 제품은 아직 메인 페이지에 공개하지 않습니다.',
+  mode3_img: '',
   core_left_label: 'WHY AKM',
   core_left_title: 'AI가 만드는 새로운<br>태권도 훈련의 기준',
   core_left_desc: 'AI KICK MASTER는 정확한 분석과 재미있는 게임 요소로 아이들의 실력을 체계적으로 성장시킵니다.',
@@ -1729,16 +1729,16 @@ const HOME_DEFAULT = {
   core_right_title: '3가지 핵심 모드',
   core_right_desc: '다양한 훈련 모드로 아이들의 흥미를 높이고 실전 감각과 실력을 함께 키워줍니다.',
   core_mode1_icon: '🥋',
-  core_mode1_title: '발차기 모드',
+  core_mode1_title: 'AI KICK MASTER',
   core_mode1_desc: '발차기 높이와 정확도를 실시간으로 분석하고 게임처럼 즐겁게 훈련합니다.',
   core_mode2_icon: '▣',
-  core_mode2_title: '격파 모드',
-  core_mode2_desc: '날아오는 판을 정확하게 격파하며 순발력과 집중력을 함께 훈련합니다.',
+  core_mode2_title: 'AI JUMP MASTER',
+  core_mode2_desc: '줄넘기 훈련을 AI 측정 경험으로 바꾸는 다음 제품입니다. 현재는 Coming Soon 상태입니다.',
   core_mode3_icon: '⚔',
-  core_mode3_title: '겨루기 모드',
-  core_mode3_desc: 'AI 상대와 실전처럼 겨루며 반응 속도와 타이밍을 자연스럽게 익힙니다.',
-  contact_title: '지금 바로 도장 수업에<br>AI 훈련을 더하세요.',
-  contact_desc: 'AI KICK MASTER 도입 문의 및 무료 체험 상담을 신청하시면 도장 환경에 맞춰 안내해드립니다.',
+  core_mode3_title: 'Coming Soon',
+  core_mode3_desc: '품새, 겨루기 등 추가 제품은 아직 메인 페이지에 공개하지 않습니다.',
+  contact_title: 'AI 스포츠 교육의 시작,<br>NAREUN LABS',
+  contact_desc: 'AI KICK MASTER 도입 문의와 NAREUN LABS 제품 상담을 준비 중입니다.',
   kakao_label: '바로 상담하기 →'
 };
 const HOME_FIELDS = Object.keys(HOME_DEFAULT);
