@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NAREUN LABS Brand Guide v1.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ── NAREUN LABS CORE ── */
+    --ink:#0B0F1A;
+    --ink-2:#121729;
+    --ink-3:#1A2036;
+    --paper:#F5F3EE;
+    --gold:#E8A020;
+    --gold-soft:#F5C560;
+    --line: rgba(245,243,238,0.10);
+    --line-strong: rgba(245,243,238,0.18);
+    --muted:#9AA3B5;
+
+    /* ── AI KICK MASTER ── */
+    --kick-black:#0B0B0D;
+    --kick-red:#E3172E;
+    --kick-orange:#FF6A1A;
+    --kick-red-soft:#FF4D5E;
+
+    /* ── AI JUMP MASTER ── */
+    --jump-navy:#0A1628;
+    --jump-teal:#14B8A6;
+    --jump-lime:#A3E635;
+
+    /* ── SPACING SCALE ── */
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px; --s9:96px;
+
+    /* ── RADIUS SCALE ── */
+    --r-sm:8px; --r-md:14px; --r-lg:20px; --r-pill:999px;
+
+    --font-kr:'Noto Sans KR', sans-serif;
+    --font-data:'Space Grotesk', sans-serif;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ scroll-behavior:smooth; }
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:var(--font-kr);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{ color:inherit; }
+  ::selection{ background:var(--gold); color:var(--ink); }
+
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible{
+    outline:2px solid var(--gold);
+    outline-offset:3px;
+    border-radius:4px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
+  }
+
+  /* ── LAYOUT SHELL ── */
+  .shell{
+    display:grid;
+    grid-template-columns:240px 1fr;
+    min-height:100vh;
+  }
+  @media (max-width:900px){
+    .shell{ grid-template-columns:1fr; }
+  }
+
+  /* ── TOC SIDEBAR ── */
+  .toc{
+    position:sticky; top:0; align-self:start; height:100vh;
+    padding:var(--s6) var(--s5);
+    border-right:1px solid var(--line);
+    overflow-y:auto;
+  }
+  @media (max-width:900px){
+    .toc{
+      position:static; height:auto;
+      display:flex; gap:var(--s3); overflow-x:auto;
+      padding:var(--s4) var(--s5);
+      border-right:none; border-bottom:1px solid var(--line);
+      white-space:nowrap;
+    }
+  }
+  .toc-brand{
+    font-family:var(--font-data); font-weight:700; letter-spacing:0.04em;
+    font-size:14px; color:var(--gold-soft); margin-bottom:var(--s6);
+  }
+  @media (max-width:900px){ .toc-brand{ display:none; } }
+  .toc-list{ list-style:none; display:flex; flex-direction:column; gap:2px; }
+  @media (max-width:900px){ .toc-list{ flex-direction:row; } }
+  .toc-list a{
+    display:block; padding:var(--s2) var(--s3); border-radius:var(--r-sm);
+    font-size:13.5px; color:var(--muted); text-decoration:none;
+    transition:background 0.15s, color 0.15s;
+  }
+  .toc-list a:hover, .toc-list a.active{ background:var(--ink-2); color:var(--paper); }
+
+  main{ min-width:0; }
+
+  /* ── HERO (signature element) ── */
+  .hero{
+    position:relative;
+    padding:var(--s9) var(--s7) var(--s8);
+    overflow:hidden;
+    border-bottom:1px solid var(--line);
+    background:var(--ink);
+  }
+  .hero::before, .hero::after{
+    content:''; position:absolute; width:60vw; height:60vw; border-radius:50%;
+    filter:blur(90px); opacity:0.35; z-index:0;
+    animation:drift 18s ease-in-out infinite alternate;
+  }
+  .hero::before{
+    background:radial-gradient(circle, var(--kick-red), var(--kick-orange) 60%, transparent 75%);
+    bottom:-30%; left:-15%;
+  }
+  .hero::after{
+    background:radial-gradient(circle, var(--jump-teal), var(--jump-lime) 60%, transparent 75%);
+    bottom:-30%; right:-15%;
+    animation-delay:2s;
+  }
+  @keyframes drift{ from{ transform:translateY(0) scale(1); } to{ transform:translateY(-18px) scale(1.06); } }
+  .hero-inner{ position:relative; z-index:1; max-width:760px; }
+  .hero-eyebrow{
+    font-family:var(--font-data); font-weight:600; letter-spacing:0.14em; text-transform:uppercase;
+    font-size:12.5px; color:var(--gold-soft); margin-bottom:var(--s4);
+  }
+  .hero h1{
+    font-size:clamp(36px, 6vw, 64px); font-weight:900; letter-spacing:-0.01em;
+    margin-bottom:var(--s3);
+  }
+  .hero .slogan{
+    font-family:var(--font-data); font-weight:500; font-size:clamp(16px, 2vw, 20px);
+    color:var(--paper); opacity:0.85; margin-bottom:var(--s6);
+  }
+  .hero .desc{ color:var(--muted); font-size:15px; max-width:560px; }
+  .hero-tags{ display:flex; flex-wrap:wrap; gap:var(--s2); margin-top:var(--s6); }
+  .tag{
+    font-family:var(--font-data); font-size:12px; font-weight:600; letter-spacing:0.04em;
+    padding:6px 14px; border-radius:var(--r-pill); border:1px solid var(--line-strong);
+    color:var(--paper); background:rgba(245,243,238,0.04);
+  }
+
+  /* ── SECTIONS ── */
+  section{ padding:var(--s8) var(--s7); border-bottom:1px solid var(--line); }
+  @media (max-width:700px){ section{ padding:var(--s6) var(--s4); } }
+  .sec-head{ margin-bottom:var(--s6); max-width:720px; }
+  .sec-eyebrow{
+    font-family:var(--font-data); font-weight:600; letter-spacing:0.14em; text-transform:uppercase;
+    font-size:12px; color:var(--gold-soft); margin-bottom:var(--s2);
+  }
+  .sec-head h2{ font-size:clamp(24px,3vw,32px); font-weight:700; margin-bottom:var(--s3); }
+  .sec-head p{ color:var(--muted); font-size:14.5px; }
+
+  .sub-head{
+    font-family:var(--font-data); font-weight:600; letter-spacing:0.06em; text-transform:uppercase;
+    font-size:13px; color:var(--muted); margin:var(--s6) 0 var(--s4);
+  }
+  .sub-head:first-of-type{ margin-top:0; }
+
+  /* ── VALUES GRID ── */
+  .values-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:var(--s4); }
+  @media (max-width:900px){ .values-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:520px){ .values-grid{ grid-template-columns:1fr; } }
+  .value-card{
+    background:var(--ink-2); border:1px solid var(--line); border-radius:var(--r-md);
+    padding:var(--s5); text-align:center;
+  }
+  .value-card .icon{ font-size:28px; margin-bottom:var(--s3); display:block; }
+  .value-card .en{ font-family:var(--font-data); font-size:12px; color:var(--gold-soft); letter-spacing:0.05em; margin-bottom:2px; }
+  .value-card .kr{ font-size:14.5px; font-weight:700; }
+
+  /* ── LOGO SECTION ── */
+  .logo-wordmark{
+    display:flex; align-items:center; justify-content:center;
+    padding:var(--s8) var(--s6); background:var(--ink-2); border:1px solid var(--line);
+    border-radius:var(--r-lg); margin-bottom:var(--s5);
+  }
+  .logo-wordmark .mark{
+    font-family:var(--font-data); font-weight:700; font-size:clamp(28px,5vw,44px);
+    letter-spacing:0.02em;
+  }
+  .logo-wordmark .mark .n2{ color:var(--gold); }
+  .logo-rules{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s4); }
+  @media (max-width:700px){ .logo-rules{ grid-template-columns:1fr; } }
+  .rule-card{
+    background:var(--ink-2); border:1px solid var(--line); border-radius:var(--r-md); padding:var(--s5);
+  }
+  .rule-card.do{ border-color:rgba(163,230,53,0.35); }
+  .rule-card.dont{ border-color:rgba(227,23,46,0.35); }
+  .rule-card .label{
+    font-family:var(--font-data); font-weight:700; font-size:12.5px; letter-spacing:0.06em;
+    margin-bottom:var(--s3); display:inline-block; padding:3px 10px; border-radius:var(--r-pill);
+  }
+  .rule-card.do .label{ background:rgba(163,230,53,0.15); color:var(--jump-lime); }
+  .rule-card.dont .label{ background:rgba(227,23,46,0.15); color:var(--kick-red-soft); }
+  .rule-card ul{ list-style:none; display:flex; flex-direction:column; gap:var(--s2); font-size:14px; color:var(--paper); }
+  .rule-card li{ padding-left:var(--s4); position:relative; }
+  .rule-card li::before{ content:'—'; position:absolute; left:0; color:var(--muted); }
+  .note-box{
+    margin-top:var(--s5); padding:var(--s4) var(--s5); background:rgba(232,160,32,0.08);
+    border:1px solid rgba(232,160,32,0.3); border-radius:var(--r-md); font-size:13.5px; color:var(--gold-soft);
+  }
+
+  /* ── COLOR SWATCHES ── */
+  .palette-block{ margin-bottom:var(--s7); }
+  .palette-block:last-child{ margin-bottom:0; }
+  .palette-title{ display:flex; align-items:center; gap:var(--s3); margin-bottom:var(--s2); }
+  .palette-title h3{ font-size:19px; font-weight:700; }
+  .palette-concept{ font-size:13px; color:var(--muted); margin-bottom:var(--s4); }
+  .swatch-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s3); }
+  @media (max-width:900px){ .swatch-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:480px){ .swatch-grid{ grid-template-columns:1fr; } }
+  .swatch{
+    border:1px solid var(--line); border-radius:var(--r-md); overflow:hidden;
+    background:var(--ink-2); cursor:pointer; transition:transform 0.15s, border-color 0.15s;
+  }
+  .swatch:hover{ transform:translateY(-2px); border-color:var(--line-strong); }
+  .swatch-color{ height:76px; background:var(--c); }
+  .swatch-meta{ padding:var(--s3) var(--s4); }
+  .swatch-meta .name{ font-size:13.5px; font-weight:700; display:block; }
+  .swatch-meta .hex{ font-family:var(--font-data); font-size:12.5px; color:var(--muted); display:block; margin:2px 0 6px; }
+  .swatch-meta .usage{ font-size:11.5px; color:var(--muted); line-height:1.4; display:block; }
+  .copied-toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--gold); color:var(--ink); font-weight:700; font-size:13px;
+    padding:10px 20px; border-radius:var(--r-pill); opacity:0; pointer-events:none;
+    transition:opacity 0.2s, transform 0.2s; z-index:100;
+  }
+  .copied-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ── TYPE SPECIMENS ── */
+  .type-row{ padding:var(--s5) 0; border-bottom:1px solid var(--line); display:grid; grid-template-columns:140px 1fr; gap:var(--s5); align-items:baseline; }
+  @media (max-width:700px){ .type-row{ grid-template-columns:1fr; gap:var(--s2); } }
+  .type-row:last-child{ border-bottom:none; }
+  .type-label{ font-family:var(--font-data); font-size:12px; color:var(--muted); letter-spacing:0.04em; }
+  .type-sample.h1{ font-size:clamp(30px,4vw,44px); font-weight:900; }
+  .type-sample.h2{ font-size:28px; font-weight:700; }
+  .type-sample.h3{ font-size:20px; font-weight:700; }
+  .type-sample.body{ font-size:15.5px; font-weight:400; color:var(--paper); max-width:560px; }
+  .type-sample.caption{ font-size:12.5px; color:var(--muted); }
+  .type-sample.data{ font-family:var(--font-data); font-size:22px; font-weight:600; letter-spacing:0.02em; }
+  .font-tags{ display:flex; gap:var(--s2); margin-top:var(--s5); flex-wrap:wrap; }
+
+  /* ── BUTTONS ── */
+  .theme-block{ margin-bottom:var(--s6); padding:var(--s6); border-radius:var(--r-lg); border:1px solid var(--line); }
+  .theme-block.core{ background:var(--ink-2); }
+  .theme-block.kick{ background:linear-gradient(160deg, var(--kick-black), #150506); }
+  .theme-block.jump{ background:linear-gradient(160deg, var(--jump-navy), #081018); }
+  .theme-label{ font-family:var(--font-data); font-size:12px; font-weight:700; letter-spacing:0.08em; color:var(--muted); margin-bottom:var(--s4); text-transform:uppercase; }
+  .btn-row{ display:flex; flex-wrap:wrap; gap:var(--s3); align-items:center; }
+  .btn{
+    font-family:var(--font-kr); font-weight:700; font-size:14.5px;
+    padding:13px 26px; border-radius:var(--r-pill); border:none; cursor:pointer;
+    transition:transform 0.15s, box-shadow 0.15s; display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn:hover{ transform:translateY(-1px); }
+  .btn.core-primary{ background:var(--gold); color:var(--ink); box-shadow:0 8px 24px rgba(232,160,32,0.25); }
+  .btn.core-secondary{ background:transparent; color:var(--paper); border:1.5px solid var(--line-strong); }
+  .btn.core-ghost{ background:transparent; color:var(--gold-soft); padding-left:6px; padding-right:6px; }
+  .btn.kick-primary{ background:linear-gradient(90deg, var(--kick-red), var(--kick-orange)); color:#fff; box-shadow:0 8px 24px rgba(227,23,46,0.3); }
+  .btn.kick-secondary{ background:transparent; color:#fff; border:1.5px solid rgba(255,255,255,0.25); }
+  .btn.jump-primary{ background:linear-gradient(90deg, var(--jump-teal), var(--jump-lime)); color:var(--jump-navy); box-shadow:0 8px 24px rgba(20,184,166,0.3); }
+  .btn.jump-secondary{ background:transparent; color:#fff; border:1.5px solid rgba(255,255,255,0.25); }
+  .btn.disabled{ background:var(--ink-3); color:var(--muted); cursor:not-allowed; opacity:0.6; }
+  .btn.disabled:hover{ transform:none; }
+
+  /* ── CARDS ── */
+  .card-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s5); }
+  @media (max-width:900px){ .card-grid{ grid-template-columns:1fr; } }
+  .demo-card{ border-radius:var(--r-lg); padding:var(--s5); position:relative; overflow:hidden; }
+  .demo-card.standard{ background:var(--ink-2); border:1px solid var(--line); }
+  .demo-card.glass{
+    background:rgba(18,23,41,0.55); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(245,243,238,0.14);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.06), 0 20px 40px rgba(0,0,0,0.35);
+  }
+  .demo-card.stat{
+    background:linear-gradient(160deg, var(--jump-navy), #0d1f38);
+    border:1px solid rgba(20,184,166,0.35);
+  }
+  .demo-card::before{
+    content:''; position:absolute; inset:0; z-index:-1;
+    background:radial-gradient(circle at 30% 20%, rgba(232,160,32,0.08), transparent 60%);
+  }
+  .demo-card .card-tag{ font-family:var(--font-data); font-size:11px; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:var(--s3); }
+  .demo-card h4{ font-size:17px; font-weight:700; margin-bottom:var(--s2); }
+  .demo-card p{ font-size:13.5px; color:var(--muted); }
+  .demo-card .stat-num{ font-family:var(--font-data); font-size:38px; font-weight:700; color:var(--jump-lime); margin:var(--s2) 0; }
+
+  /* ── ICONS ── */
+  .icon-scale{ display:flex; gap:var(--s6); align-items:flex-end; margin-bottom:var(--s5); flex-wrap:wrap; }
+  .icon-item{ text-align:center; }
+  .icon-item .box{
+    border:1.75px solid var(--paper); border-radius:var(--r-sm);
+    display:flex; align-items:center; justify-content:center; margin:0 auto var(--s2);
+  }
+  .icon-item .box.sm{ width:16px; height:16px; }
+  .icon-item .box.md{ width:24px; height:24px; }
+  .icon-item .box.lg{ width:32px; height:32px; }
+  .icon-item .lbl{ font-family:var(--font-data); font-size:11px; color:var(--muted); }
+  .emoji-row{ display:flex; gap:var(--s3); font-size:24px; margin-top:var(--s2); }
+
+  /* ── SPACING/RADIUS TOKENS ── */
+  .token-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  .token-table th{ text-align:left; font-family:var(--font-data); font-size:11.5px; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); padding:var(--s2) var(--s3); border-bottom:1px solid var(--line-strong); }
+  .token-table td{ padding:var(--s3); border-bottom:1px solid var(--line); vertical-align:middle; }
+  .token-vis{ background:var(--gold); border-radius:2px; }
+  .radius-vis{ width:44px; height:44px; background:var(--jump-teal); border:1px solid var(--line); }
+
+  /* ── DOMAIN SITEMAP ── */
+  .sitemap{
+    background:var(--ink-2); border:1px solid var(--line); border-radius:var(--r-lg);
+    padding:var(--s6); font-family:var(--font-data); font-size:14px;
+  }
+  .sitemap .root{ font-weight:700; color:var(--gold-soft); font-size:16px; margin-bottom:var(--s4); }
+  .sitemap ul{ list-style:none; padding-left:var(--s6); border-left:1px dashed var(--line-strong); }
+  .sitemap li{ padding:var(--s2) 0; position:relative; color:var(--paper); }
+  .sitemap li::before{ content:'└─'; color:var(--muted); margin-right:8px; }
+  .sitemap .future{ color:var(--muted); }
+  .sitemap .redirect{
+    margin-top:var(--s5); padding-top:var(--s5); border-top:1px solid var(--line);
+    display:flex; align-items:center; gap:var(--s3); flex-wrap:wrap; color:var(--muted); font-size:13px;
+  }
+  .sitemap .redirect .from{ color:var(--kick-orange); font-weight:600; }
+  .sitemap .redirect .to{ color:var(--jump-lime); font-weight:600; }
+
+  /* ── ROADMAP RECAP ── */
+  .roadmap{ display:flex; flex-direction:column; gap:2px; }
+  .phase-row{ display:grid; grid-template-columns:64px 1fr; gap:var(--s4); padding:var(--s3) var(--s4); border-radius:var(--r-sm); align-items:center; }
+  .phase-row:nth-child(odd){ background:var(--ink-2); }
+  .phase-num{ font-family:var(--font-data); font-weight:700; color:var(--gold-soft); font-size:13px; }
+  .phase-txt{ font-size:13.5px; color:var(--paper); }
+  .phase-txt .active-tag{ font-family:var(--font-data); font-size:10.5px; background:rgba(255,106,26,0.18); color:var(--kick-orange); padding:2px 8px; border-radius:var(--r-pill); margin-left:8px; }
+
+  footer{
+    padding:var(--s6) var(--s7); display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:var(--s3); color:var(--muted); font-size:12.5px; font-family:var(--font-data);
+  }
+</style>
+</head>
+<body>
+<div class="copied-toast" id="toast">HEX 복사됨</div>
+
+<div class="shell">
+  <nav class="toc">
+    <div class="toc-brand">NAREUN LABS</div>
+    <ul class="toc-list">
+      <li><a href="#top">Top</a></li>
+      <li><a href="#overview">브랜드 개요</a></li>
+      <li><a href="#logo">로고</a></li>
+      <li><a href="#color">컬러 시스템</a></li>
+      <li><a href="#type">타이포그래피</a></li>
+      <li><a href="#buttons">버튼</a></li>
+      <li><a href="#cards">카드 스타일</a></li>
+      <li><a href="#icons">아이콘 · 이모지</a></li>
+      <li><a href="#tokens">여백 · radius</a></li>
+      <li><a href="#domain">도메인 구조</a></li>
+      <li><a href="#roadmap">프로젝트 로드맵</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <header class="hero" id="top">
+      <div class="hero-inner">
+        <div class="hero-eyebrow">Brand Guide · v1.0</div>
+        <h1>NAREUN LABS</h1>
+        <div class="slogan">"Learn with Joy. Grow with AI."</div>
+        <p class="desc">태권도 현장의 전문성과 AI 기술을 결합해, 배우는 즐거움과 성장의 경험을 만드는 나른랩스의 통합 브랜드 가이드입니다. 앞으로 진행되는 홈페이지 및 AI KICK MASTER · AI JUMP MASTER 리뉴얼은 이 문서의 기준을 따릅니다.</p>
+        <div class="hero-tags">
+          <span class="tag">Modern</span>
+          <span class="tag">Premium</span>
+          <span class="tag">AI</span>
+          <span class="tag">Fun</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ═══ 브랜드 개요 ═══ -->
+    <section id="overview">
+      <div class="sec-head">
+        <div class="sec-eyebrow">Overview</div>
+        <h2>브랜드 개요</h2>
+        <p>나른랩스가 만드는 모든 제품이 공유하는 핵심 가치입니다. 문구 · UI 톤 · 마케팅 카피를 만들 때 이 5가지 중 무엇을 말하고 있는지 항상 점검하세요.</p>
+      </div>
+      <div class="values-grid">
+        <div class="value-card"><span class="icon">😊</span><span class="en">ENJOYMENT</span><span class="kr">즐거움</span></div>
+        <div class="value-card"><span class="icon">🌱</span><span class="en">GROWTH</span><span class="kr">성장</span></div>
+        <div class="value-card"><span class="icon">🤖</span><span class="en">INNOVATION</span><span class="kr">AI 기술</span></div>
+        <div class="value-card"><span class="icon">🛡</span><span class="en">RELIABILITY</span><span class="kr">신뢰성</span></div>
+        <div class="value-card"><span class="icon">🥋</span><span class="en">PROFESSIONALISM</span><span class="kr">전문성</span></div>
+      </div>
+    </section>
+
+    <!-- ═══ 로고 ═══ -->
+    <section id="logo">
+      <div class="sec-head">
+        <div class="sec-eyebrow">Logo</div>
+        <h2>로고 사용 규칙</h2>
+        <p>정식 심볼(모노그램)은 별도 제작 전까지, 워드마크 기준으로 규칙을 적용합니다. 심볼이 제작되면 이 섹션을 업데이트하세요.</p>
+      </div>
+      <div class="logo-wordmark">
+        <div class="mark">NAREU<span class="n2">N</span> LABS</div>
+      </div>
+      <div class="logo-rules">
+        <div class="rule-card do">
+          <span class="label">DO</span>
+          <ul>
+            <li>로고 주변에 글자 높이(N 기준)만큼 여백을 항상 확보한다</li>
+            <li>Ink(#0B0F1A) 또는 Paper(#F5F3EE) 단색 배경 위에서만 사용한다</li>
+            <li>가로 최소 80px 이하로는 축소하지 않는다</li>
+            <li>파비콘 등 초소형 사용 시 "N" 모노그램만 단독 사용한다</li>
+          </ul>
+        </div>
+        <div class="rule-card dont">
+          <span class="label">DON'T</span>
+          <ul>
+            <li>가로/세로 비율을 임의로 늘리거나 줄이지 않는다</li>
+            <li>Kick Red / Jump Teal 등 제품 컬러로 로고를 재채색하지 않는다</li>
+            <li>그림자, 외곽선, 입체 효과를 추가하지 않는다</li>
+            <li>사진이나 복잡한 패턴 위에 직접 얹지 않는다 (필요 시 딤 처리된 오버레이 사용)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note-box">📌 심볼/모노그램 로고는 아직 제작 전이에요. 다음 단계에서 원하시면 워드마크 기반의 심볼 컨셉을 같이 잡아볼 수 있어요.</div>
+    </section>
+
+    <!-- ═══ 컬러 시스템 ═══ -->
+    <section id="color">
+      <div class="sec-head">
+        <div class="sec-eyebrow">Color System</div>
+        <h2>컬러 시스템</h2>
+        <p>스와치를 클릭하면 HEX 코드가 복사됩니다. 코드 작업 시 그대로 CSS 변수 이름으로 붙여 넣어 쓰세요.</p>
+      </div>
+
+      <div class="palette-block">
+        <div class="palette-title"><h3>🏛 NAREUN LABS Core</h3></div>
+        <div class="palette-concept">메인 홈페이지 · 공통 UI · 브랜드 커뮤니케이션에 사용하는 본사 컬러</div>
+        <div class="swatch-grid">
+          <div class="swatch" style="--c:#0B0F1A" data-hex="#0B0F1A"><div class="swatch-color"></div><div class="swatch-meta"><span class="name">Ink</span><span class="hex">#0B0F1A</span><span class="usage">기본 배경</span></div></div>
+          <div class="swatch" style="--c:#121729" data-hex="#121729"><div class="swatch-color"></div><div class="swatch-meta"><span class="name">Ink-2</span><span class="hex">#121729</span><span class="usage">카드 · 표면</span></div></div>
+          <div class="swatch" style="--c:#F5F3EE" data-hex="#F5F3EE"><div class="swatch-color"></div><div class="swatch-meta"><span class="name">Paper</span><span class="hex">#F5F3EE</span><span class="usage">본문 텍스트 · 라이트 배경</span></div></div>
+          <div class="swatch" style="--c:#E8A020" data-hex="#E8A020"><div class="swatch-color"></div><div class="swatch-meta"><span class="name">Signal Gold</span><span class="hex">#E8A020</span><span class="usage">주요 CTA · 강조</span></div></div>
+        </div>
+      </div>
+
+      <div class="palette-block">
+        <div class="palette-title"><h3>🥋 AI KICK MASTER</h3></div>
+        <div class="palette-concept">강렬함 · 타격감 · 에너지</div>
+        <div class="swatch-grid">
+          <div class="swatch" style="--c:#0B0B0D" data-hex="#0B0B0D"><div class="swatch-color"></div><div class="swatch-meta"><span class="name">Impact Black</span><span class="hex">#0B0B0D</span><span class="usage">배경</span></div></div>
+          <div class="swatch" style="--c:#E3172E" data-hex="#E3172E"><div class="swatch-color"></div><div class="swatch-meta"><span class="name">Kick Red</span><span class="hex">#E3172E</span><span class="usage">메인 액센트 · CTA</span></div></div>
+          <div class="swatch" style="--c:#FF6A1A" data-hex="#FF6A1A"><div class="swatch-color"></div><div class="swatch-meta"><span class="name">Impact Orange</span><span class="hex">#FF6A1A</span><span class="usage">카운트 · 임팩트 순간 강조</span></div></div>
+          <div class="swatch" style="--c:#FF4D5E" data-hex="#FF4D5E"><div class="swatch-color"></div><div class="swatch-meta"><span class="name">Red Soft</span><span class="hex">#FF4D5E</span><span class="usage">보조 텍스트 · hover</span></div></div>
+        </div>
+      </div>
+
+      <div class="palette-block">
+        <div class="palette-title"><h3>🤸 AI JUMP MASTER</h3></div>
+        <div class="palette-concept">리듬 · 속도 · 활력</div>
+        <div class="swatch-grid">
+          <div class="swatch" style="--c:#0A1628" data-hex="#0A1628"><div class="swatch-color"></div><div class="swatch-meta"><span class="name">Dark Navy</span><span class="hex">#0A1628</span><span class="usage">배경</span></div></div>
+          <div class="swatch" style="--c:#14B8A6" data-hex="#14B8A6"><div class="swatch-color"></div><div class="swatch-meta"><span class="name">Teal</span><span class="hex">#14B8A6</span><span class="usage">메인 액센트</span></div></div>
+          <div class="swatch" style="--c:#A3E635" data-hex="#A3E635"><div class="swatch-color"></div><div class="swatch-meta"><span class="name">Lime</span><span class="hex">#A3E635</span><span class="usage">기록 · 스트릭 강조</span></div></div>
+          <div class="swatch" style="--c:#0D1F38" data-hex="#0D1F38"><div class="swatch-color"></div><div class="swatch-meta"><span class="name">Navy Soft</span><span class="hex">#0D1F38</span><span class="usage">카드 표면</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 타이포그래피 ═══ -->
+    <section id="type">
+      <div class="sec-head">
+        <div class="sec-eyebrow">Typography</div>
+        <h2>타이포그래피</h2>
+        <p>한글/영문 본문은 Noto Sans KR, 숫자·HEX·라벨 등 데이터성 텍스트는 Space Grotesk를 사용합니다.</p>
+      </div>
+      <div class="type-row"><span class="type-label">H1 · 900</span><span class="type-sample h1">나른랩스 리뉴얼</span></div>
+      <div class="type-row"><span class="type-label">H2 · 700</span><span class="type-sample h2">AI KICK MASTER</span></div>
+      <div class="type-row"><span class="type-label">H3 · 700</span><span class="type-sample h3">발차기 정확도 분석</span></div>
+      <div class="type-row"><span class="type-label">Body · 400</span><span class="type-sample body">태권도장 현장에서 바로 쓸 수 있는 AI 코칭 도구를 만듭니다. 문장은 짧고 명확하게, 존댓말 기본 톤을 유지합니다.</span></div>
+      <div class="type-row"><span class="type-label">Caption · 400</span><span class="type-sample caption">보조 설명 · 타임스탬프 · 메타 정보</span></div>
+      <div class="type-row"><span class="type-label">Data · Grotesk</span><span class="type-sample data">128 KICKS · 00:42</span></div>
+      <div class="font-tags">
+        <span class="tag">Noto Sans KR — 본문/제목</span>
+        <span class="tag">Space Grotesk — 숫자/라벨/HEX</span>
+      </div>
+    </section>
+
+    <!-- ═══ 버튼 ═══ -->
+    <section id="buttons">
+      <div class="sec-head">
+        <div class="sec-eyebrow">Buttons</div>
+        <h2>버튼 시스템</h2>
+        <p>제품마다 Primary 컬러만 바뀌고, 구조(radius, weight, 크기)는 동일하게 유지합니다.</p>
+      </div>
+
+      <div class="theme-block core">
+        <div class="theme-label">Naruun Labs Core</div>
+        <div class="btn-row">
+          <button class="btn core-primary">시작하기</button>
+          <button class="btn core-secondary">더 알아보기</button>
+          <button class="btn core-ghost">건너뛰기 →</button>
+          <button class="btn disabled" disabled>준비 중</button>
+        </div>
+      </div>
+
+      <div class="theme-block kick">
+        <div class="theme-label" style="color:#ffb199">AI Kick Master</div>
+        <div class="btn-row">
+          <button class="btn kick-primary">훈련 시작</button>
+          <button class="btn kick-secondary">기록 보기</button>
+        </div>
+      </div>
+
+      <div class="theme-block jump">
+        <div class="theme-label" style="color:#8fe3d6">AI Jump Master</div>
+        <div class="btn-row">
+          <button class="btn jump-primary">점프 시작</button>
+          <button class="btn jump-secondary">스트릭 확인</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 카드 ═══ -->
+    <section id="cards">
+      <div class="sec-head">
+        <div class="sec-eyebrow">Cards</div>
+        <h2>카드 스타일</h2>
+        <p>기존 프로그램들의 "네이비 글래스 HUD" 스타일을 공식 컴포넌트로 정의합니다.</p>
+      </div>
+      <div class="card-grid">
+        <div class="demo-card standard">
+          <div class="card-tag">Standard</div>
+          <h4>기본 카드</h4>
+          <p>일반 콘텐츠, 목록, 설정 화면 등 기본 UI에 사용합니다.</p>
+        </div>
+        <div class="demo-card glass">
+          <div class="card-tag">Glass HUD</div>
+          <h4>글래스 HUD 카드</h4>
+          <p>실시간 측정 화면, 대시보드 등 몰입감이 필요한 화면에 사용합니다. 반드시 배경에 그라디언트/이미지가 있어야 유리 효과가 보입니다.</p>
+        </div>
+        <div class="demo-card stat">
+          <div class="card-tag">Stat</div>
+          <h4>기록 카드</h4>
+          <div class="stat-num">247</div>
+          <p>연속 점프 · 오늘의 최고 기록</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 아이콘 ═══ -->
+    <section id="icons">
+      <div class="sec-head">
+        <div class="sec-eyebrow">Icons & Emoji</div>
+        <h2>아이콘 · 이모지 가이드</h2>
+        <p>시스템/내비게이션은 라인 아이콘, 친근한 안내 문구는 이모지를 사용합니다.</p>
+      </div>
+      <div class="sub-head">라인 아이콘 사이즈 스케일 (stroke 1.75px)</div>
+      <div class="icon-scale">
+        <div class="icon-item"><div class="box sm"></div><div class="lbl">16px · SM</div></div>
+        <div class="icon-item"><div class="box md"></div><div class="lbl">24px · MD (기본)</div></div>
+        <div class="icon-item"><div class="box lg"></div><div class="lbl">32px · LG</div></div>
+      </div>
+      <div class="sub-head">허용 이모지 (비공식 UI · 대시보드 전용)</div>
+      <div class="emoji-row">🥋 📅 📢 🔄 😊 🌱 🤖 🛡</div>
+    </section>
+
+    <!-- ═══ 토큰 ═══ -->
+    <section id="tokens">
+      <div class="sec-head">
+        <div class="sec-eyebrow">Spacing & Radius</div>
+        <h2>여백 · Radius 토큰</h2>
+        <p>8px 기준 스케일을 모든 제품에 동일하게 적용합니다.</p>
+      </div>
+      <table class="token-table">
+        <tr><th>토큰</th><th>값</th><th>미리보기</th></tr>
+        <tr><td>--s2</td><td>8px</td><td><div class="token-vis" style="width:8px;height:8px"></div></td></tr>
+        <tr><td>--s4</td><td>16px</td><td><div class="token-vis" style="width:16px;height:16px"></div></td></tr>
+        <tr><td>--s6</td><td>32px</td><td><div class="token-vis" style="width:32px;height:16px"></div></td></tr>
+        <tr><td>--s8</td><td>64px</td><td><div class="token-vis" style="width:64px;height:16px"></div></td></tr>
+        <tr><td>--r-sm</td><td>8px</td><td><div class="radius-vis" style="border-radius:8px"></div></td></tr>
+        <tr><td>--r-md</td><td>14px</td><td><div class="radius-vis" style="border-radius:14px"></div></td></tr>
+        <tr><td>--r-lg</td><td>20px</td><td><div class="radius-vis" style="border-radius:20px"></div></td></tr>
+        <tr><td>--r-pill</td><td>999px</td><td><div class="radius-vis" style="border-radius:999px"></div></td></tr>
+      </table>
+    </section>
+
+    <!-- ═══ 도메인 구조 ═══ -->
+    <section id="domain">
+      <div class="sec-head">
+        <div class="sec-eyebrow">Domain Structure</div>
+        <h2>도메인 구조</h2>
+        <p>앞으로 추가되는 모든 제품은 별도 도메인 없이 naruunlabs.kr 하위 경로로 운영합니다.</p>
+      </div>
+      <div class="sitemap">
+        <div class="root">naruunlabs.kr</div>
+        <ul>
+          <li>/kickmaster <span class="future">— AI KICK MASTER</span></li>
+          <li>/jumpmaster <span class="future">— AI JUMP MASTER</span></li>
+          <li>/poomsae <span class="future">— 추후 출시 예정</span></li>
+        </ul>
+        <div class="redirect">
+          <span class="from">aikickmaster.kr</span> → 301 리다이렉트 → <span class="to">naruunlabs.kr/kickmaster</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 로드맵 ═══ -->
+    <section id="roadmap">
+      <div class="sec-head">
+        <div class="sec-eyebrow">Reference</div>
+        <h2>프로젝트 로드맵</h2>
+        <p>현재 브랜드 가이드(Phase 1) 작업 중이며, 이후 순서대로 진행합니다.</p>
+      </div>
+      <div class="roadmap">
+        <div class="phase-row"><span class="phase-num">P0</span><span class="phase-txt">프로젝트 구조 정리 (공통 Assets / CSS / JS)</span></div>
+        <div class="phase-row"><span class="phase-num">P1</span><span class="phase-txt">NAREUN LABS 브랜드 가이드 제작 <span class="active-tag">현재 단계</span></span></div>
+        <div class="phase-row"><span class="phase-num">P2</span><span class="phase-txt">naruunlabs.kr 메인 홈페이지 제작</span></div>
+        <div class="phase-row"><span class="phase-num">P3</span><span class="phase-txt">KICK MASTER / JUMP MASTER 소개 페이지(Index) 리뉴얼 · aikickmaster.kr 리다이렉트</span></div>
+        <div class="phase-row"><span class="phase-num">P4</span><span class="phase-txt">HOME / ADMIN 리뉴얼</span></div>
+        <div class="phase-row"><span class="phase-num">P5</span><span class="phase-txt">KICK MASTER / JUMP MASTER 프로그램 UI 리뉴얼</span></div>
+      </div>
+    </section>
+
+    <footer>
+      <span>NAREUN LABS Brand Guide · v1.0</span>
+      <span>Last updated 2026-07-08</span>
+    </footer>
+  </main>
+</div>
+
+<script>
+  // 스와치 클릭 → HEX 복사
+  document.querySelectorAll('.swatch').forEach(function(el){
+    el.addEventListener('click', function(){
+      var hex = el.getAttribute('data-hex');
+      var toast = document.getElementById('toast');
+      var showToast = function(){
+        toast.textContent = hex + ' 복사됨';
+        toast.classList.add('show');
+        setTimeout(function(){ toast.classList.remove('show'); }, 1400);
+      };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(hex).then(showToast).catch(showToast);
+      } else {
+        showToast();
+      }
+    });
+  });
+
+  // TOC 활성 상태 표시
+  var sections = document.querySelectorAll('main section, main header');
+  var links = document.querySelectorAll('.toc-list a');
+  var map = {};
+  links.forEach(function(l){ map[l.getAttribute('href').slice(1)] = l; });
+
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      var link = map[entry.target.id];
+      if(!link) return;
+      if(entry.isIntersecting){
+        links.forEach(function(l){ l.classList.remove('active'); });
+        link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-40% 0px -50% 0px' });
+
+  sections.forEach(function(s){ if(s.id) observer.observe(s); });
+</script>
+</body>
+</html>

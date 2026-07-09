@@ -1,10 +1,15 @@
-const CACHE_NAME = 'akm-v9-20260704-font-gpu-timing';
+const CACHE_NAME = 'naruunlabs-v1-20260709-ui-renewal';
 const ASSETS = [
   './',
-  'home.html',
-  'aikickmaster.html',
-  'admin.html',
   'index.html',
+  'kickmaster.html',
+  'jumpmaster.html',
+  'kickhome.html',
+  'jumphome.html',
+  'aikickmaster.html',
+  'aijumpmaster.html',
+  'admin.html',
+  'manifest.json',
   'logo.svg',
   'logo-icon.svg',
   'logo-white.svg'
