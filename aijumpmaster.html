@@ -622,7 +622,7 @@ button{font-family:inherit;cursor:pointer;}
 <body>
 
 <!-- ─────────── 시작 화면 (변경 없음) ─────────── -->
-<div id="startScreen">
+<div id="startScreen" class="hidden">
   <div class="brand-mark">NAREUN LABS</div>
   <h1 class="product-title">점프마스터</h1>
   <div class="hop-emblem"><div class="hop-dot"></div><div class="hop-dot"></div><div class="hop-dot"></div></div>
@@ -807,6 +807,7 @@ let fpsEMA=0;                // 디버그 fps 표시용
 let audioCtx=null;
 function ensureAudio(){ try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
   if(audioCtx.state==='suspended') audioCtx.resume(); }catch(e){} }
+['click','touchstart'].forEach(ev=>document.addEventListener(ev,ensureAudio));
 function tone(freq,dur,type='sine',vol=.18,delay=0){
   if(!audioCtx) return;
   const t=audioCtx.currentTime+delay;
@@ -1211,6 +1212,12 @@ document.getElementById('enterBtn').onclick=async()=>{
   await initModel(); await startCamera(); loop();
   updateStats();
 };
+// ── 시작화면 없이 바로 실행 (킥마스터와 동일하게) ──
+(async()=>{
+  document.getElementById('app').classList.add('show');
+  await initModel(); await startCamera(); loop();
+  updateStats();
+})();
 document.getElementById('flipBtn').onclick=async()=>{
   facingMode=(facingMode==='user')?'environment':'user';
   camWrap.classList.toggle('mirrored',facingMode==='user');
