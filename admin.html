@@ -1003,9 +1003,12 @@ table{width:100%;border-collapse:collapse}th{background:#fafafa;padding:15px 14p
 
   <!-- ===== 라이선스 탭 ===== -->
   <div class="tab-content active" id="tab-license">
-    <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:16px">
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <button class="home-subtab-btn active" id="license-subtab-kick-btn" onclick="switchLicenseSubtab('kick')">🥋 킥마스터 라이선스</button>
+      <button class="home-subtab-btn" id="license-subtab-jump-btn" onclick="switchLicenseSubtab('jump')">🪢 점프마스터 라이선스</button>
+      <div style="flex:1"></div>
       <button class="btn-add btn-ghost" onclick="loadLicenses()">↻ 새로고침</button>
-      <button class="btn-add" onclick="openAddModal()">+ 라이선스 발급</button>
+      <button class="btn-add" id="licenseAddBtn" onclick="openAddModal()">+ 라이선스 발급</button>
     </div>
 
     <div class="stats-row">
@@ -1038,7 +1041,7 @@ table{width:100%;border-collapse:collapse}th{background:#fafafa;padding:15px 14p
         <tbody id="dojangsTable"><tr><td colspan="8" class="loading">불러오는 중...</td></tr></tbody>
       </table>
     </div>
-    <div class="footer-note">admin v6 · administrator console · 2026-06-27</div>
+    <div class="footer-note">admin v7 · administrator console</div>
   </div>
 
   <!-- ===== 홈페이지 편집 탭 ===== -->
@@ -1223,7 +1226,8 @@ table{width:100%;border-collapse:collapse}th{background:#fafafa;padding:15px 14p
    공통
    ============================== */
 const ADMIN_EDGE_URL = 'https://ebgoolsymyzkftvavpyj.supabase.co/functions/v1/clever-worker';
-const LOGIN_URL = 'https://aikickmaster.kr/';
+const KICK_LOGIN_URL = 'https://naruunlabs.kr/kickmaster.html';
+const JUMP_LOGIN_URL = 'https://naruunlabs.kr/jumpmaster.html';
 const AKM_VERSION = '1.0.0';
 const HOME_DATA_KEY = 'akm_home_data';
 // ※ ADMIN_SECRET 완전 제거 — 서버(Edge Function 환경변수)에만 존재
@@ -1231,15 +1235,16 @@ const HOME_DATA_KEY = 'akm_home_data';
 
 let ADMIN_TOKEN = ''; // 로그인 성공 시 서버에서 발급받은 임시 토큰 (1시간 유효)
 let LICENSES = [];
+let currentLicenseProduct = 'kick'; // 'kick' | 'jump' — license_key 접두어(AKM-/JMP-)로 구분
 
 function escapeHtml(v) {
   return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 }
 function todayStr() { return new Date().toISOString().slice(0,10); }
-function generateKey() {
+function generateKey(prefix) {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const seg = () => Array.from({length:4}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
-  return `AKM-${seg()}-${seg()}-${seg()}`;
+  return `${prefix||'AKM'}-${seg()}-${seg()}-${seg()}`;
 }
 function daysUntil(dateStr) {
   if (!dateStr) return null;
@@ -1369,12 +1374,24 @@ async function loadLicenses() {
   }
 }
 
+function currentProductPrefix(){ return currentLicenseProduct === 'jump' ? 'JMP-' : 'AKM-'; }
+function licensesForCurrentProduct(){ return LICENSES.filter(d => (d.license_key||'').startsWith(currentProductPrefix())); }
+
+function switchLicenseSubtab(p){
+  currentLicenseProduct = p;
+  document.getElementById('license-subtab-kick-btn').classList.toggle('active', p==='kick');
+  document.getElementById('license-subtab-jump-btn').classList.toggle('active', p==='jump');
+  document.getElementById('licenseAddBtn').textContent = p==='jump' ? '+ 점프마스터 라이선스 발급' : '+ 킥마스터 라이선스 발급';
+  updateStats(); renderTable();
+}
+
 function updateStats() {
-  const expiringCount = LICENSES.filter(d => { const days = daysUntil(d.expire_date); return d.is_active && days !== null && days >= 0 && days <= 7; }).length;
-  document.getElementById('statTotal').textContent = LICENSES.length;
-  document.getElementById('statActive').textContent = LICENSES.filter(d => d.is_active).length;
-  document.getElementById('statInactive').textContent = LICENSES.filter(d => !d.is_active).length;
-  document.getElementById('statLifetime').textContent = LICENSES.filter(d => d.license_type === 'lifetime').length;
+  const list = licensesForCurrentProduct();
+  const expiringCount = list.filter(d => { const days = daysUntil(d.expire_date); return d.is_active && days !== null && days >= 0 && days <= 7; }).length;
+  document.getElementById('statTotal').textContent = list.length;
+  document.getElementById('statActive').textContent = list.filter(d => d.is_active).length;
+  document.getElementById('statInactive').textContent = list.filter(d => !d.is_active).length;
+  document.getElementById('statLifetime').textContent = list.filter(d => d.license_type === 'lifetime').length;
   document.getElementById('statExpiring').textContent = expiringCount;
 }
 
@@ -1388,7 +1405,7 @@ function renderTable() {
   const tbody = document.getElementById('dojangsTable');
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
   const filter = document.getElementById('statusFilter').value;
-  let rows = LICENSES.filter(d => {
+  let rows = licensesForCurrentProduct().filter(d => {
     const hay = [d.dojang_name, d.license_key, d.phone||'', d.memo||''].join(' ').toLowerCase();
     const days = daysUntil(d.expire_date);
     const isExpired = days !== null && days < 0;
@@ -1439,12 +1456,13 @@ function onTypeChange() {
 }
 
 function openAddModal() {
-  document.getElementById('modalTitle').innerHTML = '라이선스 <span>발급</span>';
+  const productLabel = currentLicenseProduct === 'jump' ? 'AI JUMP MASTER' : 'AI KICK MASTER';
+  document.getElementById('modalTitle').innerHTML = `${productLabel} 라이선스 <span>발급</span>`;
   document.getElementById('editId').value = '';
   document.getElementById('mDojang').value = '';
   document.getElementById('mLicenseType').value = 'lifetime';
   document.getElementById('mVersion').value = AKM_VERSION;
-  document.getElementById('mKey').value = generateKey();
+  document.getElementById('mKey').value = generateKey(currentLicenseProduct === 'jump' ? 'JMP' : 'AKM');
   document.getElementById('mExpireDate').value = '';
   document.getElementById('mPayAmount').value = '';
   document.getElementById('mPayDate').value = todayStr();
@@ -1463,7 +1481,8 @@ function openAddModal() {
 
 function openEditModal(encoded) {
   const d = JSON.parse(decodeURIComponent(encoded));
-  document.getElementById('modalTitle').innerHTML = '라이선스 <span>수정</span>';
+  const productLabel = (d.license_key||'').startsWith('JMP-') ? 'AI JUMP MASTER' : 'AI KICK MASTER';
+  document.getElementById('modalTitle').innerHTML = `${productLabel} 라이선스 <span>수정</span>`;
   document.getElementById('editId').value = d.id;
   document.getElementById('mDojang').value = d.dojang_name || '';
   document.getElementById('mLicenseType').value = d.license_type || 'lifetime';
@@ -1621,9 +1640,13 @@ async function deleteLicense(id, name) {
 
 async function copyLicenseMsg(encoded) {
   const d = JSON.parse(decodeURIComponent(encoded));
+  const isJump = (d.license_key||'').startsWith('JMP-');
+  const productName = isJump ? 'AI JUMP MASTER' : 'AI KICK MASTER';
+  const loginUrl = isJump ? JUMP_LOGIN_URL : KICK_LOGIN_URL;
+  const actionLabel = isJump ? '줄넘기 프로그램 실행' : '발차기 프로그램 실행';
   const typeLabel = d.license_type === 'package' ? '태블릿 패키지' : '영구 라이선스';
   const expireLine = d.expire_date ? `📅 만료일: ${d.expire_date}\n` : '';
-  const msg = `[AI KICK MASTER 라이선스 안내]\n\n안녕하세요, ${d.dojang_name} 관장님!\nAI KICK MASTER 라이선스를 보내드립니다.\n\n🔑 라이선스 키\n${d.license_key}\n\n📋 라이선스 종류: ${typeLabel}\n${expireLine}🔗 접속 링크: ${LOGIN_URL}\n\n✅ 사용 방법\n1. 위 홈페이지로 접속하세요\n2. [발차기 프로그램 실행] 버튼을 누르세요\n3. 라이선스 키를 입력하세요\n4. 최초 1회 입력 후 자동으로 실행됩니다\n\n⚠️ 라이선스 키는 소중히 보관해주세요.\n문의사항은 카카오톡으로 연락 주세요.`;
+  const msg = `[${productName} 라이선스 안내]\n\n안녕하세요, ${d.dojang_name} 관장님!\n${productName} 라이선스를 보내드립니다.\n\n🔑 라이선스 키\n${d.license_key}\n\n📋 라이선스 종류: ${typeLabel}\n${expireLine}🔗 접속 링크: ${loginUrl}\n\n✅ 사용 방법\n1. 위 홈페이지로 접속하세요\n2. [${actionLabel}] 버튼을 누르세요\n3. 라이선스 키를 입력하세요\n4. 최초 1회 입력 후 자동으로 실행됩니다\n\n⚠️ 라이선스 키는 소중히 보관해주세요.\n문의사항은 카카오톡으로 연락 주세요.`;
   try { await navigator.clipboard.writeText(msg); showToast('✅ 카톡 안내문을 복사했습니다!'); }
   catch { prompt('복사 실패. 아래 내용을 직접 복사하세요.', msg); }
 }
