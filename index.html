@@ -5,125 +5,134 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NAREUN LABS | Learn with Joy. Grow with AI.</title>
   <meta name="description" content="NAREUN LABS는 AI 기술로 스포츠 교육을 더 즐겁고, 더 정확하고, 더 성장하는 경험으로 만듭니다." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg:#05070b;
-      --panel:#0b1220;
-      --panel2:#101a2b;
-      --text:#f5f7fb;
-      --muted:#9aa7bd;
-      --line:rgba(255,255,255,.11);
-      --blue:#35a7ff;
-      --cyan:#00d6c9;
-      --red:#e50914;
-      --orange:#ff7a1a;
-      --lime:#a3ff12;
-      --shadow:0 28px 80px rgba(0,0,0,.45);
-      --radius:28px;
+      --ink:#0B0F1A;
+      --ink-2:#121729;
+      --ink-3:#1A2036;
+      --paper:#F5F3EE;
+      --gold:#E8A020;
+      --gold-soft:#F5C560;
+      --muted:#9AA3B5;
+      --line:rgba(245,243,238,.10);
+      --line-strong:rgba(245,243,238,.18);
+      --kick-red:#E3172E;
+      --kick-orange:#FF6A1A;
+      --jump-teal:#14B8A6;
+      --jump-lime:#A3E635;
+      --font-kr:'Noto Sans KR',system-ui,-apple-system,sans-serif;
+      --font-data:'Space Grotesk',system-ui,sans-serif;
+      --wrap: min(1180px, calc(100% - 48px));
     }
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
+
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth;background:var(--ink)}
     body{
-      margin:0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color:var(--text);
+      min-height:100vh;
       background:
-        radial-gradient(circle at 18% 12%, rgba(53,167,255,.22), transparent 28%),
-        radial-gradient(circle at 78% 16%, rgba(0,214,201,.16), transparent 30%),
-        radial-gradient(circle at 72% 70%, rgba(229,9,20,.10), transparent 30%),
-        var(--bg);
+        radial-gradient(circle at 15% 6%, rgba(227,23,46,.24), transparent 31%),
+        radial-gradient(circle at 86% 12%, rgba(20,184,166,.18), transparent 30%),
+        linear-gradient(180deg,#0B0F1A 0%,#0B0F1A 58%,#090c15 100%);
+      color:var(--paper);
+      font-family:var(--font-kr);
+      line-height:1.55;
+      letter-spacing:-.025em;
       overflow-x:hidden;
+      -webkit-font-smoothing:antialiased;
     }
     a{color:inherit;text-decoration:none}
-    .wrap{width:min(1180px, calc(100% - 40px)); margin:0 auto}
+    .wrap{width:var(--wrap);margin:0 auto}
+    ::selection{background:var(--gold);color:var(--ink)}
+
     header{
-      position:sticky; top:0; z-index:50;
-      backdrop-filter: blur(18px);
-      background:rgba(5,7,11,.70);
+      position:sticky;top:0;z-index:50;
+      background:rgba(11,15,26,.72);
+      backdrop-filter:blur(20px);
       border-bottom:1px solid var(--line);
     }
-    .nav{height:76px; display:flex; align-items:center; justify-content:space-between; gap:18px}
-    .brand{display:flex; align-items:center; gap:12px; font-weight:900; letter-spacing:.08em}
-    .mark{width:38px;height:38px;border-radius:13px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:grid;place-items:center;box-shadow:0 0 30px rgba(53,167,255,.35)}
-    .mark span{font-size:18px;font-weight:1000;color:#041018}
-    nav{display:flex; gap:24px; color:var(--muted); font-size:14px; font-weight:700}
-    .nav-cta{padding:12px 17px;border-radius:999px;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#041018;font-weight:900}
+    .nav{height:76px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+    .brand{display:flex;align-items:center;gap:12px;font-family:var(--font-data);font-weight:700;letter-spacing:.04em;font-size:14px}
+    .mark{width:34px;height:34px;border-radius:50%;background:var(--paper);color:var(--ink);display:grid;place-items:center;font-family:var(--font-data);font-size:16px;font-weight:700;box-shadow:0 0 0 1px rgba(245,243,238,.1)}
+    nav{display:flex;gap:28px;color:var(--muted);font-size:13.5px;font-weight:700}
+    nav a{position:relative;transition:color .18s ease}
+    nav a:after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:1px;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:.18s ease}
+    nav a:hover{color:var(--paper)}
+    nav a:hover:after{transform:scaleX(1)}
+    .nav-cta{font-family:var(--font-data);font-size:13px;font-weight:700;color:var(--gold-soft);display:inline-flex;align-items:center;gap:8px}
+    .nav-cta:after{content:"→";transition:transform .18s ease}.nav-cta:hover:after{transform:translateX(4px)}
 
-    .hero{padding:88px 0 70px}
-    .hero-grid{display:grid; grid-template-columns: 1.05fr .95fr; gap:46px; align-items:center}
-    .badge{display:inline-flex;align-items:center;gap:9px;padding:9px 13px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.055);color:#b9c7dc;font-weight:800;font-size:13px}
-    h1{font-size:clamp(42px, 7vw, 82px); line-height:.98; margin:24px 0 20px; letter-spacing:-.06em}
-    h1 em{font-style:normal;background:linear-gradient(135deg,#fff,var(--cyan));-webkit-background-clip:text;color:transparent}
-    .lead{font-size:clamp(18px,2vw,22px); line-height:1.65; color:#c3ccdc; margin:0 0 28px; max-width:650px}
-    .actions{display:flex; flex-wrap:wrap; gap:12px; margin-top:26px}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:15px 20px;border-radius:16px;font-weight:950;border:1px solid var(--line);transition:.2s transform,.2s opacity;background:rgba(255,255,255,.06)}
-    .btn:hover{transform:translateY(-2px);opacity:.94}
-    .btn.primary{background:linear-gradient(135deg,var(--blue),var(--cyan)); color:#041018; border:0}
-    .btn.red{background:linear-gradient(135deg,var(--red),var(--orange)); border:0}
-    .btn.disabled{opacity:.48;pointer-events:none;cursor:not-allowed;background:rgba(255,255,255,.08);color:#9aa7bd;border:1px solid var(--line)}
-    .hero-card{position:relative; min-height:520px; border:1px solid var(--line); border-radius:var(--radius); background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.035)); box-shadow:var(--shadow); overflow:hidden; padding:24px}
-    .hero-card:before{content:""; position:absolute; inset:-70px; background:radial-gradient(circle at 50% 30%, rgba(53,167,255,.35), transparent 28%), radial-gradient(circle at 65% 70%, rgba(163,255,18,.18), transparent 22%); filter:blur(8px)}
-    .screen{position:relative;height:100%;min-height:470px;border-radius:22px;background:#070b12;border:1px solid rgba(255,255,255,.12);padding:18px;display:flex;flex-direction:column;gap:16px}
-    .topline{display:flex;justify-content:space-between;align-items:center;color:#7f8da4;font-size:12px;font-weight:800;letter-spacing:.1em}
-    .visual{flex:1;border-radius:20px;background:linear-gradient(135deg,rgba(53,167,255,.10),rgba(0,214,201,.06)), #0b1220; border:1px solid var(--line);display:grid;place-items:center;position:relative;overflow:hidden}
-    .orb{width:230px;height:230px;border-radius:50%;background:conic-gradient(from 180deg,var(--blue),var(--cyan),var(--lime),var(--red),var(--blue));filter:blur(.2px);opacity:.9;animation:spin 8s linear infinite}
-    .orb:after{content:"AI";position:absolute;inset:22px;border-radius:50%;background:#080d16;display:grid;place-items:center;font-size:62px;font-weight:1000;letter-spacing:-.08em;color:#fff}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    .metric{border:1px solid var(--line);border-radius:18px;padding:14px;background:rgba(255,255,255,.055)}
-    .metric b{display:block;font-size:24px}.metric span{color:var(--muted);font-size:12px;font-weight:800}
+    .hero{position:relative;min-height:calc(100vh - 76px);display:grid;place-items:center;padding:92px 0 74px;text-align:center;overflow:hidden;border-bottom:1px solid var(--line)}
+    .hero:before,.hero:after{content:"";position:absolute;width:52vw;height:52vw;border-radius:50%;filter:blur(90px);opacity:.32;pointer-events:none}
+    .hero:before{left:-23vw;bottom:-27vw;background:radial-gradient(circle,var(--kick-red),var(--kick-orange) 52%,transparent 72%)}
+    .hero:after{right:-24vw;bottom:-28vw;background:radial-gradient(circle,var(--jump-teal),var(--jump-lime) 54%,transparent 74%)}
+    .hero-grid{position:relative;z-index:2;width:min(980px,100%);margin:0 auto;display:block}
+    .hero-card{display:none!important}
+    .badge{display:block;font-family:var(--font-data);font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-soft);margin-bottom:22px}
+    h1{font-size:clamp(50px,9.2vw,112px);line-height:.9;font-weight:900;letter-spacing:-.075em;margin:0 auto 28px;max-width:980px}
+    h1 em{font-style:normal;color:var(--paper);opacity:.74}
+    .lead{width:min(710px,100%);margin:0 auto;color:#C7CEDB;font-size:clamp(16px,1.7vw,20px);line-height:1.8;font-weight:400;word-break:keep-all}
+    .actions{display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap;margin-top:38px}
+    .btn{display:inline-flex;align-items:center;gap:9px;font-size:15px;font-weight:800;line-height:1;color:var(--paper);background:transparent;border:0;border-radius:0;padding:4px 0 8px;position:relative;transition:color .18s ease,opacity .18s ease}
+    .btn:after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:currentColor;transform:scaleX(.18);transform-origin:left;transition:transform .2s ease,opacity .2s ease;opacity:.55}
+    .btn:hover{color:var(--gold-soft)}
+    .btn:hover:after{transform:scaleX(1);opacity:1}
+    .btn.primary{color:var(--gold-soft)}
+    .btn.red{color:#fff}.btn.red:hover{color:#ffb199}
+    .btn.disabled,.coming-soon-btn{color:var(--muted)!important;pointer-events:none;opacity:.65!important}
+    .btn.disabled:after,.coming-soon-btn:after{background:var(--muted);transform:scaleX(.18);opacity:.35}
 
-    section{padding:70px 0}
-    .section-head{display:flex;justify-content:space-between;gap:30px;align-items:end;margin-bottom:28px}
-    .eyebrow{color:var(--cyan);font-size:13px;font-weight:1000;letter-spacing:.14em;text-transform:uppercase}
-    h2{font-size:clamp(30px,4vw,50px);line-height:1.08;letter-spacing:-.045em;margin:8px 0 0}.sub{color:var(--muted);line-height:1.7;max-width:560px;margin:0}
-    .values{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.value{padding:22px;border-radius:22px;background:rgba(255,255,255,.055);border:1px solid var(--line)}.value strong{display:block;font-size:18px;margin-bottom:8px}.value p{margin:0;color:var(--muted);line-height:1.55;font-size:14px}
-    .products{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.product{position:relative;overflow:hidden;min-height:330px;border-radius:28px;padding:28px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.04));box-shadow:var(--shadow)}
-    .product:before{content:"";position:absolute;right:-100px;top:-100px;width:280px;height:280px;border-radius:50%;filter:blur(8px);opacity:.75}.product.kick:before{background:radial-gradient(circle,var(--red),transparent 65%)}.product.jump:before{background:radial-gradient(circle,var(--lime),transparent 65%)}
-    .product > *{position:relative}.tag{display:inline-flex;padding:8px 11px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);color:#d7dfeb;font-size:12px;font-weight:900}.product h3{font-size:34px;line-height:1;margin:22px 0 12px;letter-spacing:-.04em}.product p{color:#c2cad8;line-height:1.65;max-width:440px}.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}.chip{padding:9px 11px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:13px;color:#cbd5e5;font-weight:800}
-    .kick .accent{color:var(--orange)}.jump .accent{color:var(--lime)}
-    .tag.available{background:rgba(22,167,101,.14);border-color:rgba(22,167,101,.25);color:#7ee3ad}
-    .tag.soon{background:rgba(163,255,18,.12);border-color:rgba(163,255,18,.24);color:var(--lime)}
-    .process{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.step{padding:23px;border-radius:22px;background:var(--panel);border:1px solid var(--line)}.step b{color:var(--cyan)}.step h3{margin:14px 0 8px}.step p{margin:0;color:var(--muted);line-height:1.6;font-size:14px}
-    .cta{padding:44px;border-radius:32px;border:1px solid var(--line);background:linear-gradient(135deg,rgba(53,167,255,.17),rgba(0,214,201,.08));display:flex;justify-content:space-between;gap:20px;align-items:center}.cta h2{margin:0}.cta p{color:#c5cedd;line-height:1.6;margin:10px 0 0}
-    footer{padding:34px 0 46px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}.foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}.foot b{color:#fff}
-    @media(max-width:900px){.hero-grid,.products,.process{grid-template-columns:1fr}.values{grid-template-columns:repeat(2,1fr)}nav{display:none}.section-head,.cta{display:block}.hero{padding-top:54px}.hero-card{min-height:460px}.metric-row{grid-template-columns:1fr}.cta .actions{margin-top:20px}}
-    @media(max-width:520px){.wrap{width:min(100% - 28px,1180px)}.values{grid-template-columns:1fr}.hero-card{padding:14px}.product{padding:22px}.nav-cta{display:none}}
-  
+    section{position:relative;padding:96px 0;border-bottom:1px solid var(--line)}
+    .section-head{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:56px;align-items:start;margin-bottom:52px}
+    .eyebrow{font-family:var(--font-data);font-size:12px;font-weight:700;letter-spacing:.17em;text-transform:uppercase;color:var(--gold-soft);margin-bottom:14px}
+    h2{font-size:clamp(34px,4.8vw,64px);line-height:1.02;letter-spacing:-.06em;font-weight:900;margin:0;word-break:keep-all}
+    .sub{font-size:15.5px;line-height:1.85;color:var(--muted);word-break:keep-all;margin-top:8px}
 
-/* =========================================================
-   NAREUN LABS UI RENEWAL 2026-07-09
-   - Brand guide aligned: ink/paper/gold base
-   - Hero visual card removed, copy centered
-   ========================================================= */
-:root{
-  --bg:#0B0F1A; --panel:#121729; --panel2:#1A2036; --text:#F5F3EE; --muted:#9AA3B5;
-  --line:rgba(245,243,238,.12); --gold:#E8A020; --gold-soft:#F5C560;
-  --blue:#35a7ff; --cyan:#14B8A6; --red:#E3172E; --orange:#FF6A1A; --lime:#A3E635;
-}
-body{
-  font-family:'Pretendard','Noto Sans KR',system-ui,-apple-system,sans-serif;
-  background:
-    radial-gradient(circle at 18% 8%, rgba(227,23,46,.24), transparent 30%),
-    radial-gradient(circle at 84% 15%, rgba(20,184,166,.20), transparent 34%),
-    radial-gradient(circle at 50% 88%, rgba(232,160,32,.10), transparent 34%),
-    var(--bg);
-  color:var(--text);
-}
-header{background:rgba(11,15,26,.76);border-bottom:1px solid var(--line)}
-.nav{height:78px}.brand{letter-spacing:.04em}.mark{background:linear-gradient(135deg,var(--gold),var(--gold-soft));box-shadow:0 0 28px rgba(232,160,32,.23)}.mark span{color:#0B0F1A}
-nav a:hover{color:var(--text)}.nav-cta{background:var(--text);color:#0B0F1A;box-shadow:0 14px 32px rgba(0,0,0,.22)}
-.hero{padding:108px 0 86px;text-align:center;position:relative;overflow:hidden}.hero:before{content:"";position:absolute;inset:auto -15% -48% -15%;height:62%;background:radial-gradient(ellipse at center,rgba(232,160,32,.16),transparent 68%);pointer-events:none}.hero-grid{position:relative;z-index:1;display:block;max-width:910px;margin:0 auto}.hero-card{display:none!important}.badge{justify-content:center;color:var(--gold-soft);border-color:rgba(232,160,32,.28);background:rgba(232,160,32,.08)}
-h1{margin:26px auto 22px;max-width:900px;font-size:clamp(42px,8vw,92px);letter-spacing:-.065em}h1 em{background:linear-gradient(135deg,#fff,var(--gold-soft));-webkit-background-clip:text;background-clip:text;color:transparent}.lead{margin:0 auto 30px;max-width:760px;color:#C8CEDA}.actions{justify-content:center}.btn{border-radius:999px;border-color:var(--line);background:rgba(245,243,238,.055);box-shadow:none}.btn.primary{background:var(--gold);color:#0B0F1A;border:0}.btn:hover{transform:translateY(-2px);border-color:rgba(245,243,238,.28)}
-section{padding:82px 0}.eyebrow{color:var(--gold-soft)}.section-head{align-items:flex-start}.values,.process{gap:16px}.value,.step,.product,.cta{background:rgba(18,23,41,.74);border:1px solid var(--line);box-shadow:0 24px 70px rgba(0,0,0,.25);backdrop-filter:blur(14px)}.value strong,.step h3{color:#fff}.product{min-height:345px}.product.kick:before{background:radial-gradient(circle,rgba(227,23,46,.72),transparent 66%)}.product.jump:before{background:radial-gradient(circle,rgba(163,230,53,.60),transparent 66%)}.tag{background:rgba(245,243,238,.06)}.chip{background:rgba(245,243,238,.055)}.cta{background:linear-gradient(135deg,rgba(232,160,32,.13),rgba(20,184,166,.08))}
-@media(max-width:900px){.hero{padding:70px 0 58px}.section-head{gap:12px}.values{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:520px){.hero{padding:56px 0 46px}.actions .btn{width:100%}.values{grid-template-columns:1fr}}
+    .values{display:grid;grid-template-columns:1.15fr .85fr;gap:1px;background:var(--line);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+    .value{min-height:190px;padding:34px;background:rgba(11,15,26,.90)}
+    .value:nth-child(1){grid-row:span 2;display:flex;flex-direction:column;justify-content:flex-end;min-height:381px;background:linear-gradient(145deg,rgba(232,160,32,.12),rgba(18,23,41,.7))}
+    .value strong{display:block;font-family:var(--font-data);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-soft);margin-bottom:12px}
+    .value p{margin:0;color:#D6DBE5;font-size:clamp(18px,2.2vw,28px);font-weight:700;line-height:1.35;word-break:keep-all}
+    .value:not(:first-child) p{font-size:17px;font-weight:500;color:var(--muted);line-height:1.65}
 
+    .products{display:grid;gap:0;border-top:1px solid var(--line)}
+    .product{position:relative;display:grid;grid-template-columns:1fr 1.05fr;gap:42px;align-items:end;padding:56px 0;border-bottom:1px solid var(--line);overflow:hidden}
+    .product:before{content:"";position:absolute;right:0;top:50%;width:280px;height:280px;border-radius:50%;filter:blur(78px);opacity:.22;transform:translateY(-50%);pointer-events:none}
+    .product.kick:before{background:var(--kick-red)}.product.jump:before{background:var(--jump-teal)}
+    .tag{display:inline-flex;font-family:var(--font-data);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:18px}
+    .tag.available{color:#ffb199}.tag.soon{color:var(--jump-lime)}
+    .product h3{font-family:var(--font-data);font-size:clamp(44px,7.4vw,88px);line-height:.88;letter-spacing:-.055em;margin:0;text-transform:uppercase}
+    .product h3 .accent{display:inline-block}.kick .accent{color:#ff6a1a}.jump .accent{color:var(--jump-lime)}
+    .product p{max-width:540px;color:#C7CEDB;font-size:16px;line-height:1.82;word-break:keep-all;margin:0 0 24px}
+    .chips{display:flex;flex-wrap:wrap;gap:16px;margin:0 0 28px;color:var(--muted);font-size:13px;font-weight:700}
+    .chip{position:relative;padding-left:14px}.chip:before{content:"";position:absolute;left:0;top:.72em;width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.7}
+    .product.jump:after{content:"COMING SOON";position:absolute;right:0;top:56px;font-family:var(--font-data);font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--jump-lime);opacity:.86}
 
-    .product.jump{border-color:rgba(163,230,53,.28)}
-    .product.jump:after{content:"COMING SOON";position:absolute;right:24px;top:24px;padding:9px 13px;border-radius:999px;background:rgba(163,230,53,.14);border:1px solid rgba(163,230,53,.30);color:var(--lime);font-size:12px;font-weight:1000;letter-spacing:.08em;z-index:2;box-shadow:0 10px 24px rgba(0,0,0,.18)}
-    .coming-soon-btn{background:rgba(163,230,53,.10)!important;color:var(--lime)!important;border:1px solid rgba(163,230,53,.24)!important;opacity:1!important;pointer-events:none!important}
+    .process{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+    .step{background:rgba(11,15,26,.9);padding:30px;min-height:220px;display:flex;flex-direction:column;justify-content:space-between}
+    .step b{font-family:var(--font-data);font-size:12px;color:var(--gold-soft);letter-spacing:.12em}.step h3{font-size:22px;letter-spacing:-.03em;margin:36px 0 10px}.step p{font-size:14px;color:var(--muted);line-height:1.65;word-break:keep-all;margin:0}
 
+    .cta{display:grid;grid-template-columns:1fr auto;align-items:end;gap:36px;padding:64px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+    .cta h2{font-size:clamp(34px,5vw,68px)}.cta p{color:var(--muted);font-size:16px;line-height:1.75;margin-top:18px;word-break:keep-all;max-width:620px}
+    footer{padding:34px 0 48px;color:var(--muted);font-size:13px;font-family:var(--font-data)}
+    .foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}.foot b{color:var(--paper)}
+
+    @media(max-width:900px){
+      .wrap{width:min(100% - 32px,1180px)}
+      nav{display:none}.nav{height:68px}.nav-cta{font-size:12px}
+      .hero{min-height:auto;padding:74px 0 64px}.hero:before,.hero:after{width:80vw;height:80vw}
+      h1{font-size:clamp(44px,13vw,82px)}.lead{font-size:16px}
+      section{padding:72px 0}.section-head{grid-template-columns:1fr;gap:22px;margin-bottom:34px}
+      .values{grid-template-columns:1fr}.value:nth-child(1){grid-row:auto;min-height:240px}.value{min-height:auto;padding:28px 0;background:transparent;border-bottom:1px solid var(--line)}.values{display:block;background:transparent;border:0}.value p{font-size:22px}
+      .product{grid-template-columns:1fr;gap:24px;padding:44px 0}.product.jump:after{right:auto;left:0;top:28px}.product.jump .tag{margin-top:28px}
+      .process{grid-template-columns:1fr 1fr}.cta{grid-template-columns:1fr;padding:44px 0}
+    }
+    @media(max-width:560px){
+      .brand span{font-size:13px}.nav-cta{display:none}.actions{gap:22px}.btn{font-size:14px}
+      .process{grid-template-columns:1fr}.step{min-height:auto;gap:20px}.product h3{font-size:48px}.chips{gap:10px 14px}.cta .actions{justify-content:flex-start}
+    }
   </style>
 </head>
 <body>
@@ -133,7 +142,7 @@ section{padding:82px 0}.eyebrow{color:var(--gold-soft)}.section-head{align-items
       <nav>
         <a href="#about">브랜드</a><a href="#products">제품</a><a href="#system">시스템</a><a href="#contact">문의</a>
       </nav>
-      <a class="nav-cta" href="#products">제품 보기</a>
+      <a class="nav-cta" href="#products">Products</a>
     </div>
   </header>
 
@@ -145,19 +154,8 @@ section{padding:82px 0}.eyebrow{color:var(--gold-soft)}.section-head{align-items
           <h1 id="heroTitle">Learn with Joy.<br><em>Grow with AI.</em></h1>
           <p class="lead" id="heroLead">NAREUN LABS는 AI 기술로 스포츠 교육을 더 즐겁고, 더 정확하고, 더 성장하는 경험으로 만듭니다. 아이들이 스스로 도전하고, 기록을 확인하고, 재미있게 훈련할 수 있는 AI 교육 플랫폼을 만듭니다.</p>
           <div class="actions">
-            <a class="btn primary" href="#products">제품 둘러보기</a>
+            <a class="btn primary" href="#products">제품 보기</a>
             <a class="btn" href="#about">브랜드 철학</a>
-          </div>
-        </div>
-        <div class="hero-card" aria-label="AI 스포츠 플랫폼 미리보기">
-          <div class="screen">
-            <div class="topline"><span>NAREUN LABS SYSTEM</span><span>LIVE AI</span></div>
-            <div class="visual"><div class="orb"></div></div>
-            <div class="metric-row">
-              <div class="metric"><b>Kick</b><span>AI KICK MASTER</span></div>
-              <div class="metric"><b>Jump</b><span>AI JUMP MASTER</span></div>
-              <div class="metric"><b>Grow</b><span>RECORD & TRAINING</span></div>
-            </div>
           </div>
         </div>
       </div>
@@ -166,15 +164,14 @@ section{padding:82px 0}.eyebrow{color:var(--gold-soft)}.section-head{align-items
     <section id="about">
       <div class="wrap">
         <div class="section-head">
-          <div><div class="eyebrow">Brand Values</div><h2>즐거움에서 시작해<br>성장으로 이어집니다.</h2></div>
-          <p class="sub">AI는 목적이 아니라 더 좋은 교육 경험을 만드는 도구입니다. NAREUN LABS는 아이들이 계속 하고 싶어지는 훈련, 도장에서 믿고 사용할 수 있는 시스템을 지향합니다.</p>
+          <div><div class="eyebrow">Brand Values</div><h2>기술보다 먼저,<br>수련 경험을 설계합니다.</h2></div>
+          <p class="sub">AI는 보여주기 위한 장식이 아니라 아이들이 더 오래 집중하고, 더 자주 도전하고, 성장 과정을 직접 확인하게 만드는 도구입니다.</p>
         </div>
         <div class="values">
-          <div class="value"><strong>Enjoyment</strong><p>다시 하고 싶어지는 즐거운 경험.</p></div>
-          <div class="value"><strong>Growth</strong><p>기록보다 중요한 꾸준한 성장.</p></div>
-          <div class="value"><strong>Innovation</strong><p>AI 기술을 교육 현장에 맞게 적용.</p></div>
-          <div class="value"><strong>Reliability</strong><p>매일 사용할 수 있는 안정성과 신뢰.</p></div>
-          <div class="value"><strong>Professional</strong><p>스포츠 교육 현장을 이해한 설계.</p></div>
+          <div class="value"><strong>Enjoyment</strong><p>다시 하고 싶어지는 훈련 경험.</p></div>
+          <div class="value"><strong>Growth</strong><p>순간 점수보다 중요한 건 아이가 어제보다 나아졌다는 확실한 감각입니다.</p></div>
+          <div class="value"><strong>Reliability</strong><p>도장에서 매일 켜고 사용할 수 있도록 단순하고 안정적인 흐름을 우선합니다.</p></div>
+          <div class="value"><strong>Professional</strong><p>태권도 현장을 이해한 기준으로 화면, 기록, 사용 동선을 설계합니다.</p></div>
         </div>
       </div>
     </section>
@@ -182,23 +179,31 @@ section{padding:82px 0}.eyebrow{color:var(--gold-soft)}.section-head{align-items
     <section id="products">
       <div class="wrap">
         <div class="section-head">
-          <div><div class="eyebrow">Products</div><h2>NAREUN LABS의 AI 스포츠 교육 제품군</h2></div>
-          <p class="sub">AI KICK MASTER는 사용 가능하며, AI JUMP MASTER는 완성도를 더 높인 뒤 오픈할 예정입니다.</p>
+          <div><div class="eyebrow">Products</div><h2>NAREUN LABS의<br>AI 스포츠 제품군</h2></div>
+          <p class="sub">현재는 AI KICK MASTER를 중심으로 운영합니다. AI JUMP MASTER는 완성도를 더 높인 뒤 정식으로 연결합니다.</p>
         </div>
         <div class="products">
           <article class="product kick">
-            <span class="tag available">AVAILABLE NOW · BLACK · RED</span>
-            <h3>AI KICK<br><span class="accent">MASTER</span></h3>
-            <p>웹캠 기반 AI 자세 인식으로 발차기 훈련을 게임처럼 즐길 수 있는 태권도장 전용 훈련 프로그램입니다.</p>
-            <div class="chips"><span class="chip">발차기 측정</span><span class="chip">콤보</span><span class="chip">랭킹</span><span class="chip">기록 관리</span></div>
-            <div class="actions"><a class="btn red" href="kickmaster.html">Kick Master 보기</a></div>
+            <div>
+              <span class="tag available">Available now</span>
+              <h3>AI KICK<br><span class="accent">MASTER</span></h3>
+            </div>
+            <div>
+              <p>웹캠 기반 AI 자세 인식으로 발차기 훈련을 게임처럼 즐길 수 있는 태권도장 전용 훈련 프로그램입니다.</p>
+              <div class="chips"><span class="chip">발차기 측정</span><span class="chip">콤보</span><span class="chip">랭킹</span><span class="chip">기록 관리</span></div>
+              <div class="actions"><a class="btn red" href="kickmaster.html">Kick Master 보기</a></div>
+            </div>
           </article>
           <article class="product jump">
-            <span class="tag soon">COMING SOON · LIME · TEAL</span>
-            <h3>AI JUMP<br><span class="accent">MASTER</span></h3>
-            <p>줄넘기 훈련을 리듬감 있고 직관적인 AI 측정 경험으로 바꾸는 프로그램입니다. 현재는 내부 테스트와 UI 보완을 진행 중이며, 완성 후 정식 공개됩니다.</p>
-            <div class="chips"><span class="chip">줄넘기 측정</span><span class="chip">스피드</span><span class="chip">챌린지</span><span class="chip">성장 기록</span></div>
-            <div class="actions"><span class="btn disabled coming-soon-btn" aria-disabled="true">Coming Soon</span></div>
+            <div>
+              <span class="tag soon">Coming soon</span>
+              <h3>AI JUMP<br><span class="accent">MASTER</span></h3>
+            </div>
+            <div>
+              <p>줄넘기 훈련을 리듬감 있고 직관적인 AI 측정 경험으로 바꾸는 프로그램입니다. 현재는 내부 테스트와 UI 보완을 진행 중입니다.</p>
+              <div class="chips"><span class="chip">줄넘기 측정</span><span class="chip">스피드</span><span class="chip">챌린지</span><span class="chip">성장 기록</span></div>
+              <div class="actions"><span class="btn disabled coming-soon-btn" aria-disabled="true">오픈 준비 중</span></div>
+            </div>
           </article>
         </div>
       </div>
@@ -208,13 +213,13 @@ section{padding:82px 0}.eyebrow{color:var(--gold-soft)}.section-head{align-items
       <div class="wrap">
         <div class="section-head">
           <div><div class="eyebrow">Platform System</div><h2>제품은 달라도<br>경험은 하나로 이어집니다.</h2></div>
-          <p class="sub">홈, 관리자, 제품 페이지, 실제 프로그램까지 하나의 브랜드 기준으로 정리합니다. 새로운 제품이 추가되어도 같은 구조로 자연스럽게 확장됩니다.</p>
+          <p class="sub">메인 홈페이지, 제품 페이지, 도장 홈, 관리자 화면, 실제 훈련 프로그램까지 하나의 브랜드 기준으로 정리합니다.</p>
         </div>
         <div class="process">
-          <div class="step"><b>01</b><h3>Main Home</h3><p>naruunlabs.kr에서 모든 제품과 브랜드를 소개합니다.</p></div>
-          <div class="step"><b>02</b><h3>Product Page</h3><p>Kick Master, Jump Master 각각의 제품 소개 페이지를 제공합니다.</p></div>
-          <div class="step"><b>03</b><h3>Home / Admin</h3><p>도장별 사용, 학생, 기록, 설정을 관리합니다.</p></div>
-          <div class="step"><b>04</b><h3>AI Program</h3><p>실제 훈련 프로그램에서 AI 측정과 게임형 훈련을 제공합니다.</p></div>
+          <div class="step"><b>01</b><div><h3>Main</h3><p>브랜드와 제품의 첫인상을 전달합니다.</p></div></div>
+          <div class="step"><b>02</b><div><h3>Product</h3><p>각 제품의 목적과 사용 흐름을 보여줍니다.</p></div></div>
+          <div class="step"><b>03</b><div><h3>Home / Admin</h3><p>도장, 학생, 기록, 설정을 관리합니다.</p></div></div>
+          <div class="step"><b>04</b><div><h3>AI Program</h3><p>실제 수련에서 측정과 게임형 훈련을 제공합니다.</p></div></div>
         </div>
       </div>
     </section>
@@ -242,11 +247,8 @@ section{padding:82px 0}.eyebrow{color:var(--gold-soft)}.section-head{align-items
   <script>
   (function(){
     const ADMIN_EDGE_URL = 'https://ebgoolsymyzkftvavpyj.supabase.co/functions/v1/clever-worker';
-
-    // ── 1단계: 쉬운 코드 게이트 (진짜 보안 아님, 그냥 실수로 admin 열리는 것 방지용) ──
-    // 진짜 비밀번호는 admin.html 로그인 화면에서 별도로 검증합니다.
-    // 이 코드를 바꾸고 싶으면 아래 EASY_CODE 값만 수정하면 됩니다.
     const EASY_CODE = '0000';
+    let ADMIN_URL_OVERRIDE = '';
 
     const logo = document.querySelector('header .brand .mark');
     if(logo){
@@ -271,8 +273,6 @@ section{padding:82px 0}.eyebrow{color:var(--gold-soft)}.section-head{align-items
       });
     }
 
-    // ── 관리자에서 저장한 인덱스 문구를 불러와 반영 (실패해도 기본 문구 그대로 유지) ──
-    let ADMIN_URL_OVERRIDE = '';
     fetch(ADMIN_EDGE_URL, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
