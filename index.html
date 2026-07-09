@@ -84,6 +84,9 @@
     .kick .accent{color:var(--orange)}.jump .accent{color:var(--lime)}
     .tag.available{background:rgba(22,167,101,.14);border-color:rgba(22,167,101,.25);color:#7ee3ad}
     .tag.soon{background:rgba(163,255,18,.12);border-color:rgba(163,255,18,.24);color:var(--lime)}
+    .product.soon-locked{opacity:.62;filter:grayscale(.35)}
+    .product.soon-locked:hover{opacity:.72}
+    .soon-ribbon{position:absolute;top:22px;right:-42px;transform:rotate(35deg);background:linear-gradient(135deg,var(--lime),var(--cyan));color:#041018;font-weight:1000;font-size:13px;letter-spacing:.12em;padding:7px 52px;box-shadow:0 10px 24px rgba(0,0,0,.35);z-index:2}
     .process{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.step{padding:23px;border-radius:22px;background:var(--panel);border:1px solid var(--line)}.step b{color:var(--cyan)}.step h3{margin:14px 0 8px}.step p{margin:0;color:var(--muted);line-height:1.6;font-size:14px}
     .cta{padding:44px;border-radius:32px;border:1px solid var(--line);background:linear-gradient(135deg,rgba(53,167,255,.17),rgba(0,214,201,.08));display:flex;justify-content:space-between;gap:20px;align-items:center}.cta h2{margin:0}.cta p{color:#c5cedd;line-height:1.6;margin:10px 0 0}
     footer{padding:34px 0 46px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}.foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}.foot b{color:#fff}
@@ -158,12 +161,13 @@
             <div class="chips"><span class="chip">발차기 측정</span><span class="chip">콤보</span><span class="chip">랭킹</span><span class="chip">기록 관리</span></div>
             <div class="actions"><a class="btn red" href="kickmaster.html">Kick Master 보기</a></div>
           </article>
-          <article class="product jump">
-            <span class="tag available">AVAILABLE NOW · LIME · TEAL</span>
+          <article class="product jump soon-locked">
+            <div class="soon-ribbon">COMING SOON</div>
+            <span class="tag soon">COMING SOON · LIME · TEAL</span>
             <h3>AI JUMP<br><span class="accent">MASTER</span></h3>
             <p>줄넘기 훈련을 리듬감 있고 직관적인 AI 측정 경험으로 바꾸는 프로그램입니다. 속도, 횟수, 도전 요소를 중심으로 구성됩니다.</p>
             <div class="chips"><span class="chip">줄넘기 측정</span><span class="chip">스피드</span><span class="chip">챌린지</span><span class="chip">성장 기록</span></div>
-            <div class="actions"><a class="btn" style="background:linear-gradient(135deg,#14B8A6,#A3E635);border:0;color:#041018" href="jumpmaster.html">Jump Master 보기</a></div>
+            <div class="actions"><span class="btn disabled">Jump Master 준비 중</span></div>
           </article>
         </div>
       </div>
