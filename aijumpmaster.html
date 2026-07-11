@@ -626,9 +626,40 @@ button{font-family:inherit;cursor:pointer;}
 /* NARUUN LABS IN-APP UI POLISH 2026-07-09 */
 button{transition:transform .14s ease, filter .14s ease, background .14s ease}button:hover{filter:brightness(1.06)}.mode-btn,.game-btn,.drill-btn,.start-btn,#startBtn,.btns button{border-radius:14px!important}.panel{box-shadow:inset 1px 0 0 rgba(255,255,255,.04)}#modeBadge,#timerBadge,#status,.stat-box{backdrop-filter:blur(12px)}
 
+/* ===== 라이선스 로그인 화면 (킥마스터와 동일 패턴, 점프 브랜드 컬러) ===== */
+#loginScreen{position:fixed;inset:0;z-index:9999;background:radial-gradient(circle at top,#123b36 0,var(--navy-900) 44%,#050b0a 100%);display:flex;align-items:center;justify-content:center;font-family:'Noto Sans KR',system-ui,sans-serif;}
+#loginScreen.hidden{display:none;}
+.login-box{background:rgba(255,255,255,0.04);border:1.5px solid rgba(20,184,166,0.25);border-radius:24px;padding:48px 44px 40px;width:400px;max-width:92vw;box-shadow:0 8px 48px rgba(0,0,0,0.5);text-align:center;}
+.login-logo-img{height:34px;margin-bottom:4px;}
+.login-sub{font-size:12px;color:#7aa9a0;margin-bottom:10px;font-weight:600;}
+.login-key-label{font-size:12px;color:#9ac5bb;font-weight:800;text-align:left;display:block;margin-bottom:8px;margin-top:20px;}
+.login-key-help{font-size:11px;color:#4a6a60;margin-bottom:20px;line-height:1.5;}
+.login-field{width:100%;margin-bottom:14px;background:rgba(255,255,255,0.06);border:1.5px solid rgba(20,184,166,0.2);border-radius:12px;padding:14px 18px;color:#fff;font-size:15px;font-weight:600;outline:none;box-sizing:border-box;transition:border-color .2s;letter-spacing:1px;text-align:center;}
+.login-field:focus{border-color:var(--teal);}
+.login-field::placeholder{color:#4a6a60;letter-spacing:0;}
+.login-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--teal),var(--lime));border:none;border-radius:12px;color:#04342c;font-size:16px;font-weight:900;cursor:pointer;margin-top:6px;transition:opacity .2s,transform .1s;}
+.login-btn:hover{opacity:.9;}
+.login-btn:active{transform:scale(.98);}
+.login-error{color:#F09595;font-size:13px;font-weight:700;margin-top:14px;min-height:20px;}
+.login-footer{font-size:11px;color:#3a5a50;margin-top:24px;line-height:1.6;}
+
 </style>
 </head>
 <body>
+
+<!-- ===== 라이선스 키 입력 화면 ===== -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo" style="font-size:24px;font-weight:900;color:#fff;letter-spacing:-.5px;margin-bottom:4px;">NARUUN LABS</div>
+    <div class="login-sub">AI JUMP MASTER · 태권도 AI 줄넘기 훈련 시스템</div>
+    <label class="login-key-label">🔑 라이선스 키</label>
+    <div class="login-key-help">구매 후 전달받은 라이선스 키를 입력하세요.<br>최초 1회 입력 후 자동으로 인증됩니다.</div>
+    <input id="licenseKeyInput" class="login-field" type="text" placeholder="JMP-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" />
+    <button class="login-btn" onclick="doLicenseActivate()">인증하기</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-footer">© NARUUN LABS · AI JUMP MASTER<br>naruunlabs.kr · 구매 및 문의는 카카오톡으로 연락해주세요.</div>
+  </div>
+</div>
 
 <!-- ─────────── 시작 화면 (변경 없음) ─────────── -->
 <div id="startScreen" class="hidden">
@@ -652,9 +683,9 @@ button{transition:transform .14s ease, filter .14s ease, background .14s ease}bu
     <!-- 좌상단 브랜드 + 우상단 타이머 -->
     <div class="top-bar">
       <div class="brand-stack">
-        <div class="bs-name">점프마스터</div>
+        <div class="bs-name" id="bsDojangName">점프마스터</div>
         <div class="bs-tag"><span class="bs-dot"></span>정품 인증됨</div>
-        <div class="bs-meta">나른랩스 · v0.2 · Google MediaPipe</div>
+        <div class="bs-meta">나른랩스 · v0.2 · Google MediaPipe · <a href="javascript:void(0)" onclick="logoutLicense()" style="color:inherit;text-decoration:underline;">로그아웃</a></div>
       </div>
       <div id="timerBadge"><div id="timerNum">30</div><div id="timerLabel">남은 시간</div></div>
     </div>
@@ -1221,12 +1252,12 @@ document.getElementById('enterBtn').onclick=async()=>{
   await initModel(); await startCamera(); loop();
   updateStats();
 };
-// ── 시작화면 없이 바로 실행 (킥마스터와 동일하게) ──
-(async()=>{
+// ── 시작화면 없이 바로 실행 (인증 통과 후에만 호출됨) ──
+window.__startApp = async function(){
   document.getElementById('app').classList.add('show');
   await initModel(); await startCamera(); loop();
   updateStats();
-})();
+};
 document.getElementById('flipBtn').onclick=async()=>{
   facingMode=(facingMode==='user')?'environment':'user';
   camWrap.classList.toggle('mirrored',facingMode==='user');
@@ -1269,6 +1300,101 @@ setAppHeight();
 window.addEventListener('resize',setAppHeight,{passive:true});
 window.addEventListener('orientationchange',()=>setTimeout(setAppHeight,250),{passive:true});
 if(window.visualViewport) window.visualViewport.addEventListener('resize',setAppHeight,{passive:true});
+</script>
+
+<!-- ===== 라이선스 인증 (자체 게이트, 서버 검증 포함) ===== -->
+<script>
+const _JMP_EDGE_URL   = 'https://ebgoolsymyzkftvavpyj.supabase.co/functions/v1/verify-license';
+const _JMP_LS_KEY      = 'jmp_license_v1';
+const _JMP_CACHE_DAYS  = 7;
+const _JMP_VERSION     = '0.2.0';
+
+let _jmpFailCount = 0;
+let _jmpFailLockUntil = 0;
+
+function _jmpGetOrCreateDeviceId(){
+  const KEY='jmp_device_id';
+  try{
+    let id=localStorage.getItem(KEY);
+    if(!id){ id='dev-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10); localStorage.setItem(KEY,id); }
+    return id;
+  }catch(e){ return 'dev-fallback'; }
+}
+
+function _jmpGetCache(){ try{ return JSON.parse(localStorage.getItem(_JMP_LS_KEY)||'null'); }catch(e){ return null; } }
+function _jmpSetCache(data){ try{ localStorage.setItem(_JMP_LS_KEY, JSON.stringify(data)); }catch(e){} }
+function _jmpClearCache(){ try{ localStorage.removeItem(_JMP_LS_KEY); }catch(e){} }
+
+function _jmpShowAuthedUI(dojang_name){
+  const nameEl=document.getElementById('bsDojangName');
+  if(nameEl) nameEl.textContent = dojang_name || '점프마스터';
+  document.getElementById('loginScreen').classList.add('hidden');
+  if(window.__startApp) window.__startApp();
+}
+
+async function _jmpVerifyWithServer(license_key){
+  const device_id=_jmpGetOrCreateDeviceId();
+  const res=await fetch(_JMP_EDGE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({license_key, device_id})});
+  return await res.json();
+}
+
+async function doLicenseActivate(){
+  const input=document.getElementById('licenseKeyInput');
+  const key=input.value.trim().toUpperCase();
+  const errorEl=document.getElementById('loginError');
+  const btn=document.querySelector('.login-btn');
+
+  if(Date.now() < _jmpFailLockUntil){
+    const sec=Math.ceil((_jmpFailLockUntil-Date.now())/1000);
+    errorEl.textContent=`잠시 후 다시 시도해주세요. (${sec}초)`;
+    return;
+  }
+  if(!key){ errorEl.textContent='라이선스 키를 입력해주세요.'; return; }
+  if(!/^JMP-/.test(key)){ errorEl.textContent='올바른 형식의 키를 입력해주세요. (JMP-으로 시작)'; return; }
+
+  btn.textContent='인증 중...'; btn.disabled=true; errorEl.textContent='';
+
+  try{
+    const result=await _jmpVerifyWithServer(key);
+    if(!result.valid){
+      _jmpFailCount++;
+      if(_jmpFailCount>=5){ _jmpFailLockUntil=Date.now()+30000; _jmpFailCount=0; errorEl.textContent='입력 오류가 많습니다. 30초 후 다시 시도해주세요.'; }
+      else{ errorEl.textContent=result.error||'유효하지 않은 라이선스 키입니다.'; }
+      btn.textContent='인증하기'; btn.disabled=false; return;
+    }
+    _jmpFailCount=0;
+    _jmpSetCache({license_key:key, dojang_name:result.dojang_name, license_type:result.license_type, version:result.version||_JMP_VERSION, device_slots:result.device_slots||[], max_devices:result.max_devices||2, cached_at:Date.now()});
+    btn.textContent='인증하기'; btn.disabled=false;
+    _jmpShowAuthedUI(result.dojang_name);
+  }catch(e){
+    const cache=_jmpGetCache();
+    if(cache && cache.license_key===key){
+      const days=(Date.now()-cache.cached_at)/(1000*60*60*24);
+      if(days < _JMP_CACHE_DAYS){ btn.textContent='인증하기'; btn.disabled=false; _jmpShowAuthedUI(cache.dojang_name); return; }
+    }
+    errorEl.textContent='네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
+    btn.textContent='인증하기'; btn.disabled=false;
+  }
+}
+
+document.addEventListener('keydown', function(e){
+  if(e.key==='Enter' && !document.getElementById('loginScreen').classList.contains('hidden')) doLicenseActivate();
+});
+
+window.addEventListener('load', function(){
+  const cache=_jmpGetCache();
+  if(!cache) return;
+  const days=(Date.now()-cache.cached_at)/(1000*60*60*24);
+  if(days >= _JMP_CACHE_DAYS){ _jmpClearCache(); return; }
+  _jmpShowAuthedUI(cache.dojang_name);
+});
+
+window.logoutLicense=()=>{
+  _jmpClearCache();
+  document.getElementById('loginScreen').classList.remove('hidden');
+  const input=document.getElementById('licenseKeyInput'); if(input) input.value='';
+  const err=document.getElementById('loginError'); if(err) err.textContent='';
+};
 </script>
 </body>
 </html>

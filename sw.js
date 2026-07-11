@@ -1,11 +1,9 @@
-const CACHE_NAME = 'naruunlabs-v1-20260709-ui-renewal';
+const CACHE_NAME = 'naruunlabs-v2-20260711-flow-simplify';
 const ASSETS = [
   './',
   'index.html',
   'kickmaster.html',
   'jumpmaster.html',
-  'kickhome.html',
-  'jumphome.html',
   'aikickmaster.html',
   'aijumpmaster.html',
   'admin.html',
