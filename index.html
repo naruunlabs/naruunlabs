@@ -1,421 +1,518 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NARUUN LABS | Learn with Joy. Grow with AI.</title>
-  <meta name="description" content="NARUUN LABS는 AI 기술로 스포츠 교육을 더 즐겁고, 더 정확하고, 더 성장하는 경험으로 만듭니다." />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --blue:#0757D8;
-      --blue-2:#1288F8;
-      --blue-3:#EAF4FF;
-      --deep:#071C49;
-      --ink:#101828;
-      --text:#1D2939;
-      --muted:#667085;
-      --soft:#F5FAFF;
-      --paper:#FFFFFF;
-      --line:#E6EEF8;
-      --kick:#E3172E;
-      --kick-orange:#FF6A1A;
-      --jump:#14B8A6;
-      --jump-lime:#A3E635;
-      --font-kr:'Noto Sans KR',system-ui,-apple-system,sans-serif;
-      --font-data:'Space Grotesk',system-ui,sans-serif;
-      --wrap:min(1180px, calc(100% - 48px));
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    html{scroll-behavior:smooth;background:#fff}
-    body{
-      min-height:100vh;
-      color:var(--text);
-      background:
-        radial-gradient(circle at 82% 8%, rgba(18,136,248,.12), transparent 32%),
-        linear-gradient(180deg,#fff 0%,#F7FBFF 56%,#fff 100%);
-      font-family:var(--font-kr);
-      line-height:1.55;
-      letter-spacing:-.025em;
-      overflow-x:hidden;
-      -webkit-font-smoothing:antialiased;
-    }
-    a{color:inherit;text-decoration:none}
-    .wrap{width:var(--wrap);margin:0 auto}
-    ::selection{background:var(--blue);color:#fff}
-
-    header{
-      position:sticky;top:0;z-index:50;
-      background:rgba(255,255,255,.82);
-      backdrop-filter:blur(18px);
-      border-bottom:1px solid rgba(230,238,248,.82);
-    }
-    .nav{height:76px;display:flex;align-items:center;justify-content:space-between;gap:24px}
-    .brand{display:flex;align-items:center;gap:12px;font-family:var(--font-data);font-weight:700;letter-spacing:.04em;font-size:14px;color:var(--deep)}
-    .mark{
-      width:36px;height:36px;border-radius:12px;
-      background:linear-gradient(135deg,#071C49 0%,#0757D8 62%,#1288F8 100%);
-      color:#fff;display:grid;place-items:center;font-family:var(--font-data);
-      font-size:17px;font-weight:700;box-shadow:0 12px 30px rgba(7,87,216,.18);
-    }
-    nav{display:flex;gap:30px;color:#6B7890;font-size:13.5px;font-weight:700}
-    nav a{position:relative;transition:color .18s ease}
-    nav a:after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:2px;background:var(--blue);transform:scaleX(0);transform-origin:left;transition:.18s ease;border-radius:10px}
-    nav a:hover{color:var(--blue)}
-    nav a:hover:after{transform:scaleX(1)}
-    .nav-cta{font-family:var(--font-data);font-size:13px;font-weight:700;color:var(--blue);display:inline-flex;align-items:center;gap:8px}
-    .nav-cta:after{content:"→";transition:transform .18s ease}.nav-cta:hover:after{transform:translateX(4px)}
-
-    .hero{
-      position:relative;min-height:calc(100vh - 76px);
-      display:grid;place-items:center;padding:104px 0 82px;
-      overflow:hidden;border-bottom:1px solid var(--line);
-    }
-    .hero:before{
-      content:"";position:absolute;inset:0;
-      background:
-        linear-gradient(110deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.95) 48%,rgba(255,255,255,0) 100%),
-        repeating-linear-gradient(135deg,rgba(7,87,216,.028) 0 1px,transparent 1px 18px);
-      pointer-events:none;
-    }
-    .hero:after{
-      content:"N";position:absolute;right:-6vw;top:8vh;
-      font-family:var(--font-data);font-weight:700;font-size:clamp(260px,42vw,620px);
-      line-height:.7;letter-spacing:-.12em;
-      background:linear-gradient(135deg,#071C49,#0757D8 70%,#1288F8);
-      -webkit-background-clip:text;background-clip:text;color:transparent;
-      opacity:.075;pointer-events:none;
-    }
-    .hero-grid{position:relative;z-index:2;width:min(1040px,100%);margin:0 auto;display:block;text-align:left}
-    .hero-card{display:none!important}
-    .badge{
-      display:block;font-family:var(--font-data);font-size:12px;font-weight:700;
-      letter-spacing:.18em;text-transform:uppercase;color:var(--blue);
-      margin-bottom:24px;
-    }
-    h1{
-      font-size:clamp(56px,9vw,118px);line-height:.91;font-weight:900;
-      letter-spacing:-.078em;margin:0 0 32px;max-width:980px;color:var(--deep);
-    }
-    h1 em{
-      font-style:normal;
-      background:linear-gradient(100deg,#0757D8 0%,#1299FF 86%);
-      -webkit-background-clip:text;background-clip:text;color:transparent;
-    }
-    .lead{
-      width:min(680px,100%);color:#536174;font-size:clamp(16px,1.65vw,20px);
-      line-height:1.82;font-weight:400;word-break:keep-all;
-    }
-    .actions{display:flex;align-items:center;gap:34px;flex-wrap:wrap;margin-top:42px}
-    .btn{
-      display:inline-flex;align-items:center;gap:9px;font-size:15px;font-weight:800;
-      line-height:1;color:var(--deep);background:transparent;border:0;border-radius:0;
-      padding:4px 0 9px;position:relative;transition:color .18s ease,opacity .18s ease;
-    }
-    .btn:after{
-      content:"";position:absolute;left:0;right:0;bottom:0;height:2px;
-      background:currentColor;transform:scaleX(.18);transform-origin:left;
-      transition:transform .2s ease,opacity .2s ease;opacity:.35;border-radius:10px;
-    }
-    .btn:hover{color:var(--blue)}
-    .btn:hover:after{transform:scaleX(1);opacity:1}
-    .btn.primary{color:var(--blue)}
-    .btn.red{color:var(--kick)}.btn.red:hover{color:var(--kick-orange)}
-    .btn.disabled,.coming-soon-btn{color:#93A4B8!important;pointer-events:none;opacity:.82!important}
-    .btn.disabled:after,.coming-soon-btn:after{background:#93A4B8;transform:scaleX(.18);opacity:.35}
-
-    section{position:relative;padding:102px 0;border-bottom:1px solid var(--line)}
-    .section-head{
-      display:grid;grid-template-columns:minmax(0,1fr) 430px;
-      gap:58px;align-items:start;margin-bottom:58px;
-    }
-    .eyebrow{
-      font-family:var(--font-data);font-size:12px;font-weight:700;letter-spacing:.18em;
-      text-transform:uppercase;color:var(--blue);margin-bottom:15px;
-    }
-    h2{
-      font-size:clamp(36px,4.9vw,66px);line-height:1.02;
-      letter-spacing:-.065em;font-weight:900;margin:0;color:var(--deep);word-break:keep-all;
-    }
-    .sub{font-size:15.5px;line-height:1.85;color:var(--muted);word-break:keep-all;margin-top:8px}
-
-    .values{
-      display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);
-      border-top:1px solid var(--line);border-bottom:1px solid var(--line);
-    }
-    .value{
-      position:relative;min-height:310px;padding:38px;background:rgba(255,255,255,.92);
-      display:flex;flex-direction:column;justify-content:center;overflow:hidden;
-    }
-    .value strong{
-      display:block;font-family:var(--font-data);font-size:13px;letter-spacing:.12em;
-      text-transform:uppercase;color:var(--blue);margin-bottom:14px;
-    }
-    .value p{margin:0;color:#617084;font-size:18px;font-weight:500;line-height:1.7;word-break:keep-all;max-width:500px}
-    .value.visual{padding:0;justify-content:flex-end;background:#0A1730}
-    .value.visual img{
-      position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;display:block;
-    }
-    .value.visual:after{
-      content:"";position:absolute;inset:0;
-      background:linear-gradient(180deg,rgba(5,17,43,.04) 28%,rgba(5,17,43,.82) 100%);
-      pointer-events:none;
-    }
-    .value.visual .value-copy{position:relative;z-index:1;padding:38px;color:#fff}
-    .value.visual strong{color:#CFE0FF;margin-bottom:13px}
-    .value.visual p{color:#fff;font-size:clamp(22px,2.4vw,32px);font-weight:800;line-height:1.35;max-width:520px}
-
-    .products{display:grid;gap:0;border-top:1px solid var(--line)}
-    .product{
-      position:relative;display:grid;grid-template-columns:1fr 1.05fr;gap:42px;
-      align-items:end;padding:58px 0;border-bottom:1px solid var(--line);overflow:hidden;
-      min-height:430px;
-    }
-    .product:before{
-      content:"";position:absolute;right:0;top:50%;width:300px;height:300px;
-      border-radius:50%;filter:blur(80px);opacity:.13;transform:translateY(-50%);pointer-events:none;
-    }
-    .product.kick:before{background:var(--kick)}
-    .product.jump:before{background:var(--jump)}
-    .tag{
-      display:inline-flex;font-family:var(--font-data);font-size:11px;font-weight:700;
-      letter-spacing:.14em;text-transform:uppercase;color:#7C8CA2;margin-bottom:18px;
-    }
-    .tag.available{color:var(--kick);font-weight:700}
-    .tag.soon{color:var(--jump)}
-    .product h3{
-      font-family:var(--font-data);font-size:clamp(46px,7.4vw,92px);
-      line-height:.88;letter-spacing:-.055em;margin:0;text-transform:uppercase;color:var(--deep);
-    }
-    .product h3 .word{display:inline-block}
-    .product h3 .word-ai,.product h3 .word-master{color:var(--deep)}
-    .product h3 .word-kick{color:var(--kick-orange)}
-    .product h3 .word-jump{color:var(--jump)}
-    .product p{max-width:540px;color:#5B697C;font-size:16px;line-height:1.82;word-break:keep-all;margin:0 0 24px}
-    .chips{display:flex;flex-wrap:wrap;gap:16px;margin:0 0 28px;color:#78879B;font-size:13px;font-weight:700}
-    .chip{position:relative;padding-left:14px}.chip:before{content:"";position:absolute;left:0;top:.72em;width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.7}
-
-    .product.jump{
-      min-height:430px;
-      padding:58px 0;
-      background:
-        radial-gradient(circle at 88% 12%, rgba(20,184,166,.12), transparent 24%),
-        linear-gradient(180deg,#fff 0%,#F7FCFB 100%);
-    }
-    .coming-marquee{
-      position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-5deg);
-      font-family:var(--font-data);font-size:clamp(44px,9.5vw,126px);font-weight:700;
-      letter-spacing:-.08em;white-space:nowrap;line-height:.8;
-      color:transparent;-webkit-text-stroke:1.5px rgba(20,184,166,.20);
-      opacity:.72;pointer-events:none;z-index:0;
-    }
-    .coming-marquee strong{
-      display:block;color:rgba(20,184,166,.08);-webkit-text-stroke:0;
-      text-shadow:0 20px 80px rgba(20,184,166,.12);
-    }
-    .coming-badge{
-      position:absolute;right:0;top:46px;z-index:2;
-      font-family:var(--font-data);font-size:clamp(14px,1.7vw,22px);font-weight:700;
-      letter-spacing:.1em;text-transform:uppercase;color:#fff;
-      padding:11px 15px;border-radius:999px;
-      background:linear-gradient(135deg,var(--jump),#0A7AF0);
-      box-shadow:0 18px 44px rgba(20,184,166,.24);
-    }
-    .product.jump > div{position:relative;z-index:1}
-
-    .process{
-      display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
-      border-top:1px solid var(--line);border-bottom:1px solid var(--line);
-    }
-    .step{background:#fff;padding:30px;min-height:220px;display:flex;flex-direction:column;justify-content:space-between}
-    .step b{font-family:var(--font-data);font-size:12px;color:var(--blue);letter-spacing:.12em}
-    .step h3{font-size:22px;letter-spacing:-.03em;margin:36px 0 10px;color:var(--deep)}
-    .step p{font-size:14px;color:var(--muted);line-height:1.65;word-break:keep-all;margin:0}
-
-    .cta{
-      display:grid;grid-template-columns:1fr auto;align-items:end;gap:36px;
-      padding:72px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
-      background:
-        radial-gradient(circle at 100% 0%, rgba(7,87,216,.12), transparent 32%);
-    }
-    .cta h2{font-size:clamp(36px,5vw,70px)}
-    .cta p{color:var(--muted);font-size:16px;line-height:1.75;margin-top:18px;word-break:keep-all;max-width:620px}
-    footer{padding:34px 0 48px;color:#7C8CA2;font-size:13px;font-family:var(--font-data)}
-    .foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}.foot b{color:var(--deep)}
-
-    @media(max-width:900px){
-      .wrap{width:min(100% - 32px,1180px)}
-      nav{display:none}.nav{height:68px}.nav-cta{font-size:12px}
-      .hero{min-height:auto;padding:82px 0 70px}.hero:after{right:-28vw;top:16vh}
-      h1{font-size:clamp(48px,13vw,84px)}.lead{font-size:16px}
-      section{padding:76px 0}.section-head{grid-template-columns:1fr;gap:22px;margin-bottom:36px}
-      .values{grid-template-columns:1fr;background:transparent;border:0}.value{min-height:260px;padding:30px;background:#fff;border-bottom:1px solid var(--line)}.value.visual{min-height:300px;padding:0}.value.visual .value-copy{padding:30px}.value p{font-size:17px}
-      .product{grid-template-columns:1fr;gap:24px;padding:50px 0;min-height:auto}.product.jump{min-height:auto;padding:76px 0 50px}.coming-badge{left:0;right:auto;top:30px;font-size:16px}.coming-marquee{font-size:clamp(48px,16vw,104px)}
-      .process{grid-template-columns:1fr 1fr}.cta{grid-template-columns:1fr;padding:50px 0}
-    }
-    @media(max-width:560px){
-      .brand span{font-size:13px}.nav-cta{display:none}.actions{gap:22px}.btn{font-size:14px}
-      .process{grid-template-columns:1fr}.step{min-height:auto;gap:20px}.product h3{font-size:50px}.chips{gap:10px 14px}.cta .actions{justify-content:flex-start}
-    }
-  
-/* NARUUN LABS OFFICIAL COLOR SYSTEM v1.0 */
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NARUUN LABS | 움직임을 성장으로</title>
+<meta name="description" content="NARUUN LABS는 AI 기반 스포츠 교육 프로그램으로 수련을 더 즐겁고, 더 정확하며, 더 오래 이어지는 성장 경험으로 만듭니다.">
+<meta name="theme-color" content="#071C49">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
+<style>
 :root{
-  --brand-primary:#0757D8; --brand-secondary:#1288F8; --brand-deep:#071C49; --brand-light:#EAF4FF;
-  --kick-primary:#E3172E; --kick-primary-dark:#B91426; --kick-secondary:#FF6A1A; --kick-accent:#FF8C42; --kick-dark:#0B0B0D;
-  --jump-primary:#14B8A6; --jump-primary-dark:#0D9488; --jump-secondary:#A3E635; --jump-accent:#5EEAD4; --jump-dark:#0A1628;
+  --brand:#0757D8;--brand2:#1288F8;--deep:#071C49;--ink:#101828;
+  --text:#344054;--muted:#667085;--line:#E4EAF2;--soft:#F5F8FC;--white:#fff;
+  --kick:#E3172E;--kick2:#FF6A1A;--jump:#14B8A6;--jump2:#A3E635;
+  --wrap:min(1180px,calc(100% - 48px));--radius:28px;
+  --shadow:0 28px 80px rgba(7,28,73,.10);
 }
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard','Noto Sans KR',system-ui,sans-serif;color:var(--text);background:#fff;line-height:1.6;letter-spacing:-.025em;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}.wrap{width:var(--wrap);margin:0 auto}
+button{font:inherit}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+::selection{background:var(--brand);color:#fff}
+
+header{position:fixed;inset:0 0 auto;z-index:100;background:rgba(255,255,255,.82);backdrop-filter:blur(18px);border-bottom:1px solid rgba(228,234,242,.78)}
+.nav{height:76px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.brand{display:flex;align-items:center;gap:12px;color:var(--deep);font-weight:900;font-size:15px;letter-spacing:.045em}
+.brand-mark{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;font-size:17px;background:linear-gradient(135deg,var(--deep),var(--brand) 62%,var(--brand2));box-shadow:0 12px 28px rgba(7,87,216,.22);user-select:none}
+.nav-links{display:flex;align-items:center;gap:30px;font-size:13.5px;font-weight:750;color:#667085}
+.nav-links a{transition:.2s}.nav-links a:hover{color:var(--brand)}
+.nav-cta{display:inline-flex;align-items:center;gap:8px;padding:11px 16px;border-radius:999px;color:#fff!important;background:var(--deep);box-shadow:0 10px 24px rgba(7,28,73,.16)}
+.nav-cta:after{content:'↗';font-size:12px}
+.menu-btn{display:none;border:0;background:transparent;font-size:24px;color:var(--deep)}
+
+.hero{position:relative;min-height:100vh;padding:148px 0 92px;display:flex;align-items:center;overflow:hidden;background:linear-gradient(180deg,#fff 0%,#F7FAFE 100%)}
+.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 76% 24%,rgba(18,136,248,.16),transparent 28%),radial-gradient(circle at 18% 82%,rgba(7,87,216,.08),transparent 28%);pointer-events:none}
+.hero:after{content:"N";position:absolute;right:-4vw;top:13vh;font-size:clamp(280px,43vw,660px);font-weight:900;line-height:.65;letter-spacing:-.14em;color:rgba(7,87,216,.055);pointer-events:none}
+.hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(420px,.95fr);gap:68px;align-items:center}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;color:var(--brand);font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
+.eyebrow:before{content:"";width:30px;height:2px;background:currentColor}
+h1{margin:22px 0 28px;font-size:clamp(54px,7.1vw,96px);line-height:.96;letter-spacing:-.065em;color:var(--deep);font-weight:900;word-break:keep-all}
+h1 .accent{background:linear-gradient(100deg,var(--brand),#20A0FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-lead{max-width:650px;font-size:clamp(16px,1.55vw,19px);color:#58677A;line-height:1.85;word-break:keep-all}
+.hero-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:38px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:54px;padding:0 24px;border-radius:999px;font-size:14px;font-weight:850;transition:.2s}
+.btn:hover{transform:translateY(-2px)}.btn.primary{background:var(--deep);color:#fff;box-shadow:0 16px 34px rgba(7,28,73,.20)}.btn.secondary{background:#fff;color:var(--deep);border:1px solid var(--line)}
+.hero-proof{display:flex;gap:28px;margin-top:46px;padding-top:26px;border-top:1px solid var(--line)}
+.proof b{display:block;color:var(--deep);font-size:15px}.proof span{display:block;margin-top:3px;color:#8A96A8;font-size:12px}
+
+.system-visual{position:relative;height:560px}
+.device{position:absolute;inset:40px 10px 20px 34px;border-radius:34px;padding:12px;background:#09101E;box-shadow:0 40px 90px rgba(7,28,73,.26);transform:rotate(-2deg)}
+.device-screen{height:100%;border-radius:24px;overflow:hidden;position:relative;background:linear-gradient(145deg,#12213B,#07111F)}
+.screen-grid{position:absolute;inset:0;background:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:28px 28px}
+.person{position:absolute;left:37%;top:18%;width:24%;height:60%}.person:before{content:"";position:absolute;left:32%;top:0;width:36%;aspect-ratio:1;border-radius:50%;background:linear-gradient(135deg,#ECF7FF,#8CC8FF)}.person:after{content:"";position:absolute;left:44%;top:18%;width:12%;height:48%;border-radius:999px;background:#B8DEFF;box-shadow:-48px 38px 0 -3px #B8DEFF,48px 38px 0 -3px #B8DEFF,-30px 118px 0 -3px #B8DEFF,42px 116px 0 -3px #B8DEFF;transform:rotate(-8deg)}
+.target{position:absolute;right:13%;top:34%;width:72px;height:72px;border-radius:50%;border:2px solid rgba(255,106,26,.9);box-shadow:0 0 0 13px rgba(255,106,26,.12),0 0 32px rgba(255,106,26,.42)}
+.hud-title{position:absolute;left:22px;top:20px;color:#fff;font-size:12px;font-weight:900}.hud-title small{display:block;color:#7E97B7;font-size:9px;margin-top:2px}.hud-score{position:absolute;right:22px;top:20px;color:#fff;text-align:right;font-weight:900}.hud-score span{display:block;color:#FF8C42;font-size:32px;line-height:1}.hud-bottom{position:absolute;left:22px;right:22px;bottom:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.hud-chip{padding:10px 8px;border-radius:11px;background:rgba(5,14,29,.72);border:1px solid rgba(120,170,255,.24);color:#DCEBFF;text-align:center;font-size:9px;font-weight:800}.hud-chip.active{background:linear-gradient(135deg,var(--kick),var(--kick2));color:#fff;border-color:transparent}
+.float-card{position:absolute;padding:18px 20px;border-radius:20px;background:rgba(255,255,255,.93);border:1px solid rgba(228,234,242,.9);box-shadow:0 22px 50px rgba(7,28,73,.14);backdrop-filter:blur(12px)}
+.float-card.kick{left:-26px;top:18px}.float-card.jump{right:-18px;bottom:0}.float-card b{display:block;color:var(--deep);font-size:13px}.float-card span{display:block;margin-top:4px;color:var(--muted);font-size:11px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px}.kick .dot{background:var(--kick)}.jump .dot{background:var(--jump)}
+
+.section{padding:118px 0}.section-soft{background:var(--soft)}
+.section-head{display:grid;grid-template-columns:.75fr 1.25fr;gap:80px;align-items:end;margin-bottom:52px}
+.section-kicker{color:var(--brand);font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
+.section-head h2{font-size:clamp(34px,4.4vw,58px);line-height:1.08;letter-spacing:-.05em;color:var(--deep);word-break:keep-all}.section-head p{font-size:16px;line-height:1.9;color:var(--muted);word-break:keep-all}
+
+.philosophy-grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.philosophy{padding:34px 30px;border-right:1px solid var(--line)}.philosophy:last-child{border-right:0}.philosophy .num{font-size:12px;color:var(--brand);font-weight:900}.philosophy h3{margin:22px 0 10px;font-size:20px;color:var(--deep)}.philosophy p{font-size:14px;color:var(--muted);line-height:1.75}
+
+.product-stack{display:grid;gap:26px}
+.product{position:relative;overflow:hidden;min-height:430px;border-radius:34px;padding:48px;display:grid;grid-template-columns:1fr 1fr;align-items:center;box-shadow:var(--shadow)}
+.product.kick{background:linear-gradient(135deg,#090A0E 0%,#191017 100%);color:#fff}.product.jump{background:linear-gradient(135deg,#071C2D 0%,#0A2832 100%);color:#fff}
+.product:before{content:"";position:absolute;width:520px;height:520px;border-radius:50%;right:-160px;top:-220px;filter:blur(4px)}.product.kick:before{background:radial-gradient(circle,rgba(227,23,46,.40),transparent 66%)}.product.jump:before{background:radial-gradient(circle,rgba(20,184,166,.38),transparent 66%)}
+.product-copy{position:relative;z-index:2;max-width:520px}.product-label{font-size:11px;letter-spacing:.16em;font-weight:900}.kick .product-label{color:#FF8C42}.jump .product-label{color:#5EEAD4}.product h3{font-size:clamp(38px,5vw,66px);line-height:1;margin:16px 0 20px;letter-spacing:-.055em}.product p{color:#B8C1CF;font-size:15px;line-height:1.8;max-width:500px}.product-links{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}.product .btn.primary{background:#fff;color:#101828;box-shadow:none}.product .btn.secondary{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.14);color:#fff}
+.product-preview{position:relative;z-index:2;height:310px;margin-left:30px;border-radius:26px;border:1px solid rgba(255,255,255,.14);background:rgba(3,7,14,.52);overflow:hidden;box-shadow:0 28px 60px rgba(0,0,0,.28)}
+.preview-top{height:52px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08);font-size:11px;color:#AAB7C8}.preview-brand{font-weight:900;color:#fff}.preview-canvas{position:absolute;inset:52px 0 0;background:radial-gradient(circle at 50% 38%,rgba(255,255,255,.08),transparent 32%)}
+.preview-ring{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);width:132px;height:132px;border-radius:50%;border:2px solid}.kick .preview-ring{border-color:var(--kick);box-shadow:0 0 0 18px rgba(227,23,46,.08),0 0 38px rgba(227,23,46,.25)}.jump .preview-ring{border-color:var(--jump);box-shadow:0 0 0 18px rgba(20,184,166,.08),0 0 38px rgba(20,184,166,.25)}
+.preview-stat{position:absolute;right:18px;top:18px;text-align:right}.preview-stat b{display:block;font-size:36px;line-height:1}.kick .preview-stat b{color:#FF8C42}.jump .preview-stat b{color:var(--jump2)}.preview-stat span{font-size:9px;color:#94A3B8}.preview-controls{position:absolute;left:18px;right:18px;bottom:18px;display:flex;gap:7px}.preview-controls span{flex:1;padding:9px 4px;border-radius:9px;background:rgba(255,255,255,.07);text-align:center;color:#CBD5E1;font-size:9px;font-weight:800}.kick .preview-controls span:first-child{background:linear-gradient(135deg,var(--kick),var(--kick2));color:#fff}.jump .preview-controls span:first-child{background:linear-gradient(135deg,var(--jump),#65C98F);color:#fff}
+
+.process{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.process-card{padding:28px 24px;border:1px solid var(--line);border-radius:22px;background:#fff}.process-card span{color:var(--brand);font-size:11px;font-weight:900}.process-card h3{margin:18px 0 8px;color:var(--deep);font-size:18px}.process-card p{font-size:13.5px;color:var(--muted);line-height:1.72}
+
+.final{padding:120px 0;background:var(--deep);color:#fff;position:relative;overflow:hidden}.final:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 78% 20%,rgba(18,136,248,.32),transparent 30%)}.final-inner{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-end;gap:40px}.final h2{font-size:clamp(38px,5.2vw,68px);line-height:1.05;letter-spacing:-.055em;max-width:760px}.final p{margin-top:22px;color:#B8C7DB;font-size:16px}.final .btn{background:#fff;color:var(--deep);white-space:nowrap}
+footer{padding:34px 0;border-top:1px solid rgba(255,255,255,.08);background:var(--deep);color:#8FA2BC}.footer-inner{display:flex;justify-content:space-between;gap:24px;font-size:12px}.footer-brand{color:#fff;font-weight:900;letter-spacing:.05em}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}.reveal.on{opacity:1;transform:none}
+
+@media(max-width:980px){.hero-grid{grid-template-columns:1fr}.system-visual{height:500px;max-width:680px;width:100%;margin:0 auto}.section-head{grid-template-columns:1fr;gap:18px}.product{grid-template-columns:1fr;gap:38px}.product-preview{margin-left:0}.process{grid-template-columns:repeat(2,1fr)}.nav-links a:not(.nav-cta){display:none}}
+@media(max-width:680px){:root{--wrap:min(100% - 32px,1180px)}header{position:absolute}.nav{height:68px}.nav-links{gap:0}.nav-cta{padding:9px 13px;font-size:12px}.hero{padding:112px 0 72px;min-height:auto}.hero-grid{gap:42px}h1{font-size:clamp(46px,15vw,68px)}.hero-proof{gap:18px;flex-wrap:wrap}.system-visual{height:390px}.device{inset:30px 2px 18px 12px}.float-card{padding:13px 14px}.float-card.kick{left:-8px}.float-card.jump{right:-8px}.section{padding:82px 0}.philosophy-grid{grid-template-columns:1fr}.philosophy{border-right:0;border-bottom:1px solid var(--line)}.philosophy:last-child{border-bottom:0}.product{padding:30px 22px;min-height:0;border-radius:26px}.product-preview{height:250px}.process{grid-template-columns:1fr}.final{padding:84px 0}.final-inner{align-items:flex-start;flex-direction:column}.footer-inner{flex-direction:column}.hero-actions .btn{width:100%}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}.reveal{opacity:1;transform:none}}
+
+/* =========================================================
+   요청 반영: 이전 index 스타일의 HERO + PRODUCTS
+   나머지 섹션은 NARUUN LABS v2 디자인 유지
+   ========================================================= */
+
+/* HERO */
+.legacy-hero{
+  position:relative;
+  min-height:calc(100vh - 76px);
+  display:grid;
+  place-items:center;
+  padding:104px 0 82px;
+  overflow:hidden;
+  border-bottom:1px solid var(--line);
+  background:#fff;
+}
+.legacy-hero::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(110deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.95) 48%,rgba(255,255,255,0) 100%),
+    repeating-linear-gradient(135deg,rgba(7,87,216,.028) 0 1px,transparent 1px 18px);
+  pointer-events:none;
+}
+.legacy-hero::after{
+  content:"AI";
+  position:absolute;
+  right:-4vw;
+  top:8vh;
+  font-weight:900;
+  font-size:clamp(250px,38vw,590px);
+  line-height:.7;
+  letter-spacing:-.12em;
+  color:rgba(7,87,216,.055);
+  pointer-events:none;
+}
+.legacy-hero .legacy-hero-grid{
+  position:relative;
+  z-index:2;
+  width:min(1040px,100%);
+  margin:0 auto;
+  text-align:left;
+}
+.legacy-hero .legacy-badge{
+  display:block;
+  color:var(--brand);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  margin-bottom:24px;
+}
+.legacy-hero h1{
+  font-size:clamp(56px,9vw,118px);
+  line-height:.91;
+  font-weight:900;
+  letter-spacing:-.078em;
+  margin:0 0 32px;
+  max-width:980px;
+  color:var(--deep);
+}
+.legacy-hero h1 em{
+  font-style:normal;
+  background:linear-gradient(100deg,#0757D8 0%,#1299FF 86%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+.legacy-hero .legacy-lead{
+  width:min(680px,100%);
+  color:#536174;
+  font-size:clamp(16px,1.65vw,20px);
+  line-height:1.82;
+  font-weight:400;
+  word-break:keep-all;
+}
+.legacy-hero .legacy-actions{
+  display:flex;
+  align-items:center;
+  gap:34px;
+  flex-wrap:wrap;
+  margin-top:42px;
+}
+.legacy-hero .legacy-link{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+  position:relative;
+  padding:4px 0 9px;
+  color:var(--deep);
+  font-size:15px;
+  font-weight:850;
+  line-height:1;
+  transition:color .18s ease;
+}
+.legacy-hero .legacy-link::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:2px;
+  border-radius:10px;
+  background:currentColor;
+  transform:scaleX(.18);
+  transform-origin:left;
+  opacity:.35;
+  transition:.2s ease;
+}
+.legacy-hero .legacy-link:hover{color:var(--brand)}
+.legacy-hero .legacy-link:hover::after{transform:scaleX(1);opacity:1}
+.legacy-hero .legacy-link.primary{color:var(--brand)}
+
+/* PRODUCTS */
+.legacy-products-section{
+  padding:102px 0;
+  background:#fff;
+  border-bottom:1px solid var(--line);
+}
+.legacy-products-section .legacy-section-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 430px;
+  gap:58px;
+  align-items:start;
+  margin-bottom:58px;
+}
+.legacy-products-section .legacy-kicker{
+  color:var(--brand);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  margin-bottom:15px;
+}
+.legacy-products-section h2{
+  font-size:clamp(36px,4.9vw,66px);
+  line-height:1.02;
+  letter-spacing:-.065em;
+  font-weight:900;
+  color:var(--deep);
+}
+.legacy-products-section .legacy-sub{
+  margin-top:8px;
+  color:var(--muted);
+  font-size:15.5px;
+  line-height:1.85;
+  word-break:keep-all;
+}
+.legacy-products{
+  display:grid;
+  gap:0;
+  border-top:1px solid var(--line);
+}
+.legacy-product{
+  position:relative;
+  display:grid;
+  grid-template-columns:1fr 1.05fr;
+  gap:42px;
+  align-items:end;
+  min-height:430px;
+  padding:58px 0;
+  overflow:hidden;
+  border-bottom:1px solid var(--line);
+}
+.legacy-product::before{
+  content:"";
+  position:absolute;
+  right:0;
+  top:50%;
+  width:300px;
+  height:300px;
+  border-radius:50%;
+  filter:blur(80px);
+  opacity:.13;
+  transform:translateY(-50%);
+  pointer-events:none;
+}
+.legacy-product.kick::before{background:var(--kick)}
+.legacy-product.jump::before{background:var(--jump)}
+.legacy-product > div{position:relative;z-index:1}
+.legacy-tag{
+  display:inline-flex;
+  margin-bottom:18px;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+.legacy-tag.available{color:var(--kick)}
+.legacy-tag.soon{color:var(--jump)}
+.legacy-product h3{
+  font-size:clamp(46px,7.4vw,92px);
+  line-height:.88;
+  letter-spacing:-.055em;
+  font-weight:900;
+  color:var(--deep);
+  text-transform:uppercase;
+}
+.legacy-product h3 .word{display:inline-block}
+.legacy-product h3 .word-kick{color:var(--kick2)}
+.legacy-product h3 .word-jump{color:var(--jump)}
+.legacy-product p{
+  max-width:540px;
+  margin:0 0 24px;
+  color:#5B697C;
+  font-size:16px;
+  line-height:1.82;
+  word-break:keep-all;
+}
+.legacy-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+  margin:0 0 28px;
+  color:#78879B;
+  font-size:13px;
+  font-weight:750;
+}
+.legacy-chip{
+  position:relative;
+  padding-left:14px;
+}
+.legacy-chip::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:.72em;
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:currentColor;
+  opacity:.7;
+}
+.legacy-product .legacy-link{
+  display:inline-flex;
+  position:relative;
+  padding:4px 0 9px;
+  color:var(--kick);
+  font-size:15px;
+  font-weight:850;
+}
+.legacy-product .legacy-link::after{
+  content:"";
+  position:absolute;
+  left:0;right:0;bottom:0;
+  height:2px;
+  border-radius:10px;
+  background:currentColor;
+  transform:scaleX(.18);
+  transform-origin:left;
+  opacity:.35;
+  transition:.2s ease;
+}
+.legacy-product .legacy-link:hover::after{transform:scaleX(1);opacity:1}
+.legacy-product.jump{
+  background:
+    radial-gradient(circle at 88% 12%,rgba(20,184,166,.12),transparent 24%),
+    linear-gradient(180deg,#fff 0%,#F7FCFB 100%);
+}
+.legacy-product.jump .legacy-link{color:var(--jump)}
+.coming-marquee{
+  position:absolute!important;
+  left:0;
+  top:50%;
+  transform:translateY(-50%) rotate(-5deg);
+  z-index:0!important;
+  font-size:clamp(44px,9.5vw,126px);
+  font-weight:900;
+  letter-spacing:-.08em;
+  white-space:nowrap;
+  line-height:.8;
+  color:transparent;
+  -webkit-text-stroke:1.5px rgba(20,184,166,.20);
+  opacity:.72;
+  pointer-events:none;
+}
+.coming-marquee strong{
+  display:block;
+  color:rgba(20,184,166,.08);
+  -webkit-text-stroke:0;
+}
+.coming-badge{
+  position:absolute!important;
+  right:0;
+  top:46px;
+  z-index:2!important;
+  min-width:min(560px,52%);
+  padding:11px 20px;
+  border-radius:999px;
+  background:linear-gradient(135deg,var(--jump),#4F76E8);
+  color:#fff;
+  font-size:clamp(14px,1.7vw,22px);
+  font-weight:900;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  box-shadow:0 18px 44px rgba(20,184,166,.24);
+}
+
+@media(max-width:980px){
+  .legacy-products-section .legacy-section-head{grid-template-columns:1fr;gap:22px}
+  .legacy-product{grid-template-columns:1fr;align-items:start}
+  .coming-badge{position:relative!important;right:auto;top:auto;min-width:0;width:max-content;margin:0 0 28px}
+}
+@media(max-width:680px){
+  .legacy-hero{min-height:auto;padding:112px 0 72px}
+  .legacy-hero::after{right:-26vw;top:16vh}
+  .legacy-hero h1{font-size:clamp(48px,15vw,72px)}
+  .legacy-hero .legacy-actions{gap:22px}
+  .legacy-products-section{padding:82px 0}
+  .legacy-product{min-height:0;padding:46px 0;gap:28px}
+  .legacy-product h3{font-size:clamp(50px,16vw,70px)}
+  .legacy-chips{gap:10px 14px}
+}
+
 </style>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#071C49">
 </head>
-<body>
-  <header>
-    <div class="wrap nav">
-      <a class="brand" href="#top" aria-label="NARUUN LABS 홈"><div class="mark"><span>N</span></div><span>NARUUN LABS</span></a>
-      <nav>
-        <a href="#about">브랜드</a><a href="#products">제품</a><a href="#contact">문의</a>
-      </nav>
-      <a class="nav-cta" href="#products">Products</a>
-    </div>
-  </header>
+<body id="top">
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#top" aria-label="NARUUN LABS 홈">
+      <span class="brand-mark" id="adminTrigger">N</span><span>NARUUN LABS</span>
+    </a>
+    <nav class="nav-links" aria-label="주요 메뉴">
+      <a href="#about">브랜드</a><a href="#products">제품</a><a href="#how">사용 방식</a>
+      <a class="nav-cta" href="mailto:naruunlabs@gmail.com">문의하기</a>
+    </nav>
+  </div>
+</header>
 
-  <main id="top">
-    <section class="hero">
-      <div class="wrap hero-grid">
+<main>
+
+<section class="legacy-hero">
+  <div class="wrap legacy-hero-grid">
+    <div>
+      <div class="legacy-badge" id="heroEyebrow">AI SPORTS EDUCATION PLATFORM</div>
+      <h1 id="heroTitle">Learn with Joy.<br><em>Grow with AI.</em></h1>
+      <p class="legacy-lead" id="heroLead">NARUUN LABS는 AI 기술로 스포츠 교육을 더 즐겁고, 더 정확하고, 더 성장하는 경험으로 만듭니다. 아이들이 스스로 도전하고, 기록을 확인하고, 재미있게 훈련할 수 있는 AI 교육 플랫폼을 만듭니다.</p>
+      <div class="legacy-actions">
+        <a class="legacy-link primary" href="#products">제품 보기</a>
+        <a class="legacy-link" href="#about">브랜드 철학</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="about">
+  <div class="wrap">
+    <div class="section-head reveal"><div><span class="section-kicker">WHY NARUUN LABS</span><h2>기술보다 먼저,<br>수련 경험을 설계합니다.</h2></div><p>AI가 눈에 띄는 것이 목적은 아닙니다. 준비가 복잡하지 않고, 아이들이 설명 없이도 바로 참여하며, 지도자가 현장에서 실제로 활용할 수 있어야 합니다. NARUUN LABS는 그 기준에서 제품을 만듭니다.</p></div>
+    <div class="philosophy-grid reveal"><article class="philosophy"><span class="num">01 · SIMPLE</span><h3>설치는 가볍게</h3><p>웹캠과 화면만으로 시작할 수 있도록 구성해 별도 센서와 복잡한 장비 의존도를 낮춥니다.</p></article><article class="philosophy"><span class="num">02 · JOYFUL</span><h3>수련은 즐겁게</h3><p>점수, 목표, 게임 요소를 통해 반복 훈련의 지루함을 줄이고 자연스러운 참여를 끌어냅니다.</p></article><article class="philosophy"><span class="num">03 · USEFUL</span><h3>기록은 유용하게</h3><p>단순한 재미에서 끝나지 않고 횟수와 결과가 성장 확인과 지도에 이어지도록 설계합니다.</p></article></div>
+  </div>
+</section>
+
+
+<section class="legacy-products-section" id="products">
+  <div class="wrap">
+    <div class="legacy-section-head reveal">
+      <div>
+        <div class="legacy-kicker">PRODUCTS</div>
+        <h2>NARUUN LABS의<br>AI 스포츠 제품군</h2>
+      </div>
+      <p class="legacy-sub">AI KICK MASTER와 AI JUMP MASTER는 같은 NARUUN LABS 경험을 공유합니다. 제품별 움직임은 다르지만 사용 흐름과 인터페이스는 익숙하게 이어집니다.</p>
+    </div>
+
+    <div class="legacy-products">
+      <article class="legacy-product kick reveal">
         <div>
-          <div class="badge" id="heroEyebrow">AI SPORTS EDUCATION PLATFORM</div>
-          <h1 id="heroTitle">Learn with Joy.<br><em>Grow with AI.</em></h1>
-          <p class="lead" id="heroLead">NARUUN LABS는 AI 기술로 스포츠 교육을 더 즐겁고, 더 정확하고, 더 성장하는 경험으로 만듭니다. 아이들이 스스로 도전하고, 기록을 확인하고, 재미있게 훈련할 수 있는 AI 교육 플랫폼을 만듭니다.</p>
-          <div class="actions">
-            <a class="btn primary" href="#products">제품 보기</a>
-            <a class="btn" href="#about">브랜드 철학</a>
+          <span class="legacy-tag available">AVAILABLE NOW</span>
+          <h3><span class="word">AI</span> <span class="word word-kick">KICK</span><br><span class="word">MASTER</span></h3>
+        </div>
+        <div>
+          <p>웹캠 기반 AI 자세 인식으로 발차기 훈련을 게임처럼 즐길 수 있는 태권도장 전용 훈련 프로그램입니다.</p>
+          <div class="legacy-chips">
+            <span class="legacy-chip">발차기 측정</span>
+            <span class="legacy-chip">콤보</span>
+            <span class="legacy-chip">랭킹</span>
+            <span class="legacy-chip">즉시 실행</span>
           </div>
+          <a class="legacy-link" href="kickmaster.html">Kick Master 보기</a>
         </div>
-      </div>
-    </section>
+      </article>
 
-    <section id="about">
-      <div class="wrap">
-        <div class="section-head">
-          <div><div class="eyebrow">Brand Values</div><h2>기술보다 먼저,<br>수련 경험을 설계합니다.</h2></div>
-          <p class="sub">AI는 보여주기 위한 장식이 아니라 아이들이 더 오래 집중하고, 더 자주 도전하고, 성장 과정을 직접 확인하게 만드는 도구입니다.</p>
+      <article class="legacy-product jump reveal">
+        <div class="coming-marquee"><strong>COMING</strong>SOON</div>
+        <div class="coming-badge">COMING SOON</div>
+        <div>
+          <span class="legacy-tag soon">PREPARING NEXT EXPERIENCE</span>
+          <h3><span class="word">AI</span> <span class="word word-jump">JUMP</span><br><span class="word">MASTER</span></h3>
         </div>
-        <div class="values">
-          <div class="value visual">
-            <img src="assets/value-enjoyment.jpg" alt="AI KICK MASTER 겨루기 모드 실행 화면">
-            <div class="value-copy"><strong>Enjoyment</strong><p>다시 하고 싶어지는 훈련 경험.</p></div>
+        <div>
+          <p>줄넘기 훈련을 리듬감 있고 직관적인 AI 측정 경험으로 바꾸는 프로그램입니다. 현재는 내부 테스트와 UI 보완을 진행 중입니다.</p>
+          <div class="legacy-chips">
+            <span class="legacy-chip">줄넘기 측정</span>
+            <span class="legacy-chip">스피드</span>
+            <span class="legacy-chip">릴레이</span>
+            <span class="legacy-chip">성장 기록</span>
           </div>
-          <div class="value"><strong>Growth</strong><p>순간 점수보다 중요한 건 아이가 어제보다 나아졌다는 확실한 감각입니다.</p></div>
-          <div class="value"><strong>Reliability</strong><p>도장에서 매일 켜고 사용할 수 있도록 단순하고 안정적인 흐름을 우선합니다.</p></div>
-          <div class="value visual">
-            <img src="assets/value-professional.jpg" alt="AI KICK MASTER 돌려차기 훈련 실행 화면">
-            <div class="value-copy"><strong>Professional</strong><p>태권도 현장을 이해한 기준으로 화면, 기록, 사용 동선을 설계합니다.</p></div>
-          </div>
+          <a class="legacy-link" href="jumpmaster.html">Jump Master 보기</a>
         </div>
-      </div>
-    </section>
-
-    <section id="products">
-      <div class="wrap">
-        <div class="section-head">
-          <div><div class="eyebrow">Products</div><h2>NARUUN LABS의<br>AI 스포츠 제품군</h2></div>
-          <p class="sub">현재는 AI KICK MASTER를 중심으로 운영합니다. AI JUMP MASTER는 완성도를 더 높인 뒤 정식으로 연결합니다.</p>
-        </div>
-        <div class="products">
-          <article class="product kick">
-            <div>
-              <span class="tag available">Available now</span>
-              <h3><span class="word word-ai">AI</span> <span class="word word-kick">KICK</span><br><span class="word word-master">MASTER</span></h3>
-            </div>
-            <div>
-              <p>웹캠 기반 AI 자세 인식으로 발차기 훈련을 게임처럼 즐길 수 있는 태권도장 전용 훈련 프로그램입니다.</p>
-              <div class="chips"><span class="chip">발차기 측정</span><span class="chip">콤보</span><span class="chip">랭킹</span><span class="chip">즉시 실행</span></div>
-              <div class="actions"><a class="btn red" href="kickmaster.html">Kick Master 보기</a></div>
-            </div>
-          </article>
-          <article class="product jump">
-            <div class="coming-marquee"><strong>COMING</strong>SOON</div>
-            <div class="coming-badge">Coming Soon</div>
-            <div>
-              <span class="tag soon">Preparing next experience</span>
-              <h3><span class="word word-ai">AI</span> <span class="word word-jump">JUMP</span><br><span class="word word-master">MASTER</span></h3>
-            </div>
-            <div>
-              <p>줄넘기 훈련을 리듬감 있고 직관적인 AI 측정 경험으로 바꾸는 프로그램입니다. 현재는 내부 테스트와 UI 보완을 진행 중입니다.</p>
-              <div class="chips"><span class="chip">줄넘기 측정</span><span class="chip">스피드</span><span class="chip">챌린지</span><span class="chip">성장 기록</span></div>
-              <div class="actions"><span class="btn disabled coming-soon-btn" aria-disabled="true">오픈 준비 중</span></div>
-            </div>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section id="contact">
-      <div class="wrap">
-        <div class="cta">
-          <div>
-            <h2>AI 스포츠 교육의 시작,<br>NARUUN LABS</h2>
-            <p id="contactDesc">AI KICK MASTER 도입 문의와 NARUUN LABS 제품 상담을 준비 중입니다.</p>
-          </div>
-          <div class="actions"><a class="btn primary" href="mailto:naruunlabs@gmail.com">문의하기</a></div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <div class="wrap foot">
-      <div><b>NARUUN LABS</b> · Learn with Joy. Grow with AI.</div>
-      <div id="copyrightText">© 2026 NARUUN LABS. All rights reserved.</div>
+      </article>
     </div>
-  </footer>
+  </div>
+</section>
 
-  <script>
-  (function(){
-    const ADMIN_EDGE_URL = 'https://ebgoolsymyzkftvavpyj.supabase.co/functions/v1/clever-worker';
-    const EASY_CODE = '0000';
-    let ADMIN_URL_OVERRIDE = '';
 
-    const logo = document.querySelector('header .brand .mark');
-    if(logo){
-      let clickCount = 0;
-      let clickTimer = null;
-      logo.addEventListener('click', function(e){
-        e.preventDefault();
-        clickCount++;
-        clearTimeout(clickTimer);
-        clickTimer = setTimeout(()=>{ clickCount = 0; }, 1500);
-        if(clickCount >= 5){
-          clickCount = 0;
-          clearTimeout(clickTimer);
-          const code = prompt('코드를 입력하세요');
-          if(code === null) return;
-          if(code === EASY_CODE){
-            window.location.href = ADMIN_URL_OVERRIDE || 'admin.html';
-          } else {
-            alert('코드가 올바르지 않습니다.');
-          }
-        }
-      });
-    }
+<section class="section" id="how">
+  <div class="wrap"><div class="section-head reveal"><div><span class="section-kicker">HOW IT WORKS</span><h2>복잡한 준비 없이,<br>바로 수련으로.</h2></div><p>도장에서 필요한 흐름은 단순합니다. 카메라를 연결하고 학생과 모드를 선택한 뒤 시작하면 됩니다. 프로그램이 움직임을 읽고 즉시 반응합니다.</p></div><div class="process reveal"><article class="process-card"><span>STEP 01</span><h3>카메라 연결</h3><p>태블릿이나 노트북의 카메라를 사용해 수련 공간을 비춥니다.</p></article><article class="process-card"><span>STEP 02</span><h3>학생 선택</h3><p>등록된 학생을 선택해 개인별 기록과 훈련 결과를 연결합니다.</p></article><article class="process-card"><span>STEP 03</span><h3>훈련 시작</h3><p>목표 동작과 모드를 고르면 화면이 실시간으로 움직임에 반응합니다.</p></article><article class="process-card"><span>STEP 04</span><h3>결과 확인</h3><p>횟수와 점수, 기록을 통해 다음 수련의 목표를 분명히 잡습니다.</p></article></div></div>
+</section>
 
-    fetch(ADMIN_EDGE_URL, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ action:'GET_HOME_DATA', payload:{ target:'index' } })
-    }).then(r => r.json()).then(res => {
-      const d = res && res.data;
-      if(!d) return;
-      if(d.admin_url) ADMIN_URL_OVERRIDE = d.admin_url;
-      const setText = (id, val) => { const el = document.getElementById(id); if(el && val) el.textContent = val; };
-      const setHtml = (id, val) => { const el = document.getElementById(id); if(el && val) el.innerHTML = val; };
-      setText('heroEyebrow', d.hero_eyebrow);
-      setHtml('heroTitle', d.hero_title);
-      setText('heroLead', d.hero_desc);
-      setText('contactDesc', d.contact_desc);
-      setText('copyrightText', d.copyright);
-    }).catch(()=>{ /* 실패 시 기본 정적 문구 그대로 사용 */ });
-  })();
-  </script>
+<section class="final" id="contact"><div class="wrap final-inner"><div><h2>AI 스포츠 교육의 시작,<br>NARUUN LABS.</h2><p id="contactDesc">도장 현장에서 실제로 쓰이는 기술을 만듭니다. 제품 도입과 시범 운영에 대해 문의해 주세요.</p></div><a class="btn" href="mailto:naruunlabs@gmail.com">naruunlabs@gmail.com ↗</a></div></section>
+</main>
+<footer><div class="wrap footer-inner"><div><span class="footer-brand">NARUUN LABS</span><span> · Learn with Joy. Grow with AI.</span></div><div id="copyrightText">© 2026 NARUUN LABS. All rights reserved.</div></div></footer>
+
+<script>
+(function(){
+  const ADMIN_EDGE_URL='https://ebgoolsymyzkftvavpyj.supabase.co/functions/v1/clever-worker';
+  const EASY_CODE='0000'; let adminUrl='';
+  const trigger=document.getElementById('adminTrigger'); let count=0,timer;
+  trigger?.addEventListener('click',e=>{e.preventDefault();count++;clearTimeout(timer);timer=setTimeout(()=>count=0,1500);if(count>=5){count=0;const code=prompt('코드를 입력하세요');if(code===null)return;if(code===EASY_CODE)location.href=adminUrl||'admin.html';else alert('코드가 올바르지 않습니다.');}});
+  fetch(ADMIN_EDGE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'GET_HOME_DATA',payload:{target:'index'}})})
+    .then(r=>r.json()).then(res=>{const d=res&&res.data;if(!d)return;if(d.admin_url)adminUrl=d.admin_url;const setText=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.textContent=v};const setHtml=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.innerHTML=v};setText('heroEyebrow',d.hero_eyebrow);setHtml('heroTitle',d.hero_title);setText('heroLead',d.hero_desc);setText('contactDesc',d.contact_desc);setText('copyrightText',d.copyright);}).catch(()=>{});
+  const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')}),{threshold:.12});document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+})();
+</script>
 </body>
 </html>
