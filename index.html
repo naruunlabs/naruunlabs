@@ -401,6 +401,80 @@ footer{padding:34px 0;border-top:1px solid rgba(255,255,255,.08);background:var(
   .legacy-chips{gap:10px 14px}
 }
 
+
+/* OFFICIAL TRADEMARK STRIP */
+.trademark-strip{
+  position:relative;
+  overflow:hidden;
+  padding:44px 0 46px;
+  border-top:1px solid #E4EAF2;
+  border-bottom:1px solid #E4EAF2;
+  background:
+    radial-gradient(circle at 18% 50%,rgba(7,87,216,.08),transparent 34%),
+    radial-gradient(circle at 82% 50%,rgba(212,160,23,.08),transparent 28%),
+    linear-gradient(180deg,#FBFDFF 0%,#F6FAFF 100%);
+}
+.trademark-strip::before,
+.trademark-strip::after{
+  content:"";
+  position:absolute;
+  top:50%;
+  width:min(18vw,220px);
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(7,28,73,.28));
+}
+.trademark-strip::before{left:0}
+.trademark-strip::after{
+  right:0;
+  transform:scaleX(-1);
+}
+.trademark-inner{
+  position:relative;
+  z-index:1;
+  width:min(1180px,calc(100% - 48px));
+  margin:0 auto;
+  text-align:center;
+}
+.trademark-label{
+  display:inline-flex;
+  align-items:center;
+  gap:12px;
+  color:#071C49;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+}
+.trademark-label::before,
+.trademark-label::after{
+  content:"";
+  width:28px;
+  height:1px;
+  background:#D4A017;
+}
+.trademark-name{
+  margin-top:12px;
+  color:#071C49;
+  font-size:clamp(28px,4vw,46px);
+  line-height:1.05;
+  font-weight:900;
+  letter-spacing:-.05em;
+}
+.trademark-status{
+  margin-top:10px;
+  color:#C38C00;
+  font-size:14px;
+  font-weight:850;
+  letter-spacing:-.02em;
+}
+@media(max-width:680px){
+  .trademark-strip{padding:34px 0 36px}
+  .trademark-inner{width:min(100% - 32px,1180px)}
+  .trademark-label{font-size:10px;letter-spacing:.18em}
+  .trademark-label::before,.trademark-label::after{width:18px}
+  .trademark-status{font-size:13px}
+}
+
 </style>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#071C49">
@@ -434,6 +508,14 @@ footer{padding:34px 0;border-top:1px solid rgba(255,255,255,.08);background:var(
   </div>
 </section>
 
+
+<section class="trademark-strip reveal" aria-label="AI KICK MASTER 상표 출원 안내">
+  <div class="trademark-inner">
+    <div class="trademark-label">Official Trademark</div>
+    <div class="trademark-name">AI KICK MASTER™</div>
+    <div class="trademark-status">대한민국 상표 등록출원 진행중</div>
+  </div>
+</section>
 
 <section class="section" id="about">
   <div class="wrap">
