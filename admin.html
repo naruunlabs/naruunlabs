@@ -241,6 +241,14 @@ tr.row-expired td{background:#fdecec}
   .modal{padding:24px}
   .input-row{grid-template-columns:1fr}
 }
+
+/* OFFICIAL COMPANY LOGO */
+.admin-company-logo{display:block;object-fit:contain;object-position:left center}
+.login-box .admin-company-logo{width:250px;height:62px;margin-bottom:4px}
+.top-logo-row .admin-company-logo{width:188px;height:44px}
+.sidebar-company-logo{width:178px;height:42px;display:block;object-fit:contain;object-position:left center;filter:brightness(0) invert(1)}
+@media(max-width:620px){.top-logo-row .admin-company-logo{width:150px;height:36px}}
+
 </style>
 
 <style id="naruun-admin-v2-final">
@@ -296,7 +304,7 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
 <!-- 로그인 -->
 <div id="loginWrap">
   <div class="login-box">
-    <div class="akm-admin-logo">NARUUN LABS</div>
+    <img class="admin-company-logo" src="naruunlabs_logo.svg" alt="NARUUN LABS">
     <p>NARUUN LABS 통합 관리자</p>
     <div class="login-brand-meta">
       <div class="akm-powered">Powered by Google MediaPipe</div>
@@ -313,7 +321,7 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
   <!-- 탑바 -->
   <div class="top-bar">
     <div class="top-logo">
-      <div class="top-logo-row"><div class="akm-admin-logo">NARUUN LABS</div><span class="admin-label">관리자</span></div>
+      <div class="top-logo-row"><img class="admin-company-logo" src="naruunlabs_logo.svg" alt="NARUUN LABS"><span class="admin-label">관리자</span></div>
       <div class="akm-powered">Powered by Google MediaPipe</div>
     </div>
     <div class="top-actions">
@@ -325,7 +333,7 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
 
   <!-- 탭 -->
   <div class="tab-bar">
-    <div class="sidebar-brand"><div>NARUUN LABS</div><span>Powered by Google MediaPipe</span></div>
+    <div class="sidebar-brand"><img class="sidebar-company-logo" src="naruunlabs_logo.svg" alt="NARUUN LABS"><span>Powered by Google MediaPipe</span></div>
     <button class="tab-btn active" onclick="switchTab('license')">📋 라이선스 관리</button>
     <button class="tab-btn" onclick="switchTab('home')">🏠 메인 홈페이지 편집</button>
   </div>

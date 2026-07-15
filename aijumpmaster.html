@@ -761,6 +761,12 @@ button{transition:transform .14s ease, filter .14s ease, background .14s ease}bu
   .jump-title-dojang{font-size:14px;max-width:220px;}
 }
 
+
+/* OFFICIAL PRODUCT LOGOS — matched to KICK MASTER */
+.app-login-product-logo{display:block;width:320px;height:104px;object-fit:contain;margin:0 auto 4px}
+.app-start-product-logo{display:block;width:min(430px,82vw);height:180px;object-fit:contain;margin:0 auto 4px}
+@media(max-width:600px){.app-login-product-logo{width:270px;height:88px}.app-start-product-logo{width:min(350px,86vw);height:145px}}
+
 </style>
 </head>
 <body>
@@ -768,8 +774,8 @@ button{transition:transform .14s ease, filter .14s ease, background .14s ease}bu
 <!-- ===== 라이선스 키 입력 화면 ===== -->
 <div id="loginScreen">
   <div class="login-box">
-    <div class="login-logo" style="font-size:24px;font-weight:900;color:#fff;letter-spacing:-.5px;margin-bottom:4px;">NARUUN LABS</div>
-    <div class="login-sub">AI JUMP MASTER · 태권도 AI 줄넘기 훈련 시스템</div>
+    <div class="login-logo"><img class="app-login-product-logo" src="jump1.svg" alt="AI JUMP MASTER"></div>
+    <div class="login-sub">태권도 AI 줄넘기 훈련 시스템</div>
     <label class="login-key-label">🔑 라이선스 키</label>
     <div class="login-key-help">구매 후 전달받은 라이선스 키를 입력하세요.<br>최초 1회 입력 후 자동으로 인증됩니다.</div>
     <input id="licenseKeyInput" class="login-field" type="text" placeholder="JMP-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" />
@@ -781,8 +787,7 @@ button{transition:transform .14s ease, filter .14s ease, background .14s ease}bu
 
 <!-- ─────────── 시작 화면 (변경 없음) ─────────── -->
 <div id="startScreen" class="hidden">
-  <div class="brand-mark">NARUUN LABS</div>
-  <h1 class="product-title">점프마스터</h1>
+  <img class="app-start-product-logo" src="jump2.svg" alt="AI JUMP MASTER">
   <div class="hop-emblem"><div class="hop-dot"></div><div class="hop-dot"></div><div class="hop-dot"></div></div>
   <p class="product-sub">카메라가 몸의 움직임을 보고 줄넘기 개수를 세어줍니다. 전신이 보이게 서서 제자리에서 뛰어보세요.</p>
   <button class="start-btn" id="enterBtn">시작하기</button>

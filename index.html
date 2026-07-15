@@ -503,6 +503,12 @@ footer{padding:34px 0;border-top:1px solid rgba(255,255,255,.08);background:var(
 
 
 @media(max-width:900px){.requirements-tier-title{grid-template-columns:1fr;gap:4px}.requirements-tier-title h3{font-size:22px}.requirements-tier-title p{margin-top:5px}}
+
+/* OFFICIAL LOGO SYSTEM */
+.brand-logo-img{display:block;width:176px;height:42px;object-fit:contain;object-position:left center}
+.legacy-product-logo{display:block;width:min(430px,92%);height:118px;object-fit:contain;object-position:left center;margin:4px 0 12px}
+@media(max-width:700px){.brand-logo-img{width:145px;height:36px}.legacy-product-logo{height:88px;width:min(330px,94%)}}
+
 </style>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#071C49">
@@ -511,7 +517,7 @@ footer{padding:34px 0;border-top:1px solid rgba(255,255,255,.08);background:var(
 <header>
   <div class="wrap nav">
     <a class="brand" href="#top" aria-label="NARUUN LABS 홈">
-      <span class="brand-mark" id="adminTrigger">N</span><span>NARUUN LABS</span>
+      <img class="brand-logo-img" id="adminTrigger" src="naruunlabs_logo.svg" alt="NARUUN LABS">
     </a>
     <nav class="nav-links" aria-label="주요 메뉴">
       <a href="#about">브랜드</a><a href="#products">제품</a><a href="#how">사용 방식</a>
@@ -567,7 +573,7 @@ footer{padding:34px 0;border-top:1px solid rgba(255,255,255,.08);background:var(
       <article class="legacy-product kick reveal">
         <div>
           <span class="legacy-tag available">AVAILABLE NOW</span>
-          <h3><span class="word">AI</span> <span class="word word-kick">KICK</span><br><span class="word">MASTER</span></h3>
+          <img class="legacy-product-logo" src="kick2.svg" alt="AI KICK MASTER">
         </div>
         <div>
           <p>웹캠 기반 AI 자세 인식으로 발차기 훈련을 게임처럼 즐길 수 있는 태권도장 전용 훈련 프로그램입니다.</p>
@@ -586,7 +592,7 @@ footer{padding:34px 0;border-top:1px solid rgba(255,255,255,.08);background:var(
         <div class="coming-badge">COMING SOON</div>
         <div>
           <span class="legacy-tag soon">PREPARING NEXT EXPERIENCE</span>
-          <h3><span class="word">AI</span> <span class="word word-jump">JUMP</span><br><span class="word">MASTER</span></h3>
+          <img class="legacy-product-logo" src="jump2.svg" alt="AI JUMP MASTER">
         </div>
         <div>
           <p>줄넘기 훈련을 리듬감 있고 직관적인 AI 측정 경험으로 바꾸는 프로그램입니다. 현재는 내부 테스트와 UI 보완을 진행 중입니다.</p>
