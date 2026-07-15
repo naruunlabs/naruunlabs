@@ -621,6 +621,14 @@ footer{
 .requirements-intro .eyebrow{margin-bottom:10px}
 .requirements-intro p{color:var(--ui-muted);font-size:15px;line-height:1.85;word-break:keep-all}
 .requirements-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+
+.requirements-tier{margin-top:34px}
+.requirements-tier:first-of-type{margin-top:0}
+.requirements-tier-title{display:grid;grid-template-columns:150px 180px 1fr;gap:22px;align-items:end;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--ui-line,var(--line))}
+.requirements-tier-title span{color:var(--product-primary,var(--brand));font-size:11px;font-weight:900;letter-spacing:.14em}
+.requirements-tier-title h3{color:var(--ui-deep,var(--deep));font-size:24px;letter-spacing:-.04em}
+.requirements-tier-title p{color:var(--ui-muted,var(--muted));font-size:13.5px;line-height:1.65}
+.requirements-tier.recommended{margin-top:46px}
 .requirement-card{padding:28px 26px;border:1px solid var(--ui-line);background:#fff;min-height:270px}
 .requirement-card .label{display:inline-flex;align-items:center;min-height:25px;padding:0 9px;background:color-mix(in srgb,var(--product-primary) 9%,#fff);color:var(--product-primary);font-size:11px;font-weight:900;letter-spacing:.06em}
 .requirement-card h3{margin:20px 0 14px;color:var(--ui-deep);font-size:20px;letter-spacing:-.035em}
@@ -630,6 +638,8 @@ footer{
 .requirements-note{margin-top:18px;color:#7C8CA2;font-size:12.5px;line-height:1.7}
 @media(max-width:900px){.requirements-intro{grid-template-columns:1fr;gap:14px}.requirements-grid{grid-template-columns:1fr}.requirement-card{min-height:auto}}
 
+
+@media(max-width:900px){.requirements-tier-title{grid-template-columns:1fr;gap:4px}.requirements-tier-title h3{font-size:22px}.requirements-tier-title p{margin-top:5px}}
 </style>
 </head>
 <body>
@@ -698,12 +708,23 @@ footer{
         <div><div class="eyebrow">System Requirements</div><h2>사용 환경 안내</h2></div>
         <p>별도 센서 없이 카메라가 있는 태블릿 또는 PC에서 사용할 수 있습니다. 원활한 AI 동작 인식을 위해 최신 브라우저와 충분한 조명을 권장합니다.</p>
       </div>
+      <div class="requirements-tier">
+      <div class="requirements-tier-title"><span>MINIMUM</span><h3>최소사양</h3><p>프로그램을 실행하고 기본 측정을 사용할 수 있는 기준입니다.</p></div>
       <div class="requirements-grid">
-        <article class="requirement-card"><span class="label">최소 환경</span><h3>기본 실행 기준</h3><ul class="requirement-list"><li>Windows 10 이상 또는 Android 10 이상</li><li>Intel Core i3급 / RAM 4GB 이상</li><li>전면 또는 USB 웹캠</li><li>Chrome 또는 Edge 최신 버전</li></ul></article>
-        <article class="requirement-card"><span class="label">권장 환경</span><h3>도장 수업 권장 기준</h3><ul class="requirement-list"><li>Windows 11 또는 Android 12 이상</li><li>Intel Core i5급 / RAM 8GB 이상</li><li>FHD 카메라와 밝은 촬영 공간</li><li>프로젝터 또는 대형 화면 연결</li></ul></article>
-        <article class="requirement-card"><span class="label">iPad 지원</span><h3>iPad에서도 사용 가능</h3><ul class="requirement-list"><li>iPadOS 16 이상 권장</li><li>Safari 최신 버전 사용</li><li>카메라 접근 권한 허용 필요</li><li>기종에 따라 성능 차이 가능</li></ul></article>
+        <article class="requirement-card"><span class="label">WINDOWS</span><h3>Windows PC</h3><ul class="requirement-list"><li>Windows 10 64비트 이상</li><li>Intel Core i3 8세대 또는 Ryzen 3급 이상</li><li>RAM 4GB 이상 · 여유 저장공간 1GB 이상</li><li>Chrome 또는 Edge 최신 버전 · 내장/USB 카메라</li></ul></article>
+        <article class="requirement-card"><span class="label">ANDROID</span><h3>Android 태블릿</h3><ul class="requirement-list"><li>Android 10 이상</li><li>RAM 4GB 이상</li><li>Snapdragon 720G 또는 동급 이상</li><li>Chrome 최신 버전 · 전면 카메라</li></ul></article>
+        <article class="requirement-card"><span class="label">iOS / iPadOS</span><h3>iPad</h3><ul class="requirement-list"><li>iPadOS 16 이상</li><li>iPad 8세대(A12) 또는 동급 이상</li><li>Safari 최신 버전 · 카메라 권한 허용</li><li>가로 화면 사용 권장</li></ul></article>
       </div>
-      <p class="requirements-note">※ 실제 인식 성능은 기기 성능, 카메라 화질, 조명, 촬영 거리와 주변 환경에 따라 달라질 수 있습니다.</p>
+    </div>
+    <div class="requirements-tier recommended">
+      <div class="requirements-tier-title"><span>RECOMMENDED</span><h3>권장사양</h3><p>도장 수업에서 안정적인 인식과 대형 화면 출력을 위한 기준입니다.</p></div>
+      <div class="requirements-grid">
+        <article class="requirement-card"><span class="label">WINDOWS</span><h3>Windows PC</h3><ul class="requirement-list"><li>Windows 11 64비트</li><li>Intel Core i5 10세대 또는 Ryzen 5급 이상</li><li>RAM 8GB 이상</li><li>FHD 웹캠 · Chrome 또는 Edge 최신 버전</li></ul></article>
+        <article class="requirement-card"><span class="label">ANDROID</span><h3>Android 태블릿</h3><ul class="requirement-list"><li>Android 12 이상</li><li>RAM 6GB 이상</li><li>Snapdragon 778G 또는 동급 이상</li><li>FHD급 전면 카메라 · Chrome 최신 버전</li></ul></article>
+        <article class="requirement-card"><span class="label">iOS / iPadOS</span><h3>iPad</h3><ul class="requirement-list"><li>iPadOS 17 이상</li><li>iPad 9세대(A13) 또는 그 이후 모델</li><li>Safari 최신 버전 · 카메라 권한 허용</li><li>프로젝터·외부 화면 연결 시 최신 기종 권장</li></ul></article>
+      </div>
+    </div>
+    <p class="requirements-note">※ 실제 인식 성능은 기기 성능, 카메라 화질, 조명, 촬영 거리와 주변 환경에 따라 달라질 수 있습니다.</p>
     </div>
   </section>
 
