@@ -2950,7 +2950,8 @@ button{transition:transform .14s ease, filter .14s ease, background .14s ease}bu
   font-family:inherit; font-size:18px; font-weight:1000; cursor:pointer;
   box-shadow:0 0 24px rgba(46,204,113,.30);
 }
-#drillResult.auto-summary #drillRestartBtn{display:block;}
+#drillResult.auto-summary #drillRestartBtn,
+#drillResult.final-result #drillRestartBtn{display:block;}
 body.hud-v21.auto-drill-selected .mode-row.hud-kick-row .drill-btn{
   opacity:.42 !important; pointer-events:none !important;
 }
@@ -3546,7 +3547,7 @@ function beginAutoDrillStage(index, announce=true){
   }
 }
 window.restartDrillFromResult=()=>{
-  drillResult.classList.remove('show','auto-summary');
+  drillResult.classList.remove('show','auto-summary','final-result');
   drillResultSub.classList.remove('auto-result-summary');
   autoDrillIndex=0; autoDrillResults={}; autoDrillTransitioning=false;
   if(drillRunMode==='auto'){
@@ -4070,10 +4071,36 @@ function drawDrillTrail(){
   ctx.restore();
 }
 
+// 발 구분용 가이드 색상: 오른발=부드러운 시안, 왼발=부드러운 주황
+function guideFootStyle(){
+  const right=selectedFoot()==='right';
+  return right
+    ? {label:'R', rgb:'85,223,255', solid:'#55DFFF', pale:'205,248,255'}
+    : {label:'L', rgb:'255,177,74', solid:'#FFB14A', pale:'255,235,205'};
+}
+function drawGuideFootLabel(x,y,style){
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,.9)';
+  ctx.shadowBlur=9;
+  ctx.lineWidth=6;
+  ctx.strokeStyle='rgba(0,0,0,.72)';
+  ctx.font='900 34px Gothic A1, Noto Sans KR, sans-serif';
+  ctx.textAlign='center';
+  const mirrored=camWrap.classList.contains('mirrored');
+  if(mirrored){
+    ctx.translate(x,y); ctx.scale(-1,1);
+    ctx.strokeText(style.label,0,0); ctx.fillStyle='#fff'; ctx.fillText(style.label,0,0);
+  }else{
+    ctx.strokeText(style.label,x,y); ctx.fillStyle='#fff'; ctx.fillText(style.label,x,y);
+  }
+  ctx.restore();
+}
+
 // 앞차기용 가이드 라인 — 반투명 흐름형 정답 궤적
 function drawApchaGuide(){
   if(smHipY==null||smHipX==null||!running) return;
   const W=canvas.width, H=canvas.height;
+  const footStyle=guideFootStyle();
 
   // canvas/영상이 CSS로 같이 좌우반전되므로 raw landmark X를 그대로 사용해야 몸과 같은 방향으로 따라간다.
   const bodyX=smHipX*W;
@@ -4092,11 +4119,11 @@ function drawApchaGuide(){
   function drawFlowDot(u,r,alpha){
     const c=point(u);
     ctx.save();
-    ctx.shadowColor='rgba(76,190,255,1)';
+    ctx.shadowColor='rgba('+footStyle.rgb+',1)';
     ctx.shadowBlur=18;
     ctx.fillStyle='rgba(255,255,255,'+alpha+')';
     ctx.beginPath(); ctx.arc(c.x,c.y,r,0,Math.PI*2); ctx.fill();
-    ctx.strokeStyle='rgba(76,190,255,'+(alpha*.75)+')'; ctx.lineWidth=2;
+    ctx.strokeStyle='rgba('+footStyle.rgb+','+(alpha*.75)+')'; ctx.lineWidth=2;
     ctx.beginPath(); ctx.arc(c.x,c.y,r+6,0,Math.PI*2); ctx.stroke();
     ctx.restore();
   }
@@ -4105,9 +4132,9 @@ function drawApchaGuide(){
     ctx.save();
     ctx.translate(c.x,c.y);
     ctx.globalAlpha=alpha;
-    ctx.strokeStyle='rgba(185,235,255,1)';
+    ctx.strokeStyle='rgba('+footStyle.pale+',1)';
     ctx.lineWidth=3*scale; ctx.lineCap='round'; ctx.lineJoin='round';
-    ctx.shadowColor='rgba(76,190,255,1)'; ctx.shadowBlur=12;
+    ctx.shadowColor='rgba('+footStyle.rgb+',1)'; ctx.shadowBlur=12;
     ctx.beginPath();
     ctx.moveTo(-10*scale, 6*scale);
     ctx.lineTo(0, -8*scale);
@@ -4120,9 +4147,9 @@ function drawApchaGuide(){
   ctx.lineCap='round'; ctx.lineJoin='round'; ctx.setLineDash([]);
 
   // 배경 정답선: 실제 발차기/몸을 가리지 않게 얇고 흐리게
-  drawSoftLine(24,'rgba(76,163,255,0.075)');
-  drawSoftLine(10,'rgba(76,190,255,0.16)');
-  drawSoftLine(3,'rgba(230,250,255,0.24)');
+  drawSoftLine(24,'rgba('+footStyle.rgb+',0.070)');
+  drawSoftLine(10,'rgba('+footStyle.rgb+',0.16)');
+  drawSoftLine(3,'rgba('+footStyle.pale+',0.24)');
 
   // 방향감: 위로 흐르는 빛과 작은 V 표시
   drawFlowDot(t,10,0.82);
@@ -4132,11 +4159,14 @@ function drawApchaGuide(){
   drawChevron((t+0.55)%1,0.7,0.28);
 
   // 목표 지점: 작은 홀로그램 링만 유지
-  ctx.shadowColor='rgba(76,190,255,1)'; ctx.shadowBlur=18;
-  ctx.strokeStyle='rgba(76,190,255,0.56)'; ctx.lineWidth=4;
+  ctx.shadowColor='rgba('+footStyle.rgb+',1)'; ctx.shadowBlur=18;
+  ctx.strokeStyle='rgba('+footStyle.rgb+',0.56)'; ctx.lineWidth=4;
   ctx.beginPath(); ctx.arc(bodyX,targetY,24,0,Math.PI*2); ctx.stroke();
   ctx.strokeStyle='rgba(255,255,255,0.42)'; ctx.lineWidth=2;
   ctx.beginPath(); ctx.arc(bodyX,targetY,12,0,Math.PI*2); ctx.stroke();
+
+  // 화살표 출발점에 오른발/왼발 표기
+  drawGuideFootLabel(bodyX,startY+42,footStyle);
   ctx.restore();
 }
 
@@ -4145,6 +4175,7 @@ function drawDolloGuide(){
   if(smHipY==null||smHipX==null||!running) return;
   const W=canvas.width, H=canvas.height;
   const mirrored=camWrap.classList.contains('mirrored');
+  const footStyle=guideFootStyle();
 
   // 돌려차기는 화면에서 보이는 방향 기준으로 곡선을 잡은 뒤, CSS mirror에 맞춰 canvas 좌표로 환산한다.
   const rawBodyX=smHipX*W;
@@ -4184,10 +4215,10 @@ function drawDolloGuide(){
   function drawFlowDot(u,r,alpha){
     const c=qPoint(u);
     ctx.save();
-    ctx.shadowColor='rgba(76,190,255,1)'; ctx.shadowBlur=18;
+    ctx.shadowColor='rgba('+footStyle.rgb+',1)'; ctx.shadowBlur=18;
     ctx.fillStyle='rgba(255,255,255,'+alpha+')';
     ctx.beginPath(); ctx.arc(c.x,c.y,r,0,Math.PI*2); ctx.fill();
-    ctx.strokeStyle='rgba(76,190,255,'+(alpha*.75)+')'; ctx.lineWidth=2;
+    ctx.strokeStyle='rgba('+footStyle.rgb+','+(alpha*.75)+')'; ctx.lineWidth=2;
     ctx.beginPath(); ctx.arc(c.x,c.y,r+6,0,Math.PI*2); ctx.stroke();
     ctx.restore();
   }
@@ -4197,9 +4228,9 @@ function drawDolloGuide(){
     ctx.save();
     ctx.translate(c.x,c.y); ctx.rotate(ang);
     ctx.globalAlpha=alpha;
-    ctx.strokeStyle='rgba(185,235,255,1)';
+    ctx.strokeStyle='rgba('+footStyle.pale+',1)';
     ctx.lineWidth=3*scale; ctx.lineCap='round'; ctx.lineJoin='round';
-    ctx.shadowColor='rgba(76,190,255,1)'; ctx.shadowBlur=12;
+    ctx.shadowColor='rgba('+footStyle.rgb+',1)'; ctx.shadowBlur=12;
     ctx.beginPath();
     ctx.moveTo(-8*scale,-7*scale);
     ctx.lineTo(7*scale,0);
@@ -4213,9 +4244,9 @@ function drawDolloGuide(){
   ctx.lineCap='round'; ctx.lineJoin='round'; ctx.setLineDash([]);
 
   // 배경 정답 곡선: 두껍고 가리는 화살표가 아니라 흐릿한 홀로그램 길
-  drawCurve(28,'rgba(76,163,255,0.075)');
-  drawCurve(12,'rgba(76,190,255,0.16)');
-  drawCurve(3,'rgba(230,250,255,0.24)');
+  drawCurve(28,'rgba('+footStyle.rgb+',0.070)');
+  drawCurve(12,'rgba('+footStyle.rgb+',0.16)');
+  drawCurve(3,'rgba('+footStyle.pale+',0.24)');
 
   // 곡선을 따라 흐르는 빛
   drawFlowDot(t,10,0.82);
@@ -4225,12 +4256,14 @@ function drawDolloGuide(){
   drawChevron((t+0.58)%1,0.7,0.28);
 
   // 목표 지점만 작은 링으로 표시
-  ctx.shadowColor='rgba(76,190,255,1)'; ctx.shadowBlur=18;
-  ctx.strokeStyle='rgba(76,190,255,0.56)'; ctx.lineWidth=4;
+  ctx.shadowColor='rgba('+footStyle.rgb+',1)'; ctx.shadowBlur=18;
+  ctx.strokeStyle='rgba('+footStyle.rgb+',0.56)'; ctx.lineWidth=4;
   ctx.beginPath(); ctx.arc(p.endX,p.endY,24,0,Math.PI*2); ctx.stroke();
   ctx.strokeStyle='rgba(255,255,255,0.42)'; ctx.lineWidth=2;
   ctx.beginPath(); ctx.arc(p.endX,p.endY,12,0,Math.PI*2); ctx.stroke();
 
+  // 화살표 출발점에 오른발/왼발 표기
+  drawGuideFootLabel(p.startX,p.startY+42,footStyle);
   ctx.restore();
 }
 
@@ -4304,7 +4337,7 @@ function finishAutoDrill(){
   drillResultSub.innerHTML=rows.map(r=>
     '<div class="result-label">'+r.label+'</div><div class="result-score">'+r.avg+'점</div>'
   ).join('')+'<div class="result-average">평균 '+totalAvg+'점</div>';
-  drillResult.classList.add('auto-summary','show');
+  drillResult.classList.add('auto-summary','final-result','show');
   confetti(totalAvg>=90);
   sndRecord();
   setStartBtn(false,'다시 시작');
@@ -4331,19 +4364,17 @@ function finishDrill(){
     drillResultText.textContent=txt;
     drillResultText.style.color=avg>=90?'#FF6A1A':'#2ecc71';
     drillResultSub.textContent=cfg.label+' '+drillDone+'회 · 평균 '+avg+'점';
-    drillResult.classList.add('show');
+    drillResult.classList.add('final-result','show');
     confetti(avg>=90);
     sndRecord();
-    drillResultTimer=setTimeout(()=>drillResult.classList.remove('show'),3500);
   } else {
     // 평범한 결과
     drillResultIcon.textContent='완료';
     drillResultText.textContent='수고했어요!';
     drillResultText.style.color='#fff';
     drillResultSub.textContent=cfg.label+' '+drillDone+'회 · 평균 '+avg+'점';
-    drillResult.classList.add('show');
+    drillResult.classList.add('final-result','show');
     sndScore(avg);
-    drillResultTimer=setTimeout(()=>drillResult.classList.remove('show'),2500);
   }
 
   setStartBtn(false,'다시!');
@@ -4512,8 +4543,7 @@ function finishSparring(){
     drillResultText.textContent='랜덤 미션 완료!';
     drillResultText.style.color='#4ca3ff';
     drillResultSub.textContent=sparringPracticeDone+'회 · 평균 '+avg+'점 · 최고 '+best+'점';
-    drillResult.classList.add('show');
-    setTimeout(()=>drillResult.classList.remove('show'),2800);
+    drillResult.classList.add('final-result','show');
     akmSaveRecord('sparring_practice',{score:best,average:avg,count:sparringPracticeDone,modeType:'practice',modeLabel:'겨루기 연습모드'});
     sparringMission=null;
     updateModeBadge();
@@ -4526,9 +4556,8 @@ function finishSparring(){
   drillResultText.textContent=sparringHp<=0?'K.O.!':'수련 완료!';
   drillResultText.style.color=sparringHp<=0?'#FF6A1A':'#4ca3ff';
   drillResultSub.textContent='총 데미지 '+sparringDamage+' · 최고 '+sparringMaxCombo+'콤보';
-  drillResult.classList.add('show');
+  drillResult.classList.add('final-result','show');
   if(sparringHp<=0){ confetti(true); sndRecord(); }
-  setTimeout(()=>drillResult.classList.remove('show'),2800);
   akmSaveRecord('sparring',{score:sparringDamage,damage:sparringDamage,maxCombo:sparringMaxCombo,ko:sparringHp<=0,remainHp:Math.max(0,Math.round(sparringHp)),modeType:'live',modeLabel:'겨루기 실전모드'});
 }
 
@@ -4593,6 +4622,18 @@ function finishBalloon(){
   setStartBtn(false,'다시!');
   statusEl.style.opacity='1';
   statusEl.textContent='완료! 격파 '+balloonCount+'개';
+
+  // 격파 모드도 다른 훈련과 동일하게 종료 결과를 화면 중앙에 확실히 표시
+  drillResultIcon.textContent='훈련 완료';
+  drillResultText.textContent='격파 훈련 완료!';
+  drillResultText.style.color='#4ca3ff';
+  drillResultSub.className='';
+  drillResultSub.textContent=diffCfg().label+' 난이도 · 격파 '+balloonCount+'개';
+  drillResult.classList.remove('auto-summary');
+  drillResult.classList.add('final-result','show');
+  sndRecord();
+  if(balloonCount>=10) confetti(balloonCount>=20);
+
   akmSaveRecord('balloon',{count:balloonCount});
 }
 
@@ -4702,7 +4743,7 @@ function resetCounters(){
   kicking=false; aboveFrames=0; belowFrames=0; peakPct=0; lastRankTs=null;
   trajX=[]; trajY=[]; trajHipX=[]; trajActive=false; drillSide=0;
   popOverlay.classList.remove('show');
-  drillResult.classList.remove('show'); sparringHud?.classList.remove('show');
+  drillResult.classList.remove('show','auto-summary','final-result'); sparringHud?.classList.remove('show');
   if(drillResultTimer){ clearTimeout(drillResultTimer); drillResultTimer=null; }
 }
 function stopGame(){
@@ -4714,7 +4755,7 @@ function stopGame(){
   if(gameTimer){ clearInterval(gameTimer); gameTimer=null; }
   timerBadge.classList.remove('show'); readyOverlay.classList.remove('show');
   clearBalloons();
-  drillResult.classList.remove('show'); sparringHud?.classList.remove('show');
+  drillResult.classList.remove('show','auto-summary','final-result'); sparringHud?.classList.remove('show');
   if(drillResultTimer){ clearTimeout(drillResultTimer); drillResultTimer=null; }
   renderStats();
 }
