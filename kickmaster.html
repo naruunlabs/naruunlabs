@@ -1294,6 +1294,93 @@ footer{
   }
 }
 
+
+
+/* SALES CONTENT ADDITIONS — VIDEO / BENEFITS / RECOMMENDED / PURCHASE */
+.video-section{background:#fff!important}
+.video-intro{display:block;margin-bottom:42px;max-width:900px}
+.video-intro h2{max-width:860px;word-break:keep-all;overflow-wrap:normal}
+.video-intro p{max-width:760px;margin-top:22px;color:var(--ui-muted);font-size:15px;line-height:1.85;word-break:keep-all}
+.benefit-intro p,.recommended-intro p{color:var(--ui-muted);font-size:15px;line-height:1.85;word-break:keep-all}
+.video-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.video-card{min-width:0}
+.video-frame{position:relative;aspect-ratio:16/10;overflow:hidden;background:#071C49;border:1px solid var(--ui-line)}
+.video-frame video{display:block;width:100%;height:100%;object-fit:cover;background:#071C49}
+.video-placeholder{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:22px;background:radial-gradient(circle at 70% 20%,rgba(227,23,46,.28),transparent 34%),linear-gradient(135deg,#071C49,#0B214F 62%,#172A55);color:#fff}
+.video-placeholder-inner{max-width:320px}
+.video-placeholder .play-mark{display:grid;place-items:center;width:54px;height:54px;margin:0 auto 16px;border:1px solid rgba(255,255,255,.48);font-size:19px;padding-left:3px}
+.video-placeholder strong{display:block;font-size:clamp(18px,2.1vw,28px);letter-spacing:-.05em}
+.video-placeholder span{display:block;margin-top:9px;color:rgba(255,255,255,.7);font-size:12px;line-height:1.6}
+.video-card-copy{padding:20px 2px 0}
+.video-card-copy h3{color:var(--ui-deep);font-size:21px;letter-spacing:-.04em}
+.video-card-copy p{margin-top:8px;color:var(--ui-muted);font-size:14px;line-height:1.7;word-break:keep-all}
+.benefits-section{background:var(--ui-soft)!important}
+.benefit-intro,.recommended-intro{display:grid;grid-template-columns:.8fr 1.2fr;gap:64px;align-items:end;margin-bottom:38px}
+.benefit-grid{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--ui-line);border-bottom:1px solid var(--ui-line)}
+.benefit-card{min-height:230px;padding:32px 26px;background:#fff;border-right:1px solid var(--ui-line)}
+.benefit-card:last-child{border-right:0}
+.benefit-number{display:block;color:var(--product-primary);font-size:11px;font-weight:900;letter-spacing:.16em}
+.benefit-card h3{margin:38px 0 12px;color:var(--ui-deep);font-size:21px;letter-spacing:-.04em}
+.benefit-card p{color:var(--ui-muted);font-size:14px;line-height:1.75;word-break:keep-all}
+
+.recommended-section{background:#fff!important}
+.recommended-grid{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--ui-line);border-bottom:1px solid var(--ui-line)}
+.recommended-card{padding:30px 20px;min-height:190px;border-right:1px solid var(--ui-line);background:#fff}
+.recommended-card:last-child{border-right:0}
+.recommended-card .target-icon{font-size:25px}
+.recommended-card h3{margin:24px 0 8px;color:var(--ui-deep);font-size:18px;letter-spacing:-.035em}
+.recommended-card p{color:var(--ui-muted);font-size:13.5px;line-height:1.7;word-break:keep-all}
+.recommended-note{margin-top:24px;color:var(--ui-deep);font-size:17px;font-weight:850;letter-spacing:-.03em}
+
+.purchase-section .how{grid-template-columns:repeat(4,1fr)!important}
+.purchase-section .step{min-height:245px!important}
+
+@media(max-width:900px){
+  .benefit-intro,.recommended-intro{grid-template-columns:1fr;gap:14px}
+  .video-grid{grid-template-columns:1fr;gap:34px}
+  .benefit-grid,.recommended-grid{grid-template-columns:1fr;border:0}
+  .benefit-card,.recommended-card{min-height:auto;border-right:0;border-bottom:1px solid var(--ui-line);padding:26px 0}
+  .purchase-section .how{grid-template-columns:1fr!important}
+}
+
+
+/* MODE PREVIEW HEADER — FINAL ALIGNMENT FIX */
+.video-section .video-intro{
+  display:block!important;
+  max-width:940px!important;
+  margin:0 0 44px!important;
+}
+.video-section .video-intro .video-heading{display:block!important;}
+.video-section .video-intro h2{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  max-width:none!important;
+  margin-top:10px!important;
+  font-size:clamp(38px,4.7vw,64px)!important;
+  line-height:1.06!important;
+  letter-spacing:-.06em!important;
+  word-break:keep-all!important;
+  overflow-wrap:normal!important;
+}
+.video-section .video-intro h2 span{
+  display:block!important;
+  white-space:nowrap!important;
+}
+.video-section .video-intro p{
+  max-width:760px!important;
+  margin:24px 0 0!important;
+  font-size:15px!important;
+  line-height:1.85!important;
+  word-break:keep-all!important;
+}
+@media(max-width:680px){
+  .video-section .video-intro{margin-bottom:32px!important;}
+  .video-section .video-intro h2{font-size:clamp(34px,10.5vw,50px)!important;}
+  .video-section .video-intro h2 span{white-space:normal!important;}
+  .video-section .video-intro p{margin-top:18px!important;font-size:14px!important;}
+}
+
 </style>
 </head>
 <body>
@@ -1341,6 +1428,92 @@ footer{
   </div>
 </section>
 
+<section class="video-section" id="video-preview">
+  <div class="wrap">
+    <div class="video-intro">
+      <div class="video-heading">
+        <div class="eyebrow">Mode Preview</div>
+        <h2><span>3가지 훈련 모드를</span><span>영상으로 확인하세요</span></h2>
+      </div>
+      <p>각 모드의 핵심 장면을 짧게 보여주어 발차기·격파·겨루기 훈련이 어떻게 진행되는지 한눈에 확인할 수 있습니다.</p>
+    </div>
+
+    <div class="video-grid">
+      <article class="video-card">
+        <div class="video-frame">
+          <video autoplay muted loop playsinline preload="metadata" aria-label="AI KICK MASTER 발차기 모드 영상">
+            <source src="kick-mode.mp4" type="video/mp4">
+          </video>
+          <div class="video-placeholder">
+            <div class="video-placeholder-inner">
+              <div class="play-mark">▶</div>
+              <strong>발차기 모드</strong>
+              <span>AI KICK MASTER</span>
+            </div>
+          </div>
+        </div>
+        <div class="video-card-copy">
+          <h3>발차기 모드</h3>
+          <p>AI 자세 인식으로 발차기를 판정하고 실시간 점수와 콤보를 제공합니다.</p>
+        </div>
+      </article>
+
+      <article class="video-card">
+        <div class="video-frame">
+          <video autoplay muted loop playsinline preload="metadata" aria-label="AI KICK MASTER 격파 모드 영상">
+            <source src="break-mode.mp4" type="video/mp4">
+          </video>
+          <div class="video-placeholder">
+            <div class="video-placeholder-inner">
+              <div class="play-mark">▶</div>
+              <strong>격파 모드</strong>
+              <span>AI KICK MASTER</span>
+            </div>
+          </div>
+        </div>
+        <div class="video-card-copy">
+          <h3>격파 모드</h3>
+          <p>화면 속 목표물을 발차기로 격파하며 반복 훈련을 게임처럼 즐길 수 있습니다.</p>
+        </div>
+      </article>
+
+      <article class="video-card">
+        <div class="video-frame">
+          <video autoplay muted loop playsinline preload="metadata" aria-label="AI KICK MASTER 겨루기 모드 영상">
+            <source src="sparring-mode.mp4" type="video/mp4">
+          </video>
+          <div class="video-placeholder">
+            <div class="video-placeholder-inner">
+              <div class="play-mark">▶</div>
+              <strong>겨루기 모드</strong>
+              <span>AI KICK MASTER</span>
+            </div>
+          </div>
+        </div>
+        <div class="video-card-copy">
+          <h3>겨루기 모드</h3>
+          <p>타이밍과 방향에 맞춰 반응하며 실전 감각과 집중력을 함께 훈련합니다.</p>
+        </div>
+      </article>
+    </div>
+</div>
+</section>
+
+<section class="benefits-section" id="benefits">
+  <div class="wrap">
+    <div class="benefit-intro">
+      <div><div class="eyebrow">Why AI Kick Master</div><h2>도입하면 수업이<br>이렇게 달라집니다</h2></div>
+      <p>새로운 장비를 복잡하게 운영하는 것이 아니라, 기존 수업 안에 자연스럽게 추가해 반복 훈련의 몰입도와 활용도를 높입니다.</p>
+    </div>
+    <div class="benefit-grid">
+      <article class="benefit-card"><span class="benefit-number">01</span><h3>아이들이 먼저 참여합니다</h3><p>점수와 콤보가 즉시 표시되어 반복 발차기 훈련을 게임처럼 즐길 수 있습니다.</p></article>
+      <article class="benefit-card"><span class="benefit-number">02</span><h3>반복 훈련이 지루하지 않습니다</h3><p>발차기·격파·겨루기 모드를 바꿔가며 같은 동작도 다양한 방식으로 훈련합니다.</p></article>
+      <article class="benefit-card"><span class="benefit-number">03</span><h3>수업 구성이 더 풍부해집니다</h3><p>기본기 수업, 미션 활동, 개인 도전과 단체 참여 등 여러 수업 방식에 활용할 수 있습니다.</p></article>
+      <article class="benefit-card"><span class="benefit-number">04</span><h3>추가 센서 없이 시작합니다</h3><p>카메라가 있는 태블릿이나 PC만 있으면 기존 공간에서 간편하게 사용할 수 있습니다.</p></article>
+    </div>
+  </div>
+</section>
+
   <section>
     <div class="wrap">
       <div class="section-head">
@@ -1356,16 +1529,34 @@ footer{
     </div>
   </section>
 
-  <section>
+<section class="recommended-section" id="recommended">
+  <div class="wrap">
+    <div class="recommended-intro">
+      <div><div class="eyebrow">Recommended For</div><h2>이런 곳에<br>추천합니다</h2></div>
+      <p>발차기와 신체 활동을 지도하는 공간이라면 종목에 한정하지 않고 수업 목적에 맞춰 활용할 수 있습니다.</p>
+    </div>
+    <div class="recommended-grid">
+      <article class="recommended-card"><div class="target-icon">🥋</div><h3>태권도장</h3><p>기본 발차기, 격파, 겨루기 수업의 참여도를 높이고 싶은 도장</p></article>
+      <article class="recommended-card"><div class="target-icon">🥊</div><h3>합기도장</h3><p>발차기 반복 훈련에 새로운 방식과 게임 요소를 더하고 싶은 도장</p></article>
+      <article class="recommended-card"><div class="target-icon">⚔️</div><h3>격투기 체육관</h3><p>킥 동작을 활용한 체력·민첩성 훈련 프로그램이 필요한 체육관</p></article>
+      <article class="recommended-card"><div class="target-icon">🏫</div><h3>학교·방과후 수업</h3><p>학생들이 함께 참여하는 체육 활동과 미션형 수업을 운영하는 곳</p></article>
+      <article class="recommended-card"><div class="target-icon">🏃</div><h3>체육 교육기관</h3><p>카메라 기반 신체 활동 콘텐츠를 간편하게 도입하려는 교육기관</p></article>
+    </div>
+    <p class="recommended-note">발차기 훈련을 하는 모든 교육기관에서 활용할 수 있습니다.</p>
+  </div>
+</section>
+
+  <section class="purchase-section" id="purchase">
     <div class="wrap">
       <div class="section-head">
-        <div class="eyebrow">How it works</div>
-        <h2>시작은 3단계면 충분합니다</h2>
+        <div class="eyebrow">Purchase Process</div>
+        <h2>구매부터 사용까지<br>간단하게 진행됩니다</h2>
       </div>
       <div class="how">
-        <div class="step"><b>STEP 01</b><h3>라이선스 인증</h3><p>발급받은 AKM 라이선스 키로 태블릿 또는 PC를 인증합니다.</p></div>
-        <div class="step"><b>STEP 02</b><h3>바로 시작</h3><p>다음부터는 인증 없이 켜자마자 바로 측정을 시작합니다.</p></div>
-        <div class="step"><b>STEP 03</b><h3>AI 즉시 반응</h3><p>웹캠 앞에서 발차기하면 동작을 바로 인식해 점수와 결과를 화면에 보여줍니다.</p></div>
+        <div class="step"><b>STEP 01</b><h3>구매 상담</h3><p>카카오톡 또는 전화로 사용 기기와 설치 환경을 확인하고 구매를 진행합니다.</p></div>
+        <div class="step"><b>STEP 02</b><h3>결제 및 라이선스 발급</h3><p>결제 확인 후 최대 2대의 기기에서 사용할 수 있는 영구 라이선스 키를 발급합니다.</p></div>
+        <div class="step"><b>STEP 03</b><h3>기기 인증</h3><p>태블릿 또는 PC에서 프로그램을 열고 발급받은 라이선스 키를 한 번 입력합니다.</p></div>
+        <div class="step"><b>STEP 04</b><h3>바로 훈련 시작</h3><p>인증이 끝나면 발차기·격파·겨루기 모드를 선택해 바로 수업에 활용할 수 있습니다.</p></div>
       </div>
     </div>
   </section>
@@ -1443,6 +1634,17 @@ footer{
 </footer>
 
 <script>
+(function(){
+  const video=document.getElementById('kickIntroVideo');
+  const placeholder=document.getElementById('videoPlaceholder');
+  if(!video||!placeholder)return;
+  const showVideo=()=>{placeholder.style.display='none';};
+  const showPlaceholder=()=>{placeholder.style.display='grid';};
+  video.addEventListener('canplay',showVideo,{once:true});
+  video.addEventListener('error',showPlaceholder);
+  if(video.readyState>=3)showVideo();
+})();
+
 (function(){
   fetch('https://ebgoolsymyzkftvavpyj.supabase.co/functions/v1/clever-worker', {
     method:'POST',
