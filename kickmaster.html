@@ -1306,7 +1306,9 @@ footer{
 .video-card{min-width:0}
 .video-frame{position:relative;aspect-ratio:16/10;overflow:hidden;background:#071C49;border:1px solid var(--ui-line)}
 .video-frame video{display:block;width:100%;height:100%;object-fit:cover;background:#071C49}
-.video-placeholder{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:22px;background:radial-gradient(circle at 70% 20%,rgba(227,23,46,.28),transparent 34%),linear-gradient(135deg,#071C49,#0B214F 62%,#172A55);color:#fff}
+.video-placeholder{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:22px;background:radial-gradient(circle at 70% 20%,rgba(227,23,46,.28),transparent 34%),linear-gradient(135deg,#071C49,#0B214F 62%,#172A55);color:#fff;opacity:1;visibility:visible;transition:opacity .28s ease,visibility .28s ease}
+
+.video-placeholder.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
 .video-placeholder-inner{max-width:320px}
 .video-placeholder .play-mark{display:grid;place-items:center;width:54px;height:54px;margin:0 auto 16px;border:1px solid rgba(255,255,255,.48);font-size:19px;padding-left:3px}
 .video-placeholder strong{display:block;font-size:clamp(18px,2.1vw,28px);letter-spacing:-.05em}
@@ -1441,7 +1443,7 @@ footer{
     <div class="video-grid">
       <article class="video-card">
         <div class="video-frame">
-          <video autoplay muted loop playsinline preload="metadata" aria-label="AI KICK MASTER 발차기 모드 영상">
+          <video autoplay muted loop playsinline preload="none" aria-label="AI KICK MASTER 발차기 모드 영상">
             <source src="kick-mode.mp4" type="video/mp4">
           </video>
           <div class="video-placeholder">
@@ -1460,7 +1462,7 @@ footer{
 
       <article class="video-card">
         <div class="video-frame">
-          <video autoplay muted loop playsinline preload="metadata" aria-label="AI KICK MASTER 격파 모드 영상">
+          <video autoplay muted loop playsinline preload="none" aria-label="AI KICK MASTER 격파 모드 영상">
             <source src="break-mode.mp4" type="video/mp4">
           </video>
           <div class="video-placeholder">
@@ -1479,7 +1481,7 @@ footer{
 
       <article class="video-card">
         <div class="video-frame">
-          <video autoplay muted loop playsinline preload="metadata" aria-label="AI KICK MASTER 겨루기 모드 영상">
+          <video autoplay muted loop playsinline preload="none" aria-label="AI KICK MASTER 겨루기 모드 영상">
             <source src="sparring-mode.mp4" type="video/mp4">
           </video>
           <div class="video-placeholder">
@@ -1671,6 +1673,37 @@ footer{
     const p=document.getElementById('kickPhone');if(p){p.href=tel;p.textContent='전화 문의 '+phone;}const fp=document.getElementById('kickFooterPhone');if(fp){fp.href=tel;fp.textContent=phone;}
   
   }).catch(()=>{ /* 실패 시 기본 정적 문구 그대로 사용 */ });
+})();
+</script>
+
+<script>
+(function(){
+  document.querySelectorAll('.video-frame').forEach(function(frame){
+    var video = frame.querySelector('video');
+    var placeholder = frame.querySelector('.video-placeholder');
+    if(!video || !placeholder) return;
+
+    function hidePlaceholder(){
+      placeholder.classList.add('is-hidden');
+    }
+
+    function showPlaceholder(){
+      placeholder.classList.remove('is-hidden');
+    }
+
+    video.addEventListener('playing', hidePlaceholder);
+    video.addEventListener('loadeddata', function(){
+      var playPromise = video.play();
+      if(playPromise && typeof playPromise.catch === 'function'){
+        playPromise.catch(function(){ /* 사용자가 화면을 볼 때 브라우저가 다시 자동재생을 시도함 */ });
+      }
+    });
+    video.addEventListener('error', showPlaceholder);
+
+    if(video.readyState >= 2 && !video.paused){
+      hidePlaceholder();
+    }
+  });
 })();
 </script>
 </body>
