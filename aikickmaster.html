@@ -3992,19 +3992,24 @@ function analyzeTraj(peakPctValue=null){
     }
   }
 
-  // 너무 엄격한 물음표 모양 강제 대신,
-  // 골반 기준으로 충분한 옆 이동이 있으면 돌려차기로 인정한다.
-  const roundMovement=
+  // 앞차기 판정용 기존 기준은 그대로 유지한다.
+  // 돌려차기만 아이들의 짧은 회전 궤적도 잡도록 약 10~15% 완화한다.
+  const roundMovementForFront=
     riseY>0.030 &&
     lateralRange>0.050 &&
     (netLateral>0.026 || meaningfulTurn);
+
+  const roundMovement=
+    riseY>0.030 &&
+    lateralRange>0.045 &&
+    (netLateral>0.022 || meaningfulTurn);
 
   if(drillKickType()==='apcha'){
     // 앞차기: 높이는 발의 시작점-최고점 차이가 아니라,
     // 실제 발차기 최고 높이값(peakPctValue)을 사용한다.
     // 이미 시작 기준 높이를 넘은 동작만 완료 처리되므로 별도 '더 높이' 실패는 만들지 않는다.
     const tooSideways=
-      roundMovement ||
+      roundMovementForFront ||
       lateralRange>0.068 ||
       netLateral>0.050 ||
       (lateralRange>0.055 && meaningfulTurn);
@@ -4030,7 +4035,7 @@ function analyzeTraj(peakPctValue=null){
   }
 
   const heightScore=Math.max(0,Math.min(1,(riseY-0.030)/0.145));
-  const roundScore=Math.max(0,Math.min(1,(lateralRange-0.050)/0.100));
+  const roundScore=Math.max(0,Math.min(1,(lateralRange-0.045)/0.095));
   const turnBonus=meaningfulTurn?1:0.55;
   let score=Math.round(62 + heightScore*20 + roundScore*12 + turnBonus*4);
   score=Math.max(62,Math.min(98,score));
