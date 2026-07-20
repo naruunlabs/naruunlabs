@@ -3985,7 +3985,11 @@ function analyzeTraj(){
     curveNorm=Math.max(curveNorm,Math.abs(xs[i]-lineX)/torso);
   }
   const xTravelNorm=xTravel/torso;
-  const hasRoundShape = lateralRangeNorm>0.16 || xTravelNorm>0.24 || curveNorm>0.075 || directionChanges>0;
+  // 돌려차기는 좌우 이동과 곡선 형태를 모두 보여야 인정한다.
+  // 앞차기 중 생기는 작은 좌우 흔들림이나 한 번의 방향 변화만으로는 통과하지 않는다.
+  const enoughLateral = lateralRangeNorm>0.22 || xTravelNorm>0.32;
+  const enoughCurve = curveNorm>0.09 || directionChanges>0;
+  const hasRoundShape = enoughLateral && enoughCurve;
   const stronglyCurved = lateralRangeNorm>0.34 || xTravelNorm>0.48 || curveNorm>0.16;
 
   if(drillKickType()==='apcha'){
