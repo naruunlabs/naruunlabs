@@ -3954,89 +3954,57 @@ function updateModeBadge(){
 
 // 궤적에서 발차기 형태 분석
 function analyzeTraj(){
-  if(trajX.length<6) return {score:null,ok:false,accepted:false,msg:'동작을 끝까지 차주세요'};
-
+  if(trajX.length<4) return {score:0,ok:false,msg:'너무 짧아요'};
   const startY=trajY[0], minY=Math.min(...trajY);
   const riseY=startY-minY;
   const startX=trajX[0];
   const hip0=trajHipX[0] ?? smHipX ?? 0.5;
-  const side=(startX<hip0)?-1:1; // -1: 몸 기준 왼쪽, 1: 오른쪽
-  const extremeX=side<0 ? Math.min(...trajX) : Math.max(...trajX);
-  const outward=Math.max(0,side*(extremeX-startX));
-
+  const side=(startX<hip0)?-1:1; // -1: 화면/몸 기준 왼쪽 시작, 1: 오른쪽 시작
+  const extremeX = side<0 ? Math.min(...trajX) : Math.max(...trajX);
+  const outward = Math.max(0, side*(extremeX-startX));
   let maxDX=0;
-  trajX.forEach(x=>{
-    if(Math.abs(x-startX)>Math.abs(maxDX)) maxDX=x-startX;
-  });
+  trajX.forEach(x=>{ if(Math.abs(x-startX)>Math.abs(maxDX)) maxDX=x-startX; });
   const absDX=Math.abs(maxDX);
-  const horizontalRatio=absDX/Math.max(riseY,0.001);
-  const outwardRatio=outward/Math.max(riseY,0.001);
 
   if(drillKickType()==='apcha'){
-    /*
-      보수적인 앞차기 인정 기준
-      1) 발이 충분히 올라와야 함
-      2) 좌우 이동이 상승량의 58% 이하여야 함
-      3) 몸 바깥쪽으로 크게 휘면 돌려차기 성향으로 보고 실패
-    */
-    const enoughHeight=riseY>=0.065;
-    const straightEnough=horizontalRatio<=0.58 && absDX<=0.085;
-    const notRoundhouse=outwardRatio<=0.48 && outward<=0.065;
-
-    if(!enoughHeight){
-      return {score:null,ok:false,accepted:false,msg:'앞차기를 더 높이 차세요'};
-    }
-    if(!straightEnough || !notRoundhouse){
-      return {score:null,ok:false,accepted:false,msg:'앞차기는 정면으로 곧게 차세요'};
-    }
-
+    // v1.6: 아이들이 흥미를 잃지 않도록 성공 점수는 후하게, 100점은 완벽할 때만 가능.
     const heightNorm=Math.max(0,Math.min(1,riseY/0.22));
-    const straightNorm=Math.max(0,Math.min(1,1-(horizontalRatio/0.58)));
+    const straightNorm=Math.max(0,Math.min(1,1-(absDX/Math.max(riseY*1.45,0.02))));
     let score=Math.round(60 + heightNorm*28 + straightNorm*12);
-    if(heightNorm>0.92 && straightNorm>0.88) score=Math.min(100,score+2);
+    // 높이와 직선성이 모두 좋은 경우에만 98~100점 영역 허용
+    if(heightNorm>0.92 && straightNorm>0.88) score=Math.min(100, score + 2);
     score=Math.max(40,Math.min(100,score));
-
+    // 앞차기: 충분히 올라오면서, 옆으로 과도하게 휘지 않은 궤적만 인정
+    // 기존보다 구별력은 높이되 아이들의 자연스러운 흔들림은 허용한다.
+    const ok=riseY>0.045 && absDX<riseY*1.05 && absDX<0.120;
     let msg;
-    if(score>=98) msg='완벽한 앞차기!';
+    if(!ok && riseY<=0.045) msg='🦵 조금 더 높이!';
+    else if(!ok) msg='↕️ 앞쪽으로 곧게!';
+    else if(score>=98) msg='완벽한 앞차기!';
     else if(score>=90) msg='아주 좋아요!';
     else if(score>=80) msg='좋아요!';
-    else msg='정면으로 더 힘차게!';
-    return {score,ok:true,accepted:true,msg};
+    else msg='좋은 앞차기!';
+    return {score,ok,msg};
+  } else {
+    // v1.6: 돌려차기도 80~90점대가 더 잘 나오게 조정. 100점은 높이+곡선이 모두 좋을 때만.
+    const heightNorm=Math.max(0,Math.min(1,riseY/0.19));
+    const curveNorm=Math.max(0,Math.min(1,outward/0.115));
+    let score=Math.round(60 + heightNorm*22 + curveNorm*18);
+    if(heightNorm>0.92 && curveNorm>0.88) score=Math.min(100, score + 3);
+    score=Math.max(40,Math.min(100,score));
+    // 돌려차기: 최소 높이와 바깥쪽 곡선이 함께 확인되어야 인정
+    // 절대 이동량만 강요하지 않고 상승량 대비 곡선 비율도 함께 본다.
+    const curveRatio=outward/Math.max(riseY,0.025);
+    const ok=riseY>0.040 && outward>0.028 && curveRatio>0.22;
+    let msg;
+    if(!ok && riseY<=0.040) msg='🔄 조금 더 높이!';
+    else if(!ok) msg=(side<0?'↖ 왼쪽으로 조금 더 휘어요!':'↗ 오른쪽으로 조금 더 휘어요!');
+    else if(score>=98) msg='완벽한 돌려차기!';
+    else if(score>=90) msg='아주 좋아요!';
+    else if(score>=80) msg='좋아요!';
+    else msg='좋은 돌려차기!';
+    return {score,ok,msg};
   }
-
-  /*
-    보수적인 돌려차기 인정 기준
-    1) 발이 충분히 올라와야 함
-    2) 몸 바깥 방향 이동량이 확실해야 함
-    3) 가로 이동이 상승량의 62% 이상이어야 함
-       → 위로만 올라오는 앞차기는 돌려차기로 인정하지 않음
-  */
-  const enoughHeight=riseY>=0.055;
-  const enoughOutward=outward>=0.070;
-  const curvedEnough=outwardRatio>=0.62 && horizontalRatio>=0.65;
-
-  if(!enoughHeight){
-    return {score:null,ok:false,accepted:false,msg:'돌려차기를 더 높이 차세요'};
-  }
-  if(!enoughOutward || !curvedEnough){
-    return {
-      score:null,ok:false,accepted:false,
-      msg:side<0?'돌려차기는 왼쪽으로 확실히 돌려 차세요':'돌려차기는 오른쪽으로 확실히 돌려 차세요'
-    };
-  }
-
-  const heightNorm=Math.max(0,Math.min(1,riseY/0.19));
-  const curveNorm=Math.max(0,Math.min(1,outward/0.115));
-  let score=Math.round(60 + heightNorm*22 + curveNorm*18);
-  if(heightNorm>0.92 && curveNorm>0.88) score=Math.min(100,score+3);
-  score=Math.max(40,Math.min(100,score));
-
-  let msg;
-  if(score>=98) msg='완벽한 돌려차기!';
-  else if(score>=90) msg='아주 좋아요!';
-  else if(score>=80) msg='좋아요!';
-  else msg='옆으로 더 힘차게!';
-  return {score,ok:true,accepted:true,msg};
 }
 
 // ── v2.6 발차기 성향 분석: 앞차기/돌려차기 자동 구별용 ──
@@ -4326,14 +4294,12 @@ function onDrillKick(peak, traj){
   if(!running) return;
   const result=analyzeTraj();
 
-  // 발차기 종류/최소 기준 미달:
-  // 점수, 성공 횟수, 평균, 진행 횟수에 전혀 반영하지 않고 같은 동작을 다시 시도한다.
-  if(!result.accepted){
-    lastScore=null;
-    lastGrade='다시 시도 · '+result.msg;
-    lastColor='#ff6578';
+  // 동작 기준을 통과하지 못한 발차기는 횟수·점수·평균에 반영하지 않는다.
+  if(!result.ok){
+    lastGrade=result.msg;
+    lastColor='#9fb0c8';
     sndFail();
-    popup('다시!', '#ff6578');
+    popup('다시!', '#9fb0c8');
     renderStats();
     trajX=[]; trajY=[]; trajHipX=[]; trajActive=false; drillSide=0;
     return;
@@ -4341,16 +4307,15 @@ function onDrillKick(peak, traj){
 
   drillDone++;
   drillScores.push(result.score);
-  lastScore=result.score;
-  lastGrade=result.msg;
-  lastColor='#4caf50';
+  lastScore=result.score; lastGrade=result.msg; lastColor='#4caf50';
 
   sndSuccess();
-  popup(result.score+'점','#4caf50');
+  popup(result.score+'점', '#4caf50');
+
   renderStats();
   trajX=[]; trajY=[]; trajHipX=[]; trajActive=false; drillSide=0;
 
-  // 인정된 발차기만 목표 횟수에 포함
+  // 목표 횟수 달성
   if(drillDone>=drillTarget){
     if(drillRunMode==='auto') setTimeout(finishAutoDrillStage,700);
     else setTimeout(finishDrill,700);
