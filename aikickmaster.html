@@ -428,6 +428,7 @@ body.hud-v21 #readyOverlay{z-index:10; background:rgba(2,8,18,.54); backdrop-fil
 body.hud-v21 #popOverlay{z-index:12;}
 body.hud-v21 #drillResult{z-index:13; background:rgba(2,8,18,.62); backdrop-filter:blur(4px);}
 body.hud-v21 #popScore{font-size:132px; font-weight:900; line-height:.88; text-align:center; color:#ffe36b; text-shadow:0 0 34px rgba(255,106,26,.70),0 5px 36px rgba(0,0,0,.78);}
+body.hud-v21 #popOverlay.compact-message #popScore{font-size:66px !important; line-height:1.15 !important; max-width:82vw; padding:0 24px; word-break:keep-all;}
 body.hud-v21 .popGrade{margin-top:18px; font-size:48px; color:#4ca3ff; letter-spacing:1px; text-shadow:0 0 28px rgba(76,163,255,.75),0 4px 24px rgba(0,0,0,.65);}
 body.hud-v21 #drillResultIcon{font-size:100px;}
 body.hud-v21 #drillResultText{font-size:54px; font-weight:900; text-shadow:0 0 26px rgba(76,163,255,.5);}
@@ -3897,6 +3898,8 @@ function popup(text,color){
   }
   popScore.innerHTML = text + (grade ? '<div class="popGrade">'+grade+'</div>' : '');
   popScore.style.color=color;
+  // 점수가 아닌 안내문은 긴 문장이 잘리지 않도록 절반 크기로 표시
+  popOverlay.classList.toggle('compact-message', typeof lastScore!=='number');
   popOverlay.classList.add('show');
   if(popTimer) clearTimeout(popTimer);
   popTimer=setTimeout(()=>popOverlay.classList.remove('show'),900);
@@ -3953,7 +3956,7 @@ function updateModeBadge(){
    ─────────────────────────────────────────── */
 
 // 궤적에서 발차기 형태 분석
-function analyzeTraj(){
+function analyzeTraj(peakPctValue=null){
   if(trajX.length<4) return {score:null,ok:false,msg:'동작을 다시 보여주세요',reason:'too_short'};
 
   // 몸이 좌우로 움직인 영향은 빼고, 발이 골반 기준으로 어떻게 움직였는지 분석
@@ -3997,18 +4000,23 @@ function analyzeTraj(){
     (netLateral>0.026 || meaningfulTurn);
 
   if(drillKickType()==='apcha'){
-    // 앞차기: 높이는 쉽게 인정하고, 옆 이동이 아주 큰 경우만 실패
-    const enoughHeight=riseY>0.030;
-    const tooSideways=lateralRange>0.095 || (lateralRange>0.075 && meaningfulTurn);
-    if(!enoughHeight){
-      return {score:null,ok:false,msg:'조금 더 높이!',reason:'low'};
-    }
+    // 앞차기: 높이는 발의 시작점-최고점 차이가 아니라,
+    // 실제 발차기 최고 높이값(peakPctValue)을 사용한다.
+    // 이미 시작 기준 높이를 넘은 동작만 완료 처리되므로 별도 '더 높이' 실패는 만들지 않는다.
+    const tooSideways=
+      roundMovement ||
+      lateralRange>0.068 ||
+      netLateral>0.050 ||
+      (lateralRange>0.055 && meaningfulTurn);
     if(tooSideways){
-      return {score:null,ok:false,msg:'앞으로 곧게 차세요!',reason:'round_shape'};
+      return {score:null,ok:false,msg:'앞차기로 곧게 차주세요!',reason:'round_shape'};
     }
 
-    const heightScore=Math.max(0,Math.min(1,(riseY-0.030)/0.150));
-    const straightScore=Math.max(0,Math.min(1,1-lateralRange/0.095));
+    const measuredPeak=(typeof peakPctValue==='number' && Number.isFinite(peakPctValue))
+      ? peakPctValue
+      : Math.max(0,Math.min(100,50 + riseY*250));
+    const heightScore=Math.max(0,Math.min(1,(measuredPeak-50)/50));
+    const straightScore=Math.max(0,Math.min(1,1-lateralRange/0.068));
     let score=Math.round(62 + heightScore*22 + straightScore*14);
     score=Math.max(62,Math.min(98,score));
     if(heightScore>0.96 && straightScore>0.94) score=100;
@@ -4317,7 +4325,7 @@ function drawDolloGuide(){
 /* ── 발차기 연습 완료 처리 ── */
 function onDrillKick(peak, traj){
   if(!running) return;
-  const result=analyzeTraj();
+  const result=analyzeTraj(peak);
 
   // 짧은 오인식이나 잘못된 종류의 발차기는 횟수/평균에 포함하지 않는다.
   if(!result.ok || typeof result.score!=='number'){
@@ -4458,7 +4466,7 @@ function updateAdaptiveSparringTarget(){
 }
 function handleSparringPracticeKick(peak){
   if(!running || currentMode!=='sparring' || sparringMode!=='practice') return;
-  const result=analyzeTraj();
+  const result=analyzeTraj(peak);
   let score=result.score || Math.max(40, Math.min(100, Math.round(peak)));
   const mission=sparringMission || nextSparringMission();
   const bonus=Math.max(0, Math.round((mission.targetPct-70)/8));
