@@ -3547,7 +3547,7 @@ function beginAutoDrillStage(index, announce=true){
   drillScores=[];
   lastScore=null; lastGrade=''; lastColor='var(--gold)';
   kicking=false; aboveFrames=0; belowFrames=0; peakPct=0;
-  trajX=[]; trajY=[]; trajHipX=[]; trajActive=false; drillSide=0;
+  trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajActive=false; drillSide=0;
   updateSelectedKickButtons();
   updateModeBadge();
   renderStats();
@@ -3585,9 +3585,11 @@ let lastScore=null, lastGrade='', lastColor='var(--gold)';
 let balloons=[], balloonCount=0;
 let lastRankTs=null;
 let smHipY=null, smTorso=null, smHipX=null;
+let smHipW=null; // 서 있을 때의 골반 폭(평소 기준값) — 돌려차기 골반 회전 감지용
 
 // 발차기 궤적 추적 (연습 모드용)
-let trajX=[], trajY=[], trajHipX=[], trajActive=false, drillSide=0; // drillSide: -1 왼쪽 시작, 1 오른쪽 시작
+let trajX=[], trajY=[], trajHipX=[], trajTorso=[], trajHipW=[], trajKneeX=[], trajKneeAngle=[], trajHipVis=[], trajActive=false, drillSide=0; // drillSide: -1 왼쪽 시작, 1 오른쪽 시작
+// trajTorso: 프레임별 몸통 길이(정규화 기준), trajHipW: 프레임별 골반 폭 비율(평소 대비, 1=서 있는 상태)
 
 // 연습 모드 상태
 let drillTarget=10, drillDone=0, drillScores=[], drillResultTimer=null;
@@ -3955,9 +3957,71 @@ function updateModeBadge(){
    ── 발차기 연습 모드 (앞차기 / 돌려차기) ──
    ─────────────────────────────────────────── */
 
-// 궤적에서 발차기 형태 분석
+/* ─────────────────────────────────────────────────────────────
+   ── 발차기 판정 기준값 (여기 숫자만 조절하면 됨) ──
+   모든 거리 기준은 화면 비율이 아니라 "몸통 길이(어깨~골반 세로 길이)"의
+   배수(T)로 계산한다. 예) 0.14 = 몸통 길이의 14%.
+   → 카메라와의 거리, 태블릿 화각, 학생 키 차이에 영향을 받지 않는다.
+   숫자를 낮추면 = 더 관대해짐(쉽게 인정), 높이면 = 더 엄격해짐.
+   ───────────────────────────────────────────────────────────── */
+const JUDGE={
+  MIN_RISE_T:0.14,        // 공통: 발이 최소 몸통의 14%는 올라와야 발차기로 인정
+  ROUND:{                 // ── 돌려차기: 아래 ①②③ 중 하나만 만족하면 인정 ──
+    // ① 옆으로 도는 궤적 (기존 방식, 몸통 배수로 환산)
+    LAT_T:0.19,           //   좌우 이동폭 최소값
+    NET_T:0.10,           //   시작→최고점 순수 좌우 이동 최소값
+    // ② 골반 회전 (신규): 대각선으로 차도 골반이 돌면 돌려차기로 인정
+    HIP_TURN:0.74,        //   골반 폭이 평소(서 있을 때)의 74% 이하로 줄면 회전으로 판단
+    LAT_HIP_T:0.09,       //   골반 회전이 보일 때 필요한 최소 좌우 폭 (많이 완화)
+    // ③ 대각선 궤적 (신규): 45도 근처로 비스듬히 올라가는 아이들 발차기 인정
+    DIAG_RATIO:0.72,      //   좌우폭÷상승량: 대각선 성향 (단독 통과가 아니라 보조 신호)
+    LAT_DIAG_T:0.12,      //   대각선 인정 최소 좌우 폭
+    HIP_TURN_WEAK:0.87,   //   대각선과 함께 사용할 약한 골반 회전 기준
+    HIP_TURN_FRAMES:2,    //   한 프레임 오인식을 막기 위한 연속 회전 프레임
+    HIP_VIS_MIN:0.50,     //   골반 랜드마크 신뢰도 최소값
+    KNEE_OPEN_T:0.11,     //   무릎이 골반 기준 바깥으로 열린 최소 이동량
+    KNEE_NET_T:0.07,      //   무릎 시작→최고점 순이동 최소값
+    KNEE_EXT_DEG:28,      //   무릎이 열린 뒤 펴지는 최소 각도 변화(너무 엄격하지 않게)
+    // 방향 전환 감지(궤적이 중간에 꺾였는지)
+    TURN_A_T:0.085, TURN_B_T:0.055,
+    // 점수 계산 범위
+    SCORE_RISE_SPAN:0.69, SCORE_LAT_SPAN:0.45
+  },
+  FRONT:{                 // ── 앞차기: 잘 되고 있으므로 기존 값을 몸통 배수로 환산만 함 ──
+    ROUND_LAT_T:0.24, ROUND_NET_T:0.12,   // 이 이상 돌면 "앞차기로 곧게 차주세요"
+    LAT_MAX_T:0.32, NET_MAX_T:0.24, LAT_TURN_MAX_T:0.26
+  }
+};
+
+// 궤적이 기록된 구간의 대표 몸통 길이(중앙값) — 판정 정규화 기준
+function trajTorsoRef(){
+  const arr=trajTorso.filter(v=>typeof v==='number' && v>0.02);
+  if(!arr.length) return (smTorso && smTorso>0.02)?smTorso:0.21;
+  const s=[...arr].sort((a,b)=>a-b);
+  return s[Math.floor(s.length/2)];
+}
+
+// 골반 폭 감소가 연속 프레임에서 확인되는지 검사한다.
+// 순간적인 랜드마크 튐 하나로 돌려차기가 인정되는 것을 막는다.
+function stableHipTurn(limit, endIndex=trajHipW.length-1){
+  let consecutive=0, best=0, minRatio=1;
+  for(let i=0;i<=endIndex && i<trajHipW.length;i++){
+    const ratio=trajHipW[i];
+    const vis=trajHipVis[i] ?? 1;
+    if(typeof ratio==='number' && ratio>0.15 && vis>=JUDGE.ROUND.HIP_VIS_MIN){
+      minRatio=Math.min(minRatio,ratio);
+      if(ratio<limit){ consecutive++; best=Math.max(best,consecutive); }
+      else consecutive=0;
+    }else consecutive=0;
+  }
+  return {ok:best>=JUDGE.ROUND.HIP_TURN_FRAMES,minRatio,bestFrames:best};
+}
+
+// 궤적에서 발차기 형태 분석 (모든 거리값은 몸통 길이 T의 배수로 정규화)
 function analyzeTraj(peakPctValue=null){
   if(trajX.length<4) return {score:null,ok:false,msg:'동작을 다시 보여주세요',reason:'too_short'};
+
+  const T=trajTorsoRef();
 
   // 몸이 좌우로 움직인 영향은 빼고, 발이 골반 기준으로 어떻게 움직였는지 분석
   const relX=trajX.map((x,i)=>x-(trajHipX[i] ?? smHipX ?? 0.5));
@@ -3974,54 +4038,77 @@ function analyzeTraj(peakPctValue=null){
   const ys=trajY.slice(0,peakIndex+1);
   const startX=xs[0], startY=ys[0];
   const peakX=xs[xs.length-1], peakY=ys[ys.length-1];
-  const riseY=Math.max(0,startY-peakY);
 
+  // ── 몸통 배수(T 단위)로 환산 ──
+  const riseT=Math.max(0,startY-peakY)/T;                 // 발 상승량
   let minX=xs[0], maxX=xs[0];
   for(const x of xs){ minX=Math.min(minX,x); maxX=Math.max(maxX,x); }
-  const lateralRange=maxX-minX;
-  const netLateral=Math.abs(peakX-startX);
+  const latT=(maxX-minX)/T;                               // 좌우 이동폭
+  const netT=Math.abs(peakX-startX)/T;                    // 순수 좌우 이동
+
+  // 골반 회전: 신뢰도 있는 값이 최소 2프레임 연속 나타날 때만 인정
+  const strongHip=stableHipTurn(JUDGE.ROUND.HIP_TURN,peakIndex);
+  const weakHip=stableHipTurn(JUDGE.ROUND.HIP_TURN_WEAK,peakIndex);
+  const hipWMin=strongHip.minRatio;
+  const hipTurn=strongHip.ok;
+  const hipTurnWeak=weakHip.ok;
+
+  // 무릎 궤적: 앞차기는 정면 상승, 돌려차기는 무릎이 골반 바깥으로 열리는 특성을 활용
+  const kneeRel=trajKneeX.slice(0,peakIndex+1).map((x,i)=>(typeof x==='number'?x:trajHipX[i])-(trajHipX[i] ?? smHipX ?? 0.5));
+  let kneeLatT=0, kneeNetT=0, kneeExtDeg=0;
+  if(kneeRel.length>=3){
+    const kneeStart=kneeRel[0], kneePeak=kneeRel[kneeRel.length-1];
+    kneeLatT=(Math.max(...kneeRel)-Math.min(...kneeRel))/T;
+    kneeNetT=Math.abs(kneePeak-kneeStart)/T;
+    const angles=trajKneeAngle.slice(0,peakIndex+1).filter(Number.isFinite);
+    if(angles.length>=3) kneeExtDeg=Math.max(...angles)-Math.min(...angles);
+  }
+  const kneeOpen=kneeLatT>JUDGE.ROUND.KNEE_OPEN_T && kneeNetT>JUDGE.ROUND.KNEE_NET_T;
+  const kneeSnap=kneeExtDeg>JUDGE.ROUND.KNEE_EXT_DEG;
 
   // 궤적 중간에 좌우 방향이 실제로 바뀌었는지 느슨하게 확인
   let meaningfulTurn=false;
   for(let i=2;i<xs.length-1;i++){
-    const first=xs[i]-startX;
-    const second=peakX-xs[i];
-    if(Math.abs(first)>0.018 && Math.abs(second)>0.012 && Math.sign(first)!==Math.sign(second)){
+    const first=(xs[i]-startX)/T;
+    const second=(peakX-xs[i])/T;
+    if(Math.abs(first)>JUDGE.ROUND.TURN_A_T && Math.abs(second)>JUDGE.ROUND.TURN_B_T && Math.sign(first)!==Math.sign(second)){
       meaningfulTurn=true;
       break;
     }
   }
 
-  // 앞차기 판정용 기존 기준은 그대로 유지한다.
-  // 돌려차기만 아이들의 짧은 회전 궤적도 잡도록 약 10~15% 완화한다.
-  const roundMovementForFront=
-    riseY>0.030 &&
-    lateralRange>0.050 &&
-    (netLateral>0.026 || meaningfulTurn);
+  // 대각선 정도: 좌우폭 ÷ 상승량 (클수록 옆으로 기울어진 궤적)
+  const diagRatio=latT/Math.max(riseT,0.06);
 
-  const roundMovement=
-    riseY>0.030 &&
-    lateralRange>0.045 &&
-    (netLateral>0.022 || meaningfulTurn);
+  // ── 돌려차기 인정 경로 ──
+  // 한 가지 신호만으로 무조건 인정하지 않고, 뚜렷한 옆 궤적 또는 두 가지 보조 신호를 조합한다.
+  const clearLateral=latT>JUDGE.ROUND.LAT_T && (netT>JUDGE.ROUND.NET_T || meaningfulTurn);
+  const hipPath=hipTurn && latT>JUDGE.ROUND.LAT_HIP_T;
+  const diagonalPath=diagRatio>JUDGE.ROUND.DIAG_RATIO && latT>JUDGE.ROUND.LAT_DIAG_T && (hipTurnWeak || kneeOpen);
+  const kneePath=kneeOpen && (kneeSnap || hipTurnWeak) && latT>JUDGE.ROUND.LAT_HIP_T;
+  const roundMovement=riseT>JUDGE.MIN_RISE_T && (clearLateral || hipPath || diagonalPath || kneePath);
 
   if(drillKickType()==='apcha'){
-    // 앞차기: 높이는 발의 시작점-최고점 차이가 아니라,
-    // 실제 발차기 최고 높이값(peakPctValue)을 사용한다.
-    // 이미 시작 기준 높이를 넘은 동작만 완료 처리되므로 별도 '더 높이' 실패는 만들지 않는다.
+    // 앞차기: 기존 동작 유지 (기준값만 몸통 배수로 환산).
+    // 골반 회전·대각선 완화 경로는 앞차기 판정에 쓰지 않는다 → 앞차기가 갑자기 실패하는 일 방지.
+    const roundMovementForFront=
+      riseT>JUDGE.MIN_RISE_T &&
+      latT>JUDGE.FRONT.ROUND_LAT_T &&
+      (netT>JUDGE.FRONT.ROUND_NET_T || meaningfulTurn);
     const tooSideways=
       roundMovementForFront ||
-      lateralRange>0.068 ||
-      netLateral>0.050 ||
-      (lateralRange>0.055 && meaningfulTurn);
+      latT>JUDGE.FRONT.LAT_MAX_T ||
+      netT>JUDGE.FRONT.NET_MAX_T ||
+      (latT>JUDGE.FRONT.LAT_TURN_MAX_T && meaningfulTurn);
     if(tooSideways){
       return {score:null,ok:false,msg:'앞차기로 곧게 차주세요!',reason:'round_shape'};
     }
 
     const measuredPeak=(typeof peakPctValue==='number' && Number.isFinite(peakPctValue))
       ? peakPctValue
-      : Math.max(0,Math.min(100,50 + riseY*250));
+      : Math.max(0,Math.min(100,50 + riseT*T*250));
     const heightScore=Math.max(0,Math.min(1,(measuredPeak-50)/50));
-    const straightScore=Math.max(0,Math.min(1,1-lateralRange/0.068));
+    const straightScore=Math.max(0,Math.min(1,1-latT/JUDGE.FRONT.LAT_MAX_T));
     let score=Math.round(62 + heightScore*22 + straightScore*14);
     score=Math.max(62,Math.min(98,score));
     if(heightScore>0.96 && straightScore>0.94) score=100;
@@ -4034,12 +4121,18 @@ function analyzeTraj(peakPctValue=null){
     return {score:null,ok:false,msg:'발을 옆으로 돌려 차보세요!',reason:'not_round'};
   }
 
-  const heightScore=Math.max(0,Math.min(1,(riseY-0.030)/0.145));
-  const roundScore=Math.max(0,Math.min(1,(lateralRange-0.045)/0.095));
-  const turnBonus=meaningfulTurn?1:0.55;
+  // ── 돌려차기 점수 ──
+  // 회전 정도는 궤적 폭 + 골반 회전 중 더 잘 나온 쪽을 인정 (대각선 킥도 점수 손해 없게)
+  const heightScore=Math.max(0,Math.min(1,(riseT-JUDGE.MIN_RISE_T)/JUDGE.ROUND.SCORE_RISE_SPAN));
+  const latScore=Math.max(0,Math.min(1,(latT-JUDGE.ROUND.LAT_HIP_T)/JUDGE.ROUND.SCORE_LAT_SPAN));
+  const hipScore=hipTurn?Math.max(0.45,Math.min(1,(JUDGE.ROUND.HIP_TURN-hipWMin)/0.24+0.45)):0;
+  const kneeScore=Math.max(0,Math.min(1,(kneeLatT-JUDGE.ROUND.KNEE_OPEN_T)/0.28));
+  const diagScore=diagonalPath?Math.max(0.45,Math.min(1,(diagRatio-JUDGE.ROUND.DIAG_RATIO)/1.0+0.45)):0;
+  const roundScore=Math.max(latScore,hipScore,kneeScore,diagScore);
+  const turnBonus=(meaningfulTurn||hipTurn||kneeOpen)?1:0.55;
   let score=Math.round(62 + heightScore*20 + roundScore*12 + turnBonus*4);
   score=Math.max(62,Math.min(98,score));
-  if(heightScore>0.96 && roundScore>0.92 && meaningfulTurn) score=100;
+  if(heightScore>0.96 && roundScore>0.92 && (meaningfulTurn||hipTurn)) score=100;
 
   const msg=score>=98?'완벽한 돌려차기!':score>=88?'아주 좋아요!':score>=75?'좋아요!':'성공!';
   return {score,ok:true,msg,reason:'round'};
@@ -4050,27 +4143,37 @@ function trajStats(){
   if(trajX.length<4) return null;
   const startY=trajY[0], minY=Math.min(...trajY);
   const riseY=startY-minY;
-  const startX=trajX[0];
-  const endX=trajX[trajX.length-1];
-  const hip0=trajHipX[0] ?? smHipX ?? 0.5;
-  const side=(startX<hip0)?-1:1;
-  const extremeX = side<0 ? Math.min(...trajX) : Math.max(...trajX);
+  // 몸 전체가 좌우로 이동한 값은 제거하고 골반 기준 발 궤적만 사용
+  const relX=trajX.map((x,i)=>x-(trajHipX[i] ?? smHipX ?? 0.5));
+  const startX=relX[0];
+  const endX=relX[relX.length-1];
+  const hip0=0;
+  const side=startX<0?-1:1;
+  const extremeX = side<0 ? Math.min(...relX) : Math.max(...relX);
   const outward = Math.max(0, side*(extremeX-startX));
   let maxAbsDX=0;
-  trajX.forEach(x=>{ maxAbsDX=Math.max(maxAbsDX, Math.abs(x-startX)); });
+  relX.forEach(x=>{ maxAbsDX=Math.max(maxAbsDX, Math.abs(x-startX)); });
   const travel=Math.hypot(endX-startX, trajY[trajY.length-1]-startY);
-  return {startY,minY,riseY,startX,endX,hip0,side,outward,absDX:maxAbsDX,travel};
+  const T=trajTorsoRef(); // 몸통 길이 (정규화 기준)
+  const hipState=stableHipTurn(JUDGE.ROUND.HIP_TURN);
+  const hipWMin=hipState.minRatio;
+  const hipTurn=hipState.ok;
+  return {startY,minY,riseY,startX,endX,hip0,side,outward,absDX:maxAbsDX,travel,T,hipWMin,hipTurn};
 }
 function classifyKickMotion(){
   const s=trajStats();
-  if(!s || s.riseY<=0.015) return {type:'unknown',label:'판정 어려움',quality:0.80,bonus:0,confidence:0,reason:'궤적 짧음'};
-  const heightNorm=Math.max(0,Math.min(1,s.riseY/0.20));
-  const straightNorm=Math.max(0,Math.min(1,1-(s.absDX/Math.max(s.riseY*1.35,0.025))));
-  const curveNorm=Math.max(0,Math.min(1,s.outward/0.105));
+  const T=(s && s.T)||smTorso||0.21;
+  if(!s || s.riseY<=0.07*T) return {type:'unknown',label:'판정 어려움',quality:0.80,bonus:0,confidence:0,reason:'궤적 짧음'};
+  // 기존 화면 비율 기준을 몸통 배수(T)로 환산: 0.20→0.95T, 0.025→0.12T, 0.105→0.50T
+  const heightNorm=Math.max(0,Math.min(1,s.riseY/(0.95*T)));
+  const straightNorm=Math.max(0,Math.min(1,1-(s.absDX/Math.max(s.riseY*1.35,0.12*T))));
+  let curveNorm=Math.max(0,Math.min(1,s.outward/(0.50*T)));
+  const hipTurn=!!s.hipTurn;
+  if(hipTurn) curveNorm=Math.max(curveNorm,0.45); // 골반이 돌면 대각선 궤적이라도 회전성 인정
   const frontScore=heightNorm*0.62 + straightNorm*0.38;
   const roundScore=heightNorm*0.48 + curveNorm*0.52;
   let type='front', label='앞차기 성향', reason='직선 궤적';
-  if(roundScore>frontScore+0.08 && curveNorm>0.28){ type='round'; label='돌려차기 성향'; reason='휘어 들어간 궤적'; }
+  if(roundScore>frontScore+0.08 && (curveNorm>0.28||hipTurn)){ type='round'; label='돌려차기 성향'; reason=hipTurn?'골반 회전 궤적':'휘어 들어간 궤적'; }
   const confidence=Math.min(1,Math.abs(roundScore-frontScore)+0.35);
   let quality=Math.max(0.72, Math.min(1.18, type==='round' ? (0.86+curveNorm*0.32) : (0.86+straightNorm*0.20)));
   let bonus=0;
@@ -4339,7 +4442,7 @@ function onDrillKick(peak, traj){
     lastColor='#FFB14A';
     sndFail();
     popup(result.msg,'#FFB14A');
-    trajX=[]; trajY=[]; trajHipX=[]; trajActive=false; drillSide=0;
+    trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajActive=false; drillSide=0;
     return;
   }
 
@@ -4353,7 +4456,7 @@ function onDrillKick(peak, traj){
   popup(result.score+'점','#4caf50');
   renderStats();
 
-  trajX=[]; trajY=[]; trajHipX=[]; trajActive=false; drillSide=0;
+  trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajActive=false; drillSide=0;
 
   if(drillDone>=drillTarget){
     if(drillRunMode==='auto') setTimeout(finishAutoDrillStage,700);
@@ -4487,7 +4590,7 @@ function handleSparringPracticeKick(peak){
   popup(String(score), lastColor);
   sndScore(score);
   nextSparringMission();
-  trajX=[]; trajY=[]; trajHipX=[]; trajActive=false; drillSide=0;
+  trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajActive=false; drillSide=0;
 }
 function updateSparringHud(){
   if(enemyHpFill) enemyHpFill.style.width=Math.max(0,(sparringHp/250)*100)+'%';
@@ -4581,7 +4684,7 @@ function handleSparringKick(peak){
   enemyHitMotion(zone);
   sndImpact(zone);
   // 겨루기 데미지는 전용 데미지 팝업(-22)만 사용한다.
-  trajX=[]; trajY=[]; trajHipX=[]; trajActive=false; drillSide=0;
+  trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajActive=false; drillSide=0;
   if(sparringHp<=0) setTimeout(finishSparring,500);
 }
 function startSparring(){
@@ -4813,7 +4916,7 @@ function resetCounters(){
   sparringHp=250; sparringDamage=0; sparringCombo=0; sparringMaxCombo=0; sparringLastHitT=0;
   updateSparringHud();
   kicking=false; aboveFrames=0; belowFrames=0; peakPct=0; lastRankTs=null;
-  trajX=[]; trajY=[]; trajHipX=[]; trajActive=false; drillSide=0;
+  trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajActive=false; drillSide=0;
   popOverlay.classList.remove('show');
   drillResult.classList.remove('show','auto-summary','final-result'); sparringHud?.classList.remove('show');
   if(drillResultTimer){ clearTimeout(drillResultTimer); drillResultTimer=null; }
@@ -4937,7 +5040,7 @@ function runKick(pct,m=null){
         kicking=true; peakPct=pct; belowFrames=0; trajActive=true;
         if(m){
           drillSide=(m.footX < m.hipX)?-1:1;
-          trajX=[]; trajY=[]; trajHipX=[];
+          trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[];
         }
       }
     } else aboveFrames=0;
@@ -4970,25 +5073,28 @@ function sideMetrics(lm,side,hipY,hipX,torso){
   const speed=prev?Math.hypot(fp.x-prev.x,fp.y-prev.y):0;
   prevFoot[side]={x:fp.x,y:fp.y};
   const kneeAngle=angleDeg(lm[ids.hip],lm[ids.knee],lm[ids.ankle]);
-  return {side,pct,footX:fp.x,footY:fp.y,hipY,hipX,torso,ankleX:fp.x,ankleY:fp.y,visibility:fp.vis,speed,kneeAngle};
+  return {side,pct,footX:fp.x,footY:fp.y,kneeX:lm[ids.knee]?.x,kneeY:lm[ids.knee]?.y,kneeVis:lm[ids.knee]?.visibility??0,hipY,hipX,torso,ankleX:fp.x,ankleY:fp.y,visibility:fp.vis,speed,kneeAngle};
 }
 function computeMetrics(lm){
   const shoulderY=(lm[11].y+lm[12].y)/2;
   const hipY=(lm[23].y+lm[24].y)/2;
   const hipX=(lm[23].x+lm[24].x)/2;
+  const hipW=Math.abs(lm[23].x-lm[24].x); // 골반 폭 — 돌려차기 회전 감지용
+  const hipVis=Math.min(lm[23]?.visibility??0,lm[24]?.visibility??0);
   const torso=hipY-shoulderY;
   if(torso<=0.02) return null;
   const L=sideMetrics(lm,'left',hipY,hipX,torso);
   const R=sideMetrics(lm,'right',hipY,hipX,torso);
+  const attach=(m)=>{ if(m){ m.hipW=hipW; m.hipVis=hipVis; } return m; };
   // 연습 모드는 사용자가 선택한 발만 추적. 반대발 움직임 때문에 인식이 꼬이는 것을 줄임.
   const sf=selectedFoot();
   if((isDrillMode() || (currentMode==='sparring' && sparringMode==='practice')) && sf){
     const chosen = sf==='left' ? L : R;
-    if(chosen) return chosen;
+    if(chosen) return attach(chosen);
   }
-  if(!L) return R; if(!R) return L;
+  if(!L) return attach(R); if(!R) return attach(L);
   // 격파 모드는 더 높고, 조금 더 빠르게 움직이는 발을 킥 발로 선택
-  return (L.pct + L.speed*900 > R.pct + R.speed*900) ? L : R;
+  return attach((L.pct + L.speed*900 > R.pct + R.speed*900) ? L : R);
 }
 
 /* ── MediaPipe ── */
@@ -5051,6 +5157,10 @@ function loop(){
           smHipY=(smHipY==null)?m.hipY:smHipY*0.7+m.hipY*0.3;
           smTorso=(smTorso==null)?m.torso:smTorso*0.7+m.torso*0.3;
           smHipX=(smHipX==null)?m.hipX:smHipX*0.8+m.hipX*0.2; // 엉덩이 X 스무딩
+          // 서 있을 때(발이 낮을 때)만 골반 폭 기준값 갱신 → 발차기 중 회전은 기준에 섞이지 않음
+          if(typeof m.hipW==='number' && m.pct<30 && m.speed<0.015 && (m.hipVis??0)>=JUDGE.ROUND.HIP_VIS_MIN){
+            smHipW=(smHipW==null)?m.hipW:smHipW*0.94+m.hipW*0.06;
+          }
           const mirrored=camWrap.classList.contains('mirrored');
           const fx=(mirrored?1-m.ankleX:m.ankleX)*100, fy=m.ankleY*100;
 
@@ -5061,7 +5171,12 @@ function loop(){
           if((isDrillMode()||currentMode==='sparring')&&running&&trajActive){
             const MAX_TRAJ=40;
             trajX.push(m.footX); trajY.push(m.footY); trajHipX.push(m.hipX);
-            if(trajX.length>MAX_TRAJ){ trajX.shift(); trajY.shift(); trajHipX.shift(); }
+            trajTorso.push(m.torso);
+            trajHipW.push((smHipW && smHipW>0.005 && typeof m.hipW==='number' && (m.hipVis??0)>=JUDGE.ROUND.HIP_VIS_MIN) ? m.hipW/smHipW : 1);
+            trajKneeX.push(Number.isFinite(m.kneeX)?m.kneeX:m.hipX);
+            trajKneeAngle.push(Number.isFinite(m.kneeAngle)?m.kneeAngle:null);
+            trajHipVis.push(m.hipVis??0);
+            if(trajX.length>MAX_TRAJ){ trajX.shift(); trajY.shift(); trajHipX.shift(); trajTorso.shift(); trajHipW.shift(); trajKneeX.shift(); trajKneeAngle.shift(); trajHipVis.shift(); }
           }
           // 연습 가이드 라인
           if((isDrillMode() || (currentMode==='sparring' && sparringMode==='practice')) && drillKickType()==='apcha') drawApchaGuide();
@@ -5081,7 +5196,7 @@ function loop(){
     } else {
       barFill.style.width='0%';
       if(!running){ statusEl.style.opacity='1'; statusEl.textContent='🔍 사람을 찾는 중…'; };
-      kicking=false; aboveFrames=0; belowFrames=0; smHipY=null; smTorso=null; smHipX=null;
+      kicking=false; aboveFrames=0; belowFrames=0; smHipY=null; smTorso=null; smHipX=null; smHipW=null;
     }
   }
   requestAnimationFrame(loop);
