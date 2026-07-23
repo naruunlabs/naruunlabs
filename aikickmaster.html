@@ -3183,12 +3183,6 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
   <small>이 앱은 가로 모드 전용입니다</small>
 </div>
 
-<div class="too-small-msg">
-  <div class="icon">📵</div>
-  <p>화면이 너무 작습니다</p>
-  <small>태블릿 또는 노트북의 가로 화면에서 이용해주세요</small>
-</div>
-
 <div class="stage">
   <div class="cam-wrap mirrored" id="camWrap">
   <!-- 정품 인증 배지는 loginScreen 바깥 고정 위치에 있음 -->
@@ -5037,6 +5031,8 @@ window.setMode=(mode)=>{
   const isDrill=MODE_CFG[mode].isDrill;
   const drillHome=document.getElementById('m_drillhome');
   if(drillHome) drillHome.classList.toggle('active',isDrill);
+  const labBtn=document.getElementById('m_kicklab');
+  if(labBtn) labBtn.classList.remove('active');
   drillCountArea.style.display=isDrill?'flex':'none';
   gameArea.style.display=(!isDrill)?'flex':'none';
   setStartBtn(false,'시작!'); setGrResult('');
@@ -5212,8 +5208,43 @@ function renderKickLabChoices(){
   grid.querySelectorAll('[data-lab-kick]').forEach(b=>b.onclick=()=>{kickLabKick=b.dataset.labKick;renderKickLabChoices();});
   document.getElementById('kickLabStartBtn').disabled=!kickLabKick;
 }
-window.openKickLab=async()=>{await loadKickLabConfig();if(kickLabConfig.enabled===false){statusEl.textContent='현재 발차기 연구실은 운영 중이 아닙니다.';return;}renderKickLabChoices();document.getElementById('kickLabIntro').style.display='block';document.getElementById('kickLabCapture').style.display='none';document.getElementById('kickLabModal').classList.add('show');};
-window.closeKickLab=()=>{if(kickLabCollecting)return;document.getElementById('kickLabModal').classList.remove('show');};
+window.openKickLab=()=>{
+  const modal=document.getElementById('kickLabModal');
+  const intro=document.getElementById('kickLabIntro');
+  const capture=document.getElementById('kickLabCapture');
+  const labBtn=document.getElementById('m_kicklab');
+  if(!modal||!intro||!capture){
+    if(statusEl) statusEl.textContent='발차기 연구실 화면을 불러오지 못했습니다.';
+    return;
+  }
+  if(kickLabConfig.enabled===false){
+    if(statusEl) statusEl.textContent='현재 발차기 연구실은 운영 중이 아닙니다.';
+    return;
+  }
+  renderKickLabChoices();
+  intro.style.display='block';
+  capture.style.display='none';
+  modal.classList.add('show');
+  if(labBtn) labBtn.classList.add('active');
+  // 서버 응답을 기다리느라 클릭이 멈추지 않도록 모달부터 즉시 연다.
+  Promise.race([
+    loadKickLabConfig(),
+    new Promise(resolve=>setTimeout(resolve,1800))
+  ]).then(()=>{
+    if(kickLabConfig.enabled===false){
+      modal.classList.remove('show');
+      if(labBtn) labBtn.classList.remove('active');
+      if(statusEl) statusEl.textContent='현재 발차기 연구실은 운영 중이 아닙니다.';
+      return;
+    }
+    renderKickLabChoices();
+  }).catch(()=>{});
+};
+window.closeKickLab=()=>{
+  if(kickLabCollecting)return;
+  document.getElementById('kickLabModal')?.classList.remove('show');
+  document.getElementById('m_kicklab')?.classList.remove('active');
+};
 document.querySelectorAll('[data-lab-foot]').forEach(b=>b.addEventListener('click',()=>{kickLabFoot=b.dataset.labFoot;document.querySelectorAll('[data-lab-foot]').forEach(x=>x.classList.toggle('active',x===b));}));
 window.cancelKickLabCapture=()=>{kickLabCollecting=false;kickLabFrames=[];document.getElementById('kickLabModal').classList.remove('show');};
 function labDelay(ms){return new Promise(r=>setTimeout(r,ms));}
@@ -5427,116 +5458,6 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
 body.hud-v21 .btns.fullscreen-only{width:150px !important;}
 body.hud-v21 .btns.fullscreen-only #fsBtn{width:100% !important;flex:1 1 100% !important;}
 
-/* =========================================================
-   CSS SECTION 23: responsive-left-mode-menu
-   - 네 개 버튼을 같은 기준점에서 계산해 배치
-   - 일반 모드 3개와 연구실 사이에는 별도 간격
-   - 화면 높이에 따라 전체 메뉴 위치와 크기를 자동 조정
-   ========================================================= */
-body.hud-v21{
-  --left-menu-x:clamp(10px,1.4vw,18px);
-  --left-menu-w:clamp(118px,12vw,150px);
-  --left-menu-top:clamp(142px,19vh,178px);
-  --left-menu-step:clamp(38px,5.2vh,44px);
-  --left-menu-lab-gap:clamp(14px,2.6vh,24px);
-}
-
-body.hud-v21 .hud-drill-row,
-body.hud-v21 .hud-balloon-row,
-body.hud-v21 .hud-sparring-row,
-body.hud-v21 .hud-lab-row{
-  position:absolute !important;
-  left:var(--left-menu-x) !important;
-  width:var(--left-menu-w) !important;
-  display:flex !important;
-  z-index:40 !important;
-  opacity:1 !important;
-  visibility:visible !important;
-  pointer-events:auto !important;
-  margin:0 !important;
-}
-
-body.hud-v21 .hud-drill-row{top:var(--left-menu-top) !important;}
-body.hud-v21 .hud-balloon-row{top:calc(var(--left-menu-top) + var(--left-menu-step)) !important;}
-body.hud-v21 .hud-sparring-row{top:calc(var(--left-menu-top) + var(--left-menu-step) * 2) !important;}
-body.hud-v21 .hud-lab-row{top:calc(var(--left-menu-top) + var(--left-menu-step) * 3 + var(--left-menu-lab-gap)) !important;}
-
-body.hud-v21 .hud-drill-row .game-btn,
-body.hud-v21 .hud-balloon-row .game-btn,
-body.hud-v21 .hud-sparring-row .game-btn,
-body.hud-v21 .hud-lab-row .game-btn{
-  position:relative !important;
-  width:100% !important;
-  min-height:clamp(30px,4.3vh,36px) !important;
-  padding:5px 4px 5px 18px !important;
-  background:rgba(6,16,31,.34) !important;
-  border:none !important;
-  box-shadow:none !important;
-  border-radius:0 !important;
-  color:rgba(255,255,255,.78) !important;
-  font-size:clamp(12px,1.25vw,15px) !important;
-  font-weight:1000 !important;
-  line-height:1.15 !important;
-  text-align:left !important;
-  white-space:nowrap !important;
-}
-
-body.hud-v21 .hud-drill-row .game-btn.active,
-body.hud-v21 .hud-balloon-row .game-btn.active,
-body.hud-v21 .hud-sparring-row .game-btn.active{
-  color:#fff !important;
-  background:linear-gradient(90deg,rgba(227,23,46,.24),rgba(6,16,31,.12)) !important;
-  border:none !important;
-  box-shadow:none !important;
-}
-
-body.hud-v21 .hud-lab-row .game-btn{
-  color:rgba(255,255,255,.72) !important;
-  background:linear-gradient(90deg,rgba(255,106,26,.12),rgba(6,16,31,.08)) !important;
-}
-
-body.hud-v21 .hud-drill-row .game-btn::before,
-body.hud-v21 .hud-balloon-row .game-btn::before,
-body.hud-v21 .hud-sparring-row .game-btn::before,
-body.hud-v21 .hud-lab-row .game-btn::before{
-  content:"" !important;
-  display:block !important;
-  position:absolute !important;
-  left:0 !important;
-  top:0 !important;
-  bottom:0 !important;
-  width:clamp(4px,.45vw,7px) !important;
-  height:auto !important;
-  border-radius:0 !important;
-  transform:none !important;
-  box-shadow:none !important;
-}
-
-body.hud-v21 .hud-drill-row .game-btn::before,
-body.hud-v21 .hud-balloon-row .game-btn::before,
-body.hud-v21 .hud-sparring-row .game-btn::before{background:#E3172E !important;}
-body.hud-v21 .hud-lab-row .game-btn::before{background:#FF6A1A !important;}
-body.hud-v21 .hud-lab-row .game-btn:hover{
-  color:#fff !important;
-  text-shadow:0 0 12px rgba(255,106,26,.62) !important;
-}
-
-/* 세로 해상도가 낮은 태블릿/노트북에서는 메뉴 전체를 조금 위로 압축 */
-@media (orientation:landscape) and (max-height:650px){
-  body.hud-v21{
-    --left-menu-top:128px;
-    --left-menu-step:35px;
-    --left-menu-lab-gap:11px;
-  }
-  body.hud-v21 .hud-drill-row .game-btn,
-  body.hud-v21 .hud-balloon-row .game-btn,
-  body.hud-v21 .hud-sparring-row .game-btn,
-  body.hud-v21 .hud-lab-row .game-btn{
-    min-height:28px !important;
-    font-size:12px !important;
-  }
-}
-
 /* 바탕화면 바로가기 안내 모달 */
 .shortcut-overlay{position:fixed;inset:0;background:rgba(5,7,11,.72);backdrop-filter:blur(6px);z-index:99999;display:none;align-items:center;justify-content:center;padding:20px}
 .shortcut-overlay.is-open{display:flex}
@@ -5551,74 +5472,63 @@ body.hud-v21 .hud-lab-row .game-btn:hover{
 .shortcut-close{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#fff;font-size:15px;cursor:pointer;display:grid;place-items:center}
 .shortcut-close:hover{background:rgba(255,255,255,.14)}
 
-/* =========================================================
-   CSS SECTION 24: too-small-screen guard
-   - 극단적으로 작은 가로 화면(예: 폴더블 접은 상태)에서
-     프로그램 HUD 대신 안내 화면만 표시
-   ========================================================= */
-.too-small-msg{display:none;}
-@media (orientation:landscape){
-  body.screen-too-small .stage{display:none !important;}
-  body.screen-too-small .too-small-msg{
-    display:flex; align-items:center; justify-content:center;
-    height:100vh; height:var(--akm-app-height, 100vh);
-    flex-direction:column; gap:16px; text-align:center; padding:24px;
-  }
-  body.screen-too-small .too-small-msg .icon{font-size:56px;}
-  body.screen-too-small .too-small-msg p{font-size:18px; font-weight:700; color:var(--gold);}
-  body.screen-too-small .too-small-msg small{font-size:13px; color:#9fb0c8;}
+/* ===== 2026-07-23 모드 선택바 · 발차기 연구실 긴급 수정 ===== */
+body.hud-v21.akm-ui .hud-lab-row{
+  position:absolute !important;
+  left:22px !important;
+  top:244px !important;
+  width:174px !important;
+  display:flex !important;
+  z-index:65 !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
 }
-
-/* =========================================================
-   CSS SECTION 25: phone-landscape tier
-   - 폭 740px 이하 또는 높이 430px 이하 (일반 스마트폰 가로,
-     폴더블 펼친 화면 등) 에서만 적용
-   - 기존 태블릿/노트북 미디어쿼리, SECTION 23 변수 구조는
-     건드리지 않고, 이 구간 안에서만 오버라이드
-   ========================================================= */
-@media (orientation: landscape) and (max-width: 740px),
-       (orientation: landscape) and (max-height: 430px) {
-
-  /* 브랜딩/버전 정보 숨김 — 훈련에 불필요한 정보부터 정리 */
-  body.hud-v21 .akm-hud-meta,
-  body.hud-v21 .title-version{
-    display:none !important;
-  }
-
-  /* 도장명은 유지하되 한 단계 더 축소 (기존 ellipsis 처리와 함께) */
-  body.hud-v21 .title-dojang{
-    font-size:11px !important;
-  }
-
-  /* 좌측 4개 버튼: 줄 간격을 먼저 넓혀 겹침 방지 (44px 버튼 + 여유 2px) */
-  body.hud-v21{
-    --left-menu-top:92px;
-    --left-menu-step:46px;
-    --left-menu-lab-gap:8px;
-  }
-
-  /* 실제 클릭 요소인 .game-btn 자체에 터치 영역 44px 확보 */
-  body.hud-v21 .hud-drill-row,
-  body.hud-v21 .hud-balloon-row,
-  body.hud-v21 .hud-sparring-row,
-  body.hud-v21 .hud-lab-row{
-    display:flex !important;
-    align-items:center !important;
-  }
-  body.hud-v21 .hud-drill-row .game-btn,
-  body.hud-v21 .hud-balloon-row .game-btn,
-  body.hud-v21 .hud-sparring-row .game-btn,
-  body.hud-v21 .hud-lab-row .game-btn{
-    min-height:44px !important;
-  }
-
-  /* 점수판: 기존 축소 흐름(29px→26px)에 이어 한 단계 더 축소 */
-  body.hud-v21 .stat-num{
-    font-size:22px !important;
-  }
-  body.hud-v21 .stat-label{
-    font-size:10px !important;
-  }
+body.hud-v21.akm-ui .hud-lab-row .game-btn{
+  position:relative !important;
+  width:100% !important;
+  height:28px !important;
+  min-height:28px !important;
+  padding:0 0 0 12px !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:linear-gradient(90deg,rgba(0,0,0,.46),rgba(0,0,0,0)) !important;
+  box-shadow:none !important;
+  color:rgba(255,255,255,.58) !important;
+  font-size:14px !important;
+  font-weight:1000 !important;
+  text-align:left !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.9) !important;
+}
+body.hud-v21.akm-ui .hud-drill-row .game-btn,
+body.hud-v21.akm-ui .hud-balloon-row .game-btn,
+body.hud-v21.akm-ui .hud-sparring-row .game-btn{
+  position:relative !important;
+}
+body.hud-v21.akm-ui .hud-drill-row .game-btn::before,
+body.hud-v21.akm-ui .hud-balloon-row .game-btn::before,
+body.hud-v21.akm-ui .hud-sparring-row .game-btn::before,
+body.hud-v21.akm-ui .hud-lab-row .game-btn::before{
+  content:"" !important;
+  display:block !important;
+  position:absolute !important;
+  left:0 !important;
+  top:0 !important;
+  bottom:0 !important;
+  width:4px !important;
+  background:rgba(255,255,255,.22) !important;
+  box-shadow:none !important;
+}
+body.hud-v21.akm-ui .hud-drill-row .game-btn.active::before,
+body.hud-v21.akm-ui .hud-balloon-row .game-btn.active::before,
+body.hud-v21.akm-ui .hud-sparring-row .game-btn.active::before,
+body.hud-v21.akm-ui .hud-lab-row .game-btn.active::before{
+  background:var(--arcade-red) !important;
+  box-shadow:0 0 12px rgba(255,48,79,.72) !important;
+}
+body.hud-v21.akm-ui .hud-lab-row .game-btn.active{
+  color:#fff !important;
+  text-shadow:0 2px 12px rgba(0,0,0,.95),0 0 14px rgba(255,48,79,.78) !important;
 }
 </style>
 <script id="fix4-start-stop-text-helper">
@@ -5645,25 +5555,13 @@ body.hud-v21 .hud-lab-row .game-btn:hover{
 
 <script id="akm-v280-viewport-fit-js">
 (function(){
-  var AKM_TOO_SMALL_WIDTH = 360;
-  var AKM_TOO_SMALL_HEIGHT = 260;
-
   function setAkmViewportHeight(){
-    var w = Math.floor(window.innerWidth || document.documentElement.clientWidth || screen.width);
-    var rawH = Math.floor(window.innerHeight || document.documentElement.clientHeight || screen.height);
-    var appH = Math.max(320, rawH);
-    document.documentElement.style.setProperty('--akm-app-height', appH + 'px');
-
-    var isLandscape = w > rawH;
-    var isTooSmall = isLandscape && (w < AKM_TOO_SMALL_WIDTH || rawH < AKM_TOO_SMALL_HEIGHT);
-    document.body.classList.toggle('screen-too-small', isTooSmall);
+    var h = Math.max(320, Math.floor(window.innerHeight || document.documentElement.clientHeight || screen.height));
+    document.documentElement.style.setProperty('--akm-app-height', h + 'px');
   }
   setAkmViewportHeight();
   window.addEventListener('resize', setAkmViewportHeight, {passive:true});
-  window.addEventListener('orientationchange', function(){
-    setAkmViewportHeight();
-    setTimeout(setAkmViewportHeight, 250);
-  }, {passive:true});
+  window.addEventListener('orientationchange', function(){ setTimeout(setAkmViewportHeight, 250); }, {passive:true});
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', setAkmViewportHeight, {passive:true});
   }
