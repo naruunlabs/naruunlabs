@@ -694,9 +694,9 @@ footer{padding:34px 0;border-top:1px solid rgba(255,255,255,.08);background:var(
 <script>
 (function(){
   const ADMIN_EDGE_URL='https://ebgoolsymyzkftvavpyj.supabase.co/functions/v1/clever-worker';
-  const EASY_CODE='0000'; let adminUrl='';
+  let adminUrl='';
   const trigger=document.getElementById('adminTrigger'); let count=0,timer;
-  trigger?.addEventListener('click',e=>{e.preventDefault();count++;clearTimeout(timer);timer=setTimeout(()=>count=0,1500);if(count>=5){count=0;const code=prompt('코드를 입력하세요');if(code===null)return;if(code===EASY_CODE)location.href=adminUrl||'admin.html';else alert('코드가 올바르지 않습니다.');}});
+  trigger?.addEventListener('click',e=>{e.preventDefault();count++;clearTimeout(timer);timer=setTimeout(()=>count=0,1500);if(count>=5){count=0;location.href=adminUrl||'admin.html';}});
   fetch(ADMIN_EDGE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'GET_HOME_DATA',payload:{target:'index'}})})
     .then(r=>r.json()).then(res=>{const d=res&&res.data;if(!d)return;if(d.admin_url)adminUrl=d.admin_url;const setText=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.textContent=v};const setHtml=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.innerHTML=v};setText('heroEyebrow',d.hero_eyebrow);setHtml('heroTitle',d.hero_title);setText('heroLead',d.hero_desc);setText('contactDesc',d.contact_desc);setText('copyrightText',d.copyright);
       const kakao=(d.kakao_url||'').trim(); const tel=(d.tel_url||'tel:01076573579').trim(); const phone=(d.phone||'010-7657-3579').trim();
