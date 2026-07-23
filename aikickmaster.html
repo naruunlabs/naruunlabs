@@ -3183,6 +3183,12 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
   <small>이 앱은 가로 모드 전용입니다</small>
 </div>
 
+<div class="too-small-msg">
+  <div class="icon">📵</div>
+  <p>화면이 너무 작습니다</p>
+  <small>태블릿 또는 노트북의 가로 화면에서 이용해주세요</small>
+</div>
+
 <div class="stage">
   <div class="cam-wrap mirrored" id="camWrap">
   <!-- 정품 인증 배지는 loginScreen 바깥 고정 위치에 있음 -->
@@ -5544,6 +5550,76 @@ body.hud-v21 .hud-lab-row .game-btn:hover{
 .shortcut-modal .shortcut-ok-btn{width:100%;height:48px;border:0;border-radius:14px;background:linear-gradient(135deg,#E3172E,#FF6A1A);color:#fff;font-weight:900;font-size:14px;cursor:pointer;margin-top:4px}
 .shortcut-close{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#fff;font-size:15px;cursor:pointer;display:grid;place-items:center}
 .shortcut-close:hover{background:rgba(255,255,255,.14)}
+
+/* =========================================================
+   CSS SECTION 24: too-small-screen guard
+   - 극단적으로 작은 가로 화면(예: 폴더블 접은 상태)에서
+     프로그램 HUD 대신 안내 화면만 표시
+   ========================================================= */
+.too-small-msg{display:none;}
+@media (orientation:landscape){
+  body.screen-too-small .stage{display:none !important;}
+  body.screen-too-small .too-small-msg{
+    display:flex; align-items:center; justify-content:center;
+    height:100vh; height:var(--akm-app-height, 100vh);
+    flex-direction:column; gap:16px; text-align:center; padding:24px;
+  }
+  body.screen-too-small .too-small-msg .icon{font-size:56px;}
+  body.screen-too-small .too-small-msg p{font-size:18px; font-weight:700; color:var(--gold);}
+  body.screen-too-small .too-small-msg small{font-size:13px; color:#9fb0c8;}
+}
+
+/* =========================================================
+   CSS SECTION 25: phone-landscape tier
+   - 폭 740px 이하 또는 높이 430px 이하 (일반 스마트폰 가로,
+     폴더블 펼친 화면 등) 에서만 적용
+   - 기존 태블릿/노트북 미디어쿼리, SECTION 23 변수 구조는
+     건드리지 않고, 이 구간 안에서만 오버라이드
+   ========================================================= */
+@media (orientation: landscape) and (max-width: 740px),
+       (orientation: landscape) and (max-height: 430px) {
+
+  /* 브랜딩/버전 정보 숨김 — 훈련에 불필요한 정보부터 정리 */
+  body.hud-v21 .akm-hud-meta,
+  body.hud-v21 .title-version{
+    display:none !important;
+  }
+
+  /* 도장명은 유지하되 한 단계 더 축소 (기존 ellipsis 처리와 함께) */
+  body.hud-v21 .title-dojang{
+    font-size:11px !important;
+  }
+
+  /* 좌측 4개 버튼: 줄 간격을 먼저 넓혀 겹침 방지 (44px 버튼 + 여유 2px) */
+  body.hud-v21{
+    --left-menu-top:92px;
+    --left-menu-step:46px;
+    --left-menu-lab-gap:8px;
+  }
+
+  /* 실제 클릭 요소인 .game-btn 자체에 터치 영역 44px 확보 */
+  body.hud-v21 .hud-drill-row,
+  body.hud-v21 .hud-balloon-row,
+  body.hud-v21 .hud-sparring-row,
+  body.hud-v21 .hud-lab-row{
+    display:flex !important;
+    align-items:center !important;
+  }
+  body.hud-v21 .hud-drill-row .game-btn,
+  body.hud-v21 .hud-balloon-row .game-btn,
+  body.hud-v21 .hud-sparring-row .game-btn,
+  body.hud-v21 .hud-lab-row .game-btn{
+    min-height:44px !important;
+  }
+
+  /* 점수판: 기존 축소 흐름(29px→26px)에 이어 한 단계 더 축소 */
+  body.hud-v21 .stat-num{
+    font-size:22px !important;
+  }
+  body.hud-v21 .stat-label{
+    font-size:10px !important;
+  }
+}
 </style>
 <script id="fix4-start-stop-text-helper">
 (function(){
@@ -5569,13 +5645,25 @@ body.hud-v21 .hud-lab-row .game-btn:hover{
 
 <script id="akm-v280-viewport-fit-js">
 (function(){
+  var AKM_TOO_SMALL_WIDTH = 360;
+  var AKM_TOO_SMALL_HEIGHT = 260;
+
   function setAkmViewportHeight(){
-    var h = Math.max(320, Math.floor(window.innerHeight || document.documentElement.clientHeight || screen.height));
-    document.documentElement.style.setProperty('--akm-app-height', h + 'px');
+    var w = Math.floor(window.innerWidth || document.documentElement.clientWidth || screen.width);
+    var rawH = Math.floor(window.innerHeight || document.documentElement.clientHeight || screen.height);
+    var appH = Math.max(320, rawH);
+    document.documentElement.style.setProperty('--akm-app-height', appH + 'px');
+
+    var isLandscape = w > rawH;
+    var isTooSmall = isLandscape && (w < AKM_TOO_SMALL_WIDTH || rawH < AKM_TOO_SMALL_HEIGHT);
+    document.body.classList.toggle('screen-too-small', isTooSmall);
   }
   setAkmViewportHeight();
   window.addEventListener('resize', setAkmViewportHeight, {passive:true});
-  window.addEventListener('orientationchange', function(){ setTimeout(setAkmViewportHeight, 250); }, {passive:true});
+  window.addEventListener('orientationchange', function(){
+    setAkmViewportHeight();
+    setTimeout(setAkmViewportHeight, 250);
+  }, {passive:true});
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', setAkmViewportHeight, {passive:true});
   }
