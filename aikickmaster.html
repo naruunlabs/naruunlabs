@@ -5422,44 +5422,71 @@ body.hud-v21 .btns.fullscreen-only{width:150px !important;}
 body.hud-v21 .btns.fullscreen-only #fsBtn{width:100% !important;flex:1 1 100% !important;}
 
 /* =========================================================
-   CSS SECTION 23: kick-lab-left-menu-placement
-   - 발차기 연구실을 왼쪽 메뉴 하단에 별도 배치
-   - 일반 모드는 빨간 세로선, 연구실은 주황 세로선
+   CSS SECTION 23: responsive-left-mode-menu
+   - 네 개 버튼을 같은 기준점에서 계산해 배치
+   - 일반 모드 3개와 연구실 사이에는 별도 간격
+   - 화면 높이에 따라 전체 메뉴 위치와 크기를 자동 조정
    ========================================================= */
+body.hud-v21{
+  --left-menu-x:clamp(10px,1.4vw,18px);
+  --left-menu-w:clamp(118px,12vw,150px);
+  --left-menu-top:clamp(142px,19vh,178px);
+  --left-menu-step:clamp(38px,5.2vh,44px);
+  --left-menu-lab-gap:clamp(14px,2.6vh,24px);
+}
+
+body.hud-v21 .hud-drill-row,
+body.hud-v21 .hud-balloon-row,
+body.hud-v21 .hud-sparring-row,
 body.hud-v21 .hud-lab-row{
   position:absolute !important;
-  top:210px !important;
-  left:16px !important;
-  width:126px !important;
+  left:var(--left-menu-x) !important;
+  width:var(--left-menu-w) !important;
   display:flex !important;
   z-index:40 !important;
   opacity:1 !important;
   visibility:visible !important;
   pointer-events:auto !important;
+  margin:0 !important;
 }
+
+body.hud-v21 .hud-drill-row{top:var(--left-menu-top) !important;}
+body.hud-v21 .hud-balloon-row{top:calc(var(--left-menu-top) + var(--left-menu-step)) !important;}
+body.hud-v21 .hud-sparring-row{top:calc(var(--left-menu-top) + var(--left-menu-step) * 2) !important;}
+body.hud-v21 .hud-lab-row{top:calc(var(--left-menu-top) + var(--left-menu-step) * 3 + var(--left-menu-lab-gap)) !important;}
 
 body.hud-v21 .hud-drill-row .game-btn,
 body.hud-v21 .hud-balloon-row .game-btn,
 body.hud-v21 .hud-sparring-row .game-btn,
 body.hud-v21 .hud-lab-row .game-btn{
   position:relative !important;
-  padding-left:18px !important;
-}
-
-body.hud-v21 .hud-lab-row .game-btn{
   width:100% !important;
-  min-height:24px !important;
-  padding-top:3px !important;
-  padding-right:0 !important;
-  padding-bottom:3px !important;
-  background:transparent !important;
+  min-height:clamp(30px,4.3vh,36px) !important;
+  padding:5px 4px 5px 18px !important;
+  background:rgba(6,16,31,.34) !important;
   border:none !important;
   box-shadow:none !important;
   border-radius:0 !important;
-  color:rgba(255,255,255,.62) !important;
-  font-size:13px !important;
+  color:rgba(255,255,255,.78) !important;
+  font-size:clamp(12px,1.25vw,15px) !important;
   font-weight:1000 !important;
+  line-height:1.15 !important;
   text-align:left !important;
+  white-space:nowrap !important;
+}
+
+body.hud-v21 .hud-drill-row .game-btn.active,
+body.hud-v21 .hud-balloon-row .game-btn.active,
+body.hud-v21 .hud-sparring-row .game-btn.active{
+  color:#fff !important;
+  background:linear-gradient(90deg,rgba(227,23,46,.24),rgba(6,16,31,.12)) !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+
+body.hud-v21 .hud-lab-row .game-btn{
+  color:rgba(255,255,255,.72) !important;
+  background:linear-gradient(90deg,rgba(255,106,26,.12),rgba(6,16,31,.08)) !important;
 }
 
 body.hud-v21 .hud-drill-row .game-btn::before,
@@ -5470,27 +5497,38 @@ body.hud-v21 .hud-lab-row .game-btn::before{
   display:block !important;
   position:absolute !important;
   left:0 !important;
-  top:50% !important;
-  width:4px !important;
-  height:22px !important;
-  border-radius:2px !important;
-  transform:translateY(-50%) !important;
+  top:0 !important;
+  bottom:0 !important;
+  width:clamp(4px,.45vw,7px) !important;
+  height:auto !important;
+  border-radius:0 !important;
+  transform:none !important;
   box-shadow:none !important;
 }
 
 body.hud-v21 .hud-drill-row .game-btn::before,
 body.hud-v21 .hud-balloon-row .game-btn::before,
-body.hud-v21 .hud-sparring-row .game-btn::before{
-  background:#E3172E !important;
-}
-
-body.hud-v21 .hud-lab-row .game-btn::before{
-  background:#FF6A1A !important;
-}
-
+body.hud-v21 .hud-sparring-row .game-btn::before{background:#E3172E !important;}
+body.hud-v21 .hud-lab-row .game-btn::before{background:#FF6A1A !important;}
 body.hud-v21 .hud-lab-row .game-btn:hover{
   color:#fff !important;
   text-shadow:0 0 12px rgba(255,106,26,.62) !important;
+}
+
+/* 세로 해상도가 낮은 태블릿/노트북에서는 메뉴 전체를 조금 위로 압축 */
+@media (orientation:landscape) and (max-height:650px){
+  body.hud-v21{
+    --left-menu-top:128px;
+    --left-menu-step:35px;
+    --left-menu-lab-gap:11px;
+  }
+  body.hud-v21 .hud-drill-row .game-btn,
+  body.hud-v21 .hud-balloon-row .game-btn,
+  body.hud-v21 .hud-sparring-row .game-btn,
+  body.hud-v21 .hud-lab-row .game-btn{
+    min-height:28px !important;
+    font-size:12px !important;
+  }
 }
 
 /* 바탕화면 바로가기 안내 모달 */
