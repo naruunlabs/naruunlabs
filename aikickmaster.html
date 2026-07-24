@@ -3243,7 +3243,7 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
     <!-- ===== 발차기 연구실: 연구실 모드 패널 (2단계) ===== -->
     <div id="kickLabPanel" class="kicklab-panel">
       <div class="kicklab-panel-head">
-        <div class="kicklab-panel-title">발차기 연구실<small>발차기와 발을 선택한 뒤 측정을 시작하세요</small></div>
+        <div class="kicklab-panel-title">발차기 연구실<small>한 번 시작하면 발차기할 때마다 자동 전송됩니다</small></div>
         <button type="button" class="kicklab-inline-exit" onclick="exitKickLab()">연구실 나가기</button>
       </div>
       <div class="section-label">— 발차기 선택</div>
@@ -3256,11 +3256,7 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
       <div class="game-area" id="kickLabCaptureArea">
         <button id="kickLabCaptureBtn" class="primary-start" type="button" onclick="startKickLabCapture()">측정 시작</button>
         <button id="kickLabCancelBtn" class="kick-lab-cancel" type="button" style="display:none;margin-top:8px;width:100%" onclick="cancelKickLabCapture()">중단</button>
-        <div id="kickLabResultActions" style="display:none">
-          <button type="button" class="game-btn" onclick="retryKickLabCapture()">한 번 더</button>
-          <button type="button" class="game-btn" onclick="chooseAnotherKickLab()">다른 발차기 선택</button>
-          <button type="button" class="kick-lab-cancel" onclick="exitKickLab()">연구실 나가기</button>
-        </div>
+        <div id="kickLabResultActions" style="display:none"></div>
       </div>
     </div>
     <div class="game-area" id="gameArea">
@@ -4975,6 +4971,8 @@ let labKicking=false, labAboveT=0, labBelowT=0, labPeakPct=0;
 let labStableSince=0;
 let labCountdownToken=0;
 let labWatchdogTimer=null;
+let labSampleCount=0;
+let labPendingUploads=0;
 
 async function kickLabPublicCall(action,payload={}){
   const res=await fetch(KICK_LAB_EDGE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,payload})});
@@ -5016,7 +5014,7 @@ window.closeKickLabConsent=()=>{
 window.enterKickLab=()=>{
   document.getElementById('kickLabConsent')?.classList.remove('show');
   ensureAudio(); stopGame();
-  labActive=true; labPhase='waiting_body'; labStableSince=0;
+  labActive=true; labPhase='waiting_body'; labStableSince=0; labSampleCount=0; labPendingUploads=0;
   labFoot='right';
   document.querySelectorAll('.hud-lab-foot-row [data-lab-foot]').forEach(x=>x.classList.toggle('active',x.dataset.labFoot==='right'));
   renderKickLabChoices();
@@ -5043,14 +5041,14 @@ function labCancelAll(){
 }
 function labSetStatus(text){ statusEl.style.opacity='1'; statusEl.textContent=text; }
 function labSetCaptureUi(mode){
-  // idle: 준비 대기(비활성) | ready: 촬영시작 가능 | busy: 촬영 중(중단만 가능) | result: 완료 화면
+  // idle: 전신 인식 대기 | ready: 연속 측정 시작 가능 | busy: 연속 측정 중 | result: 호환용
   const btn=document.getElementById('kickLabCaptureBtn');
   const cancel=document.getElementById('kickLabCancelBtn');
   const result=document.getElementById('kickLabResultActions');
   if(!btn||!cancel||!result) return;
   if(mode==='idle'){ btn.style.display='block'; btn.disabled=false; btn.dataset.waitingBody='true'; cancel.style.display='none'; result.style.display='none'; }
   else if(mode==='ready'){ btn.style.display='block'; btn.disabled=false; btn.dataset.waitingBody='false'; cancel.style.display='none'; result.style.display='none'; }
-  else if(mode==='busy'){ btn.style.display='none'; cancel.style.display='block'; result.style.display='none'; }
+  else if(mode==='busy'){ btn.style.display='none'; cancel.style.display='block'; cancel.textContent='측정 중지'; result.style.display='none'; }
   else if(mode==='result'){ btn.style.display='none'; cancel.style.display='none'; result.style.display='flex'; }
 }
 
@@ -5082,10 +5080,10 @@ window.startKickLabCapture=async()=>{
   labFrames=[]; labKicking=false; labAboveT=0; labBelowT=0; labPeakPct=0;
   labStartedAt=performance.now(); labLastFrameAt=0;
   labPhase='waiting_kick';
-  labSetStatus('발차기하세요!');
+  labSetStatus('연속 측정 중 · 발차기할 때마다 자동 전송됩니다.');
   if(labWatchdogTimer) clearTimeout(labWatchdogTimer);
   labWatchdogTimer=setTimeout(()=>{
-    if(labPhase==='waiting_kick') labSetStatus('준비되면 힘차게 발차기해주세요!');
+    if(labPhase==='waiting_kick') labSetStatus('연속 측정 중 · 준비되면 발차기해주세요.');
   },6000);
 };
 window.cancelKickLabCapture=()=>{
@@ -5093,22 +5091,54 @@ window.cancelKickLabCapture=()=>{
   readyOverlay.classList.remove('show');
   labPhase='waiting_body'; labStableSince=0;
   labSetCaptureUi('idle');
-  labSetStatus('🔍 전신이 보이도록 뒤로 이동해주세요');
+  labSetStatus('측정을 중지했습니다. 전신이 보이면 다시 시작할 수 있습니다.');
 };
 async function labFinishCapture(){
-  labPhase='submitting';
   if(labWatchdogTimer){ clearTimeout(labWatchdogTimer); labWatchdogTimer=null; }
-  labSetStatus('발차기 데이터가 수집되었습니다. 전송하는 중…');
+
+  // 이번 발차기 데이터는 별도 복사해 전송하고, 측정은 즉시 다음 발차기를 기다린다.
+  const sampleFrames=labFrames.slice();
+  const sampleDuration=Math.round(performance.now()-labStartedAt);
+  const sampleKick=labKick;
+  const sampleFoot=labFoot;
+
+  labFrames=[];
+  labKicking=false;
+  labAboveT=0;
+  labBelowT=0;
+  labPeakPct=0;
+  labStartedAt=performance.now();
+  labLastFrameAt=0;
+  labPhase='waiting_kick';
+  labSampleCount++;
+  labPendingUploads++;
+  labSetCaptureUi('busy');
+  labSetStatus(`${labSampleCount}회 측정 완료 · 전송 중 · 다음 발차기를 준비하세요.`);
+
   try{
     let license=null; try{license=JSON.parse(localStorage.getItem('akm_license_v1')||'null')}catch(e){}
     const deviceId=localStorage.getItem('akm_device_id')||'';
-    await kickLabPublicCall('SUBMIT_KICK_LAB_SAMPLE',{kick_type:labKick,foot:labFoot,frames:labFrames,frame_count:labFrames.length,duration_ms:Math.round(performance.now()-labStartedAt),license_key:license?.license_key||null,dojang_name:license?.dojang_name||null,device_id:deviceId||null,user_agent:navigator.userAgent});
-    labSetStatus('감사합니다! 발차기 데이터가 안전하게 전송되었습니다.');
+    await kickLabPublicCall('SUBMIT_KICK_LAB_SAMPLE',{
+      kick_type:sampleKick,
+      foot:sampleFoot,
+      frames:sampleFrames,
+      frame_count:sampleFrames.length,
+      duration_ms:sampleDuration,
+      license_key:license?.license_key||null,
+      dojang_name:license?.dojang_name||null,
+      device_id:deviceId||null,
+      user_agent:navigator.userAgent
+    });
+    labPendingUploads=Math.max(0,labPendingUploads-1);
+    if(labActive && labPhase==='waiting_kick'){
+      labSetStatus(`${labSampleCount}회 전송 완료 · 다음 발차기를 준비하세요.`);
+    }
   }catch(e){
-    labSetStatus('전송에 실패했습니다. 인터넷 연결을 확인하고 다시 시도해주세요.');
+    labPendingUploads=Math.max(0,labPendingUploads-1);
+    if(labActive && labPhase==='waiting_kick'){
+      labSetStatus(`${labSampleCount}회 측정됨 · 일부 전송 실패 · 인터넷 연결을 확인해주세요.`);
+    }
   }
-  labPhase='result';
-  labSetCaptureUi('result');
 }
 window.retryKickLabCapture=()=>{
   labPhase='ready'; labStableSince=0;
@@ -5181,8 +5211,9 @@ function labProcessFrame(lm){
       if(now-labBelowT>=BELOW_MS){
         labKicking=false; labAboveT=0; labBelowT=0;
         if(labFrames.length<6){
-          labSetStatus('발차기가 충분히 인식되지 않았습니다. 다시 시도해주세요.');
-          labPhase='ready'; labSetCaptureUi('ready');
+          labFrames=[]; labStartedAt=performance.now(); labLastFrameAt=0;
+          labSetStatus('인식 데이터가 부족했습니다 · 측정은 계속됩니다. 다시 발차기해주세요.');
+          labPhase='waiting_kick'; labSetCaptureUi('busy');
         } else {
           labFinishCapture();
         }
@@ -5922,6 +5953,173 @@ body.kicklab-mode #kickLabResultActions .kick-lab-cancel{
     height:50px !important;
     line-height:50px !important;
     font-size:16px !important;
+  }
+}
+
+
+/* ===== 발차기 연구실 UI v4 — 작고 투명한 연속 측정 패널 ===== */
+body.kicklab-mode #status{
+  top:92px !important;
+  left:50% !important;
+  right:auto !important;
+  bottom:auto !important;
+  transform:translateX(-50%) !important;
+  width:auto !important;
+  max-width:min(620px,calc(100vw - 620px)) !important;
+  min-width:300px !important;
+  padding:7px 16px !important;
+  z-index:70 !important;
+  background:rgba(5,12,23,.66) !important;
+  border:1px solid rgba(255,255,255,.12) !important;
+  border-radius:999px !important;
+  color:#eef5ff !important;
+  font-size:12px !important;
+  line-height:1.35 !important;
+  text-align:center !important;
+  white-space:normal !important;
+  box-shadow:0 8px 22px rgba(0,0,0,.20) !important;
+  backdrop-filter:blur(10px) !important;
+}
+
+body.kicklab-mode #kickLabPanel{
+  left:18px !important;
+  top:126px !important;
+  width:254px !important;
+  max-height:calc(100vh - 144px) !important;
+  padding:14px 15px !important;
+  border:1px solid rgba(112,150,205,.18) !important;
+  border-radius:14px !important;
+  background:rgba(5,13,25,.78) !important;
+  box-shadow:0 14px 38px rgba(0,0,0,.38) !important;
+  overflow-y:auto !important;
+}
+
+body.kicklab-mode .kicklab-panel-head{
+  gap:8px !important;
+  margin-bottom:12px !important;
+  padding-bottom:10px !important;
+}
+
+body.kicklab-mode .kicklab-panel-title{
+  font-size:17px !important;
+  letter-spacing:-.4px !important;
+}
+
+body.kicklab-mode .kicklab-panel-title small{
+  margin-top:4px !important;
+  font-size:10px !important;
+  line-height:1.35 !important;
+}
+
+body.kicklab-mode .kicklab-inline-exit{
+  min-height:28px !important;
+  padding:0 7px !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:#9fb0c4 !important;
+  font-size:10px !important;
+  box-shadow:none !important;
+}
+
+body.kicklab-mode .kicklab-inline-exit:hover{
+  background:transparent !important;
+  color:#fff !important;
+}
+
+body.kicklab-mode #kickLabPanel .section-label{
+  margin:0 0 5px !important;
+  font-size:10px !important;
+  color:#8397b0 !important;
+}
+
+body.kicklab-mode .hud-lab-kick-col,
+body.kicklab-mode .hud-lab-foot-row{
+  gap:5px !important;
+  margin-bottom:11px !important;
+}
+
+body.kicklab-mode .hud-lab-kick-col .game-btn,
+body.kicklab-mode .hud-lab-foot-row .game-btn{
+  min-height:30px !important;
+  height:30px !important;
+  padding:3px 4px !important;
+  border:0 !important;
+  border-bottom:2px solid transparent !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:rgba(255,255,255,.54) !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  box-shadow:none !important;
+  text-shadow:0 2px 8px rgba(0,0,0,.55) !important;
+}
+
+body.kicklab-mode .hud-lab-kick-col .game-btn:hover,
+body.kicklab-mode .hud-lab-foot-row .game-btn:hover{
+  background:transparent !important;
+  border-color:rgba(255,255,255,.22) !important;
+  color:#fff !important;
+}
+
+body.kicklab-mode .hud-lab-kick-col .game-btn.active,
+body.kicklab-mode .hud-lab-foot-row .game-btn.active{
+  border-color:#ff6a1a !important;
+  background:transparent !important;
+  color:#fff !important;
+  box-shadow:none !important;
+  text-shadow:0 0 10px rgba(255,106,26,.42) !important;
+}
+
+body.kicklab-mode #kickLabCaptureBtn{
+  min-height:38px !important;
+  height:38px !important;
+  padding:0 !important;
+  border:0 !important;
+  border-bottom:3px solid #ff6a1a !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:#fff !important;
+  font-size:15px !important;
+  line-height:35px !important;
+  box-shadow:none !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.72) !important;
+}
+
+body.kicklab-mode #kickLabCaptureBtn:hover{
+  background:rgba(255,106,26,.06) !important;
+}
+
+body.kicklab-mode #kickLabCancelBtn{
+  min-height:36px !important;
+  height:36px !important;
+  margin-top:3px !important;
+  padding:0 !important;
+  border:0 !important;
+  border-bottom:2px solid #ff6578 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:#ffb4bd !important;
+  font-size:13px !important;
+  line-height:34px !important;
+  box-shadow:none !important;
+}
+
+body.kicklab-mode #kickLabResultActions{
+  display:none !important;
+}
+
+@media (orientation:landscape) and (max-width:1200px){
+  body.kicklab-mode #status{
+    top:84px !important;
+    max-width:calc(100vw - 560px) !important;
+    min-width:260px !important;
+    font-size:11px !important;
+  }
+  body.kicklab-mode #kickLabPanel{
+    top:116px !important;
+    width:232px !important;
+    padding:12px !important;
   }
 }
 
