@@ -3826,46 +3826,53 @@ const JUDGE_HARD={
 const JUDGE_EASY={
   LEVEL:'easy',
   LABEL:'쉬움',
-  THRESH_OFFSET:-15,
-  MIN_FOOT_SPEED:0.0006,
-  MIN_RISE_T:0.080,
+  // 어려움 대비 문턱을 크게 낮춘다. 이 아래 숫자들만 손대면 되고, 어려움(JUDGE_HARD) 값은 절대 건드리지 않는다.
+  THRESH_OFFSET:-20,
+  MIN_FOOT_SPEED:0.0003,
+  MIN_RISE_T:0.060,
   ROUND:{
-    LAT_T:0.10,
-    NET_T:0.042,
-    LAT_SUPPORT_T:0.070,
-    HIP_TURN:0.83,
-    HIP_TURN_WEAK:0.94,
+    // 돌려차기 인식 자체를 어려움보다 훨씬 후하게 — 점수가 아니라 "인정되냐 안되냐"에서 차이가 나도록.
+    LAT_T:0.055,
+    NET_T:0.022,
+    LAT_SUPPORT_T:0.040,
+    HIP_TURN:0.92,
+    HIP_TURN_WEAK:0.98,
     HIP_TURN_FRAMES:1,
-    HIP_VIS_MIN:0.40,
-    KNEE_OPEN_T:0.060,
-    KNEE_NET_T:0.035,
-    KNEE_EXT_DEG:14,
-    CORRIDOR_SOFT_T:0.22,
-    CORRIDOR_HARD_T:0.40,
-    CORRIDOR_MIN_FIT:0.20,
+    HIP_VIS_MIN:0.35,
+    KNEE_OPEN_T:0.035,
+    KNEE_NET_T:0.020,
+    // 이 값은 일부러 어려움(25)보다 살짝만 낮춘다 — 너무 낮추면 앞차기 모드에서
+    // "무릎을 펴는 정상 동작"까지 돌려차기 스냅으로 오인해 거부(VETO)로 새어 들어간다.
+    KNEE_EXT_DEG:20,
+    CORRIDOR_SOFT_T:0.32,
+    CORRIDOR_HARD_T:0.55,
+    CORRIDOR_MIN_FIT:0.12,
     SCORE_RISE_SPAN:0.44,
     SCORE_LAT_SPAN:0.28
   },
   FRONT:{
-    CORRIDOR_SOFT_T:0.26,
-    CORRIDOR_HARD_T:0.44,
-    OUTSIDE_RATIO_MAX:0.55,
-    OUTSIDE_CONSEC_FRAMES:6,
-    RETURN_MIN_T:0.36,
-    RETURN_RATIO:0.34,
-    SCORE_PEAK_BASE:32,
-    SCORE_PEAK_SPAN:46,
-    /* 쉬움이라도 "앞차기 자리에서 돌려차기"는 똑같이 걸러낸다.
-       높이·곧기만 후해질 뿐, 발차기 종류 구별은 어려움과 거의 같은 기준을 쓴다. */
+    CORRIDOR_SOFT_T:0.32,
+    CORRIDOR_HARD_T:0.55,
+    OUTSIDE_RATIO_MAX:0.65,
+    OUTSIDE_CONSEC_FRAMES:8,
+    RETURN_MIN_T:0.42,
+    RETURN_RATIO:0.30,
+    SCORE_PEAK_BASE:28,
+    SCORE_PEAK_SPAN:42,
+    /* 쉬움에서는 돌려차기 거부(VETO)를 크게 완화한다.
+       목적이 바뀌었다 — "돌려차기를 최대한 잘 걸러내기"가 아니라
+       "정상적인 앞차기를 절대 오거부하지 않기"가 우선이다.
+       그래서 하나하나가 아주 뚜렷하게 돌려차기일 때만 거부하도록,
+       각 신호의 문턱을 어려움보다 훨씬 크게(=trigger되기 어렵게) 잡았다. */
     VETO:{
-      HIP_TURN:0.78,
-      HIP_FRAMES:2,
-      KNEE_LAT_T:0.130,
-      KNEE_NET_T:0.078,
-      NET_T:0.130,
-      NET_HARD_T:0.23,
-      LAT_T:0.21,
-      SWEEP_RATIO:0.65
+      HIP_TURN:0.55,
+      HIP_FRAMES:4,
+      KNEE_LAT_T:0.24,
+      KNEE_NET_T:0.15,
+      NET_T:0.22,
+      NET_HARD_T:0.36,
+      LAT_T:0.34,
+      SWEEP_RATIO:0.85
     }
   }
 };
