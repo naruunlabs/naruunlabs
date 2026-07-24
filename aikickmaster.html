@@ -3796,6 +3796,13 @@ const JUDGE_HARD={
     // 점수 계산용: 발 높이 몇 %부터 점수가 붙기 시작하는지
     SCORE_PEAK_BASE:50,
     SCORE_PEAK_SPAN:50,
+    /* 무릎 체임버(접었다 펴기) 기준.
+       kneeExtDeg = 발차기 중 무릎 각도가 벌어진 폭(도). 뻣뻣하게 편 채로
+       들기만 하면 이 값이 거의 0에 가깝다.
+       MIN_KNEE_EXT_DEG 미만이면 아예 거부, 그 이상부터 KNEE_SCORE_SPAN
+       만큼 올라갈 때까지 점수가 붙는다. */
+    MIN_KNEE_EXT_DEG:22,
+    KNEE_SCORE_SPAN:45,
     /* ── 앞차기 모드에서 "돌려차기"를 걸러내는 기준 ──
        앞차기를 시켰는데 돌려차기를 하면 통로 안에 들어와도 인정하지 않는다.
        숫자를 낮출수록(HIP_TURN은 높일수록) 더 잘 걸러낸다.
@@ -3859,6 +3866,9 @@ const JUDGE_EASY={
     RETURN_RATIO:0.30,
     SCORE_PEAK_BASE:28,
     SCORE_PEAK_SPAN:42,
+    // 쉬움은 살짝만 접어도 인정 — 완전히 뻣뻣한 다리 들기만 걸러낸다.
+    MIN_KNEE_EXT_DEG:12,
+    KNEE_SCORE_SPAN:35,
     /* 쉬움에서는 돌려차기 거부(VETO)를 크게 완화한다.
        목적이 바뀌었다 — "돌려차기를 최대한 잘 걸러내기"가 아니라
        "정상적인 앞차기를 절대 오거부하지 않기"가 우선이다.
@@ -4005,6 +4015,13 @@ function analyzeTraj(peakPctValue=null){
       return {score:null,ok:false,msg:'앞차기로 곧게 차주세요!',reason:'front_corridor_out'};
     }
 
+    /* ── 무릎 체임버 거부 ──
+       무릎을 접었다 펴는 동작이 거의 없으면(뻣뻣하게 든 다리) 거부한다.
+       kneeExtDeg는 이 함수 위쪽에서 이미 계산되어 있다(돌려차기 판정과 공용). */
+    if(kneeExtDeg<JUDGE.FRONT.MIN_KNEE_EXT_DEG){
+      return {score:null,ok:false,msg:'무릎을 접었다 펴며 차보세요!',reason:'front_no_chamber'};
+    }
+
     /* ── 돌려차기 거부 ──
        앞차기를 시켰는데 돌려차기를 하면, 발끝이 세로 통로 안에 들어와 있어도
        인정하지 않는다. 골반 회전 / 무릎이 옆으로 열리는 동작 / 한쪽으로만
@@ -4036,9 +4053,10 @@ function analyzeTraj(peakPctValue=null){
     const heightScore=clamp01((measuredPeak-JUDGE.FRONT.SCORE_PEAK_BASE)/Math.max(1,JUDGE.FRONT.SCORE_PEAK_SPAN));
     const straightScore=clamp01(1-(maxDev/JUDGE.FRONT.CORRIDOR_HARD_T));
     const stayScore=clamp01(1-outsideRatio/Math.max(JUDGE.FRONT.OUTSIDE_RATIO_MAX,0.01));
-    let score=Math.round(60 + heightScore*22 + straightScore*12 + stayScore*6);
+    const kneeScore=clamp01((kneeExtDeg-JUDGE.FRONT.MIN_KNEE_EXT_DEG)/Math.max(1,JUDGE.FRONT.KNEE_SCORE_SPAN));
+    let score=Math.round(60 + heightScore*18 + straightScore*10 + stayScore*5 + kneeScore*7);
     score=Math.max(60,Math.min(98,score));
-    if(heightScore>0.97 && straightScore>0.95 && stayScore>0.96) score=100;
+    if(heightScore>0.97 && straightScore>0.95 && stayScore>0.96 && kneeScore>0.85) score=100;
     const msg=score>=98?'완벽한 앞차기!':score>=88?'아주 좋아요!':score>=75?'좋아요!':'성공!';
     return {score,ok:true,msg,reason:'front_corridor'};
   }
