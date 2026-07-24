@@ -3194,6 +3194,11 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
       <button type="button" class="diff-btn drill-mode-btn" data-drill-run-mode="auto" onclick="setDrillRunMode('auto')">자동모드</button>
     </div>
 
+    <div id="kickLevelPanel" class="difficulty-panel kick-level-panel" aria-label="발차기 판정 난이도 선택">
+      <button type="button" class="diff-btn kick-level-btn" data-kick-level="easy" onclick="setKickLevel('easy')">쉬움</button>
+      <button type="button" class="diff-btn kick-level-btn active" data-kick-level="hard" onclick="setKickLevel('hard')">어려움</button>
+    </div>
+
     <div id="difficultyPanel" class="difficulty-panel" aria-label="격파 난이도 선택">
       <button type="button" class="diff-btn" data-diff="easy" onclick="setDifficulty('easy')">쉬움</button>
       <button type="button" class="diff-btn active" data-diff="normal" onclick="setDifficulty('normal')">보통</button>
@@ -3388,7 +3393,7 @@ function selectedFoot(){
 }
 function guideTargetPct(){
   if(currentMode==='sparring' && sparringMode==='practice' && sparringMission) return sparringMission.targetPct;
-  return Math.min(94, Math.max(60, threshPct+28));
+  return Math.min(94, Math.max(60, effThreshPct()+28));
 }
 function setSparringTargetVisible(on){
   const target=document.getElementById('enemyTarget');
@@ -3427,7 +3432,7 @@ window.setDifficulty=(level)=>{
   if(!DIFFICULTY_CFG[level]) return;
   difficulty=level;
   try{ localStorage.setItem('tkd_difficulty',level); }catch(e){}
-  document.querySelectorAll('.diff-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.diff===level));
+  document.querySelectorAll('#difficultyPanel .diff-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.diff===level));
   if(typeof statusEl!=='undefined') statusEl.textContent='난이도: '+diffCfg().label;
   if(typeof renderStats==='function') renderStats();
 };
@@ -3436,7 +3441,7 @@ function initDifficulty(){
   try{ saved=localStorage.getItem('tkd_difficulty') || 'normal'; }catch(e){}
   if(!DIFFICULTY_CFG[saved]) saved='normal';
   difficulty=saved;
-  document.querySelectorAll('.diff-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.diff===saved));
+  document.querySelectorAll('#difficultyPanel .diff-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.diff===saved));
 }
 
 window.setDrillRunMode=(mode)=>{
@@ -3636,7 +3641,7 @@ function confetti(big=false){
 }
 
 /* ── 민감도 ── */
-sensEl.addEventListener('input',()=>{ threshPct=parseInt(sensEl.value); sensVal.textContent=threshPct+'%'; barThresh.style.left=threshPct+'%'; });
+sensEl.addEventListener('input',()=>{ threshPct=parseInt(sensEl.value); applyThreshUi(); });
 barThresh.style.left=threshPct+'%';
 
 /* ── 스탯 렌더 ── */
@@ -3746,8 +3751,20 @@ function updateModeBadge(){
    배수(T)로 계산한다. 예) 0.14 = 몸통 길이의 14%.
    → 카메라와의 거리, 태블릿 화각, 학생 키 차이에 영향을 받지 않는다.
    숫자를 낮추면 = 더 관대해짐(쉽게 인정), 높이면 = 더 엄격해짐.
+
+   ★ 난이도는 두 단계다.
+     · JUDGE_HARD = "어려움". 지금까지 쓰던 기준값 그대로.
+     · JUDGE_EASY = "쉬움".  유치부용으로 기준을 크게 낮춘 값.
+     화면 오른쪽 위 "난이도 · 쉬움 / 어려움" 버튼으로 즉시 바뀐다.
+     두 덩어리는 항목이 완전히 똑같으니, 고치고 싶은 쪽 숫자만 바꾸면 된다.
    ───────────────────────────────────────────────────────────── */
-const JUDGE={
+const JUDGE_HARD={
+  LEVEL:'hard',
+  LABEL:'어려움',
+  // 설정의 "민감도(기준 높이)" 값에 더해지는 보정. 0 = 설정값 그대로 사용
+  THRESH_OFFSET:0,
+  // 발을 얼마나 천천히 올려도 발차기로 볼지 (작을수록 느린 발도 인정)
+  MIN_FOOT_SPEED:0.0012,
   MIN_RISE_T:0.14,
   ROUND:{
     // 돌려차기 최소 인정 신호
@@ -3775,9 +3792,125 @@ const JUDGE={
     OUTSIDE_RATIO_MAX:0.28,
     OUTSIDE_CONSEC_FRAMES:3,
     RETURN_MIN_T:0.21,
-    RETURN_RATIO:0.58
+    RETURN_RATIO:0.58,
+    // 점수 계산용: 발 높이 몇 %부터 점수가 붙기 시작하는지
+    SCORE_PEAK_BASE:50,
+    SCORE_PEAK_SPAN:50,
+    /* ── 앞차기 모드에서 "돌려차기"를 걸러내는 기준 ──
+       앞차기를 시켰는데 돌려차기를 하면 통로 안에 들어와도 인정하지 않는다.
+       숫자를 낮출수록(HIP_TURN은 높일수록) 더 잘 걸러낸다.
+         HIP_TURN     : 골반 폭이 평소의 이 비율보다 좁아지면 "몸이 돌았다"로 본다
+         HIP_FRAMES   : 그 상태가 몇 프레임 이어져야 인정할지
+         KNEE_LAT_T   : 무릎이 옆으로 벌어진 폭 (몸통 길이 배수)
+         KNEE_NET_T   : 무릎이 한쪽으로 밀려난 거리
+         NET_T        : 발이 시작점에서 한쪽으로 밀려난 거리
+         NET_HARD_T   : 이 정도로 밀리면 다른 조건 없이 바로 거부
+         LAT_T        : 발의 좌우 진폭
+         SWEEP_RATIO  : 한 방향으로 꾸준히 휘어 나간 프레임 비율 */
+    VETO:{
+      HIP_TURN:0.80,
+      HIP_FRAMES:2,
+      KNEE_LAT_T:0.12,
+      KNEE_NET_T:0.07,
+      NET_T:0.12,
+      NET_HARD_T:0.20,
+      LAT_T:0.20,
+      SWEEP_RATIO:0.62
+    }
   }
 };
+
+/* 쉬움(유치부용): 발을 낮게 차도, 궤적이 흔들려도 인정한다.
+   돌려차기 거부(VETO)도 함께 느슨해져서, 어설픈 앞차기를
+   돌려차기로 잘못 튕겨내는 일이 줄어든다. */
+const JUDGE_EASY={
+  LEVEL:'easy',
+  LABEL:'쉬움',
+  THRESH_OFFSET:-15,
+  MIN_FOOT_SPEED:0.0006,
+  MIN_RISE_T:0.080,
+  ROUND:{
+    LAT_T:0.10,
+    NET_T:0.042,
+    LAT_SUPPORT_T:0.070,
+    HIP_TURN:0.83,
+    HIP_TURN_WEAK:0.94,
+    HIP_TURN_FRAMES:1,
+    HIP_VIS_MIN:0.40,
+    KNEE_OPEN_T:0.060,
+    KNEE_NET_T:0.035,
+    KNEE_EXT_DEG:14,
+    CORRIDOR_SOFT_T:0.22,
+    CORRIDOR_HARD_T:0.40,
+    CORRIDOR_MIN_FIT:0.20,
+    SCORE_RISE_SPAN:0.44,
+    SCORE_LAT_SPAN:0.28
+  },
+  FRONT:{
+    CORRIDOR_SOFT_T:0.26,
+    CORRIDOR_HARD_T:0.44,
+    OUTSIDE_RATIO_MAX:0.55,
+    OUTSIDE_CONSEC_FRAMES:6,
+    RETURN_MIN_T:0.36,
+    RETURN_RATIO:0.34,
+    SCORE_PEAK_BASE:32,
+    SCORE_PEAK_SPAN:46,
+    /* 쉬움이라도 "앞차기 자리에서 돌려차기"는 똑같이 걸러낸다.
+       높이·곧기만 후해질 뿐, 발차기 종류 구별은 어려움과 거의 같은 기준을 쓴다. */
+    VETO:{
+      HIP_TURN:0.78,
+      HIP_FRAMES:2,
+      KNEE_LAT_T:0.130,
+      KNEE_NET_T:0.078,
+      NET_T:0.130,
+      NET_HARD_T:0.23,
+      LAT_T:0.21,
+      SWEEP_RATIO:0.65
+    }
+  }
+};
+
+/* 현재 적용 중인 기준값. 난이도 버튼을 누르면 통째로 교체된다. */
+let JUDGE=JUDGE_HARD;
+let kickLevel='hard';
+
+/* 설정의 민감도 슬라이더 값에 난이도 보정을 더한 "실제 기준 높이" */
+function effThreshPct(){
+  return Math.max(12, Math.min(100, threshPct + (JUDGE.THRESH_OFFSET||0)));
+}
+function applyThreshUi(){
+  if(typeof barThresh!=='undefined' && barThresh) barThresh.style.left=effThreshPct()+'%';
+  if(typeof sensVal!=='undefined' && sensVal) sensVal.textContent=threshPct+'%';
+}
+window.setKickLevel=(level)=>{
+  if(level!=='easy' && level!=='hard') return;
+  if(typeof running!=='undefined' && running && typeof stopGame==='function') stopGame();
+  kickLevel=level;
+  JUDGE=(level==='easy')?JUDGE_EASY:JUDGE_HARD;
+  try{ localStorage.setItem('akm_kick_level',level); }catch(e){}
+  document.querySelectorAll('.kick-level-btn').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.kickLevel===level);
+  });
+  applyThreshUi();
+  if(typeof statusEl!=='undefined' && statusEl){
+    statusEl.style.opacity='1';
+    statusEl.textContent=(level==='easy')
+      ? '난이도 쉬움 · 유치부 기준으로 낮게 차도 인정됩니다.'
+      : '난이도 어려움 · 정확한 자세여야 인정됩니다.';
+  }
+  if(typeof updateModeBadge==='function') updateModeBadge();
+};
+function initKickLevel(){
+  let saved='hard';
+  try{ saved=localStorage.getItem('akm_kick_level') || 'hard'; }catch(e){}
+  if(saved!=='easy' && saved!=='hard') saved='hard';
+  kickLevel=saved;
+  JUDGE=(saved==='easy')?JUDGE_EASY:JUDGE_HARD;
+  document.querySelectorAll('.kick-level-btn').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.kickLevel===saved);
+  });
+  applyThreshUi();
+}
 
 function trajTorsoRef(){
   const arr=trajTorso.filter(v=>typeof v==='number' && v>0.02);
@@ -3786,7 +3919,7 @@ function trajTorsoRef(){
   return s[Math.floor(s.length/2)];
 }
 
-function stableHipTurn(limit, endIndex=trajHipW.length-1){
+function stableHipTurn(limit, endIndex=trajHipW.length-1, minFrames=JUDGE.ROUND.HIP_TURN_FRAMES){
   let consecutive=0, best=0, minRatio=1;
   for(let i=0;i<=endIndex && i<trajHipW.length;i++){
     const ratio=trajHipW[i];
@@ -3797,7 +3930,7 @@ function stableHipTurn(limit, endIndex=trajHipW.length-1){
       else consecutive=0;
     }else consecutive=0;
   }
-  return {ok:best>=JUDGE.ROUND.HIP_TURN_FRAMES,minRatio,bestFrames:best};
+  return {ok:best>=minFrames,minRatio,bestFrames:best};
 }
 
 function clamp01(v){ return Math.max(0,Math.min(1,v)); }
@@ -3865,9 +3998,35 @@ function analyzeTraj(peakPctValue=null){
       return {score:null,ok:false,msg:'앞차기로 곧게 차주세요!',reason:'front_corridor_out'};
     }
 
+    /* ── 돌려차기 거부 ──
+       앞차기를 시켰는데 돌려차기를 하면, 발끝이 세로 통로 안에 들어와 있어도
+       인정하지 않는다. 골반 회전 / 무릎이 옆으로 열리는 동작 / 한쪽으로만
+       꾸준히 휘어 나가는 궤적 — 돌려차기에만 나타나는 신호를 본다. */
+    const V=JUDGE.FRONT.VETO;
+    const dirSign=(signedNetT===0)?(drillSide||1):Math.sign(signedNetT);
+    let sweepGood=0, prevDirected=-Infinity;
+    for(let i=0;i<xs.length;i++){
+      const directed=dirSign*(xs[i]-startX)/T;
+      if(directed>=prevDirected-0.012) sweepGood++;
+      prevDirected=directed;
+    }
+    const sweepRatio=sweepGood/Math.max(xs.length,1);
+    const hipTurnVeto=stableHipTurn(V.HIP_TURN,peakIndex,V.HIP_FRAMES).ok;
+    const kneeRoundVeto=(kneeLatT>V.KNEE_LAT_T && kneeNetT>V.KNEE_NET_T);
+    const roundVeto=
+      hipTurnVeto ||                                                 // ① 골반이 확실히 돌아갔다
+      netT>V.NET_HARD_T ||                                           // ② 발이 한쪽으로 크게 밀려났다
+      (kneeRoundVeto && netT>V.NET_T) ||                             // ③ 무릎이 옆으로 열리며 발도 옆으로
+      (kneeRoundVeto && kneeSnap && latT>V.LAT_T) ||                 // ④ 무릎을 접었다 펴는 돌려차기 특유의 동작
+      (netT>V.NET_T && latT>V.LAT_T && sweepRatio>=V.SWEEP_RATIO);   // ⑤ 한 방향으로만 꾸준히 휘어 나갔다
+
+    if(roundVeto){
+      return {score:null,ok:false,msg:'돌려차기예요! 앞차기로 곧게 차주세요',reason:'front_round_detected'};
+    }
+
     const measuredPeak=(typeof peakPctValue==='number' && Number.isFinite(peakPctValue))
       ? peakPctValue : Math.max(0,Math.min(100,50 + riseT*T*250));
-    const heightScore=clamp01((measuredPeak-50)/50);
+    const heightScore=clamp01((measuredPeak-JUDGE.FRONT.SCORE_PEAK_BASE)/Math.max(1,JUDGE.FRONT.SCORE_PEAK_SPAN));
     const straightScore=clamp01(1-(maxDev/JUDGE.FRONT.CORRIDOR_HARD_T));
     const stayScore=clamp01(1-outsideRatio/Math.max(JUDGE.FRONT.OUTSIDE_RATIO_MAX,0.01));
     let score=Math.round(60 + heightScore*22 + straightScore*12 + stayScore*6);
@@ -4763,6 +4922,8 @@ window.setMode=(mode)=>{
   const drillSelected=MODE_CFG[mode]?.isDrill===true;
   // .difficulty-panel CSS에 display:flex !important가 있으므로 important 우선순위로 정확히 교체한다.
   if(drillPanel) drillPanel.style.setProperty('display',drillSelected?'flex':'none','important');
+  const levelPanel=document.getElementById('kickLevelPanel');
+  if(levelPanel) levelPanel.style.setProperty('display',drillSelected?'flex':'none','important');
   if(diffPanel) diffPanel.style.setProperty('display',(mode==='balloon')?'flex':'none','important');
   if(sparPanel) sparPanel.style.setProperty('display',(mode==='sparring')?'flex':'none','important');
   const all=['apcha_r','apcha_l','dollo_r','dollo_l','balloon','sparring'];
@@ -4807,9 +4968,11 @@ function runKick(pct,m=null){
   // aboveFrames/belowFrames 변수는 이제 "조건이 시작된 시각(ms)"을 저장한다. (0 = 조건 미충족)
   // 기존 코드 곳곳의 aboveFrames=0 / belowFrames=0 리셋은 그대로 유효하게 동작한다.
   const now=performance.now();
-  const fastEnough = !m || m.speed==null || m.speed>MIN_FOOT_SPEED || pct>threshPct+8;
+  const TH=effThreshPct();
+  const minSpeed=(typeof JUDGE.MIN_FOOT_SPEED==='number')?JUDGE.MIN_FOOT_SPEED:MIN_FOOT_SPEED;
+  const fastEnough = !m || m.speed==null || m.speed>minSpeed || pct>TH+8;
   if(!kicking){
-    if(pct>=threshPct && fastEnough){
+    if(pct>=TH && fastEnough){
       if(!aboveFrames) aboveFrames=now;
       if(now-aboveFrames>=ABOVE_MS){
         kicking=true; peakPct=pct; belowFrames=0; trajActive=true;
@@ -4982,11 +5145,13 @@ function loop(){
 drillCountArea.style.display='flex';
 gameArea.style.display='none';
 initDifficulty();
+initKickLevel();
 initDrillRunMode();
 initSparringMode();
 document.getElementById('sparringTypePanel')?.style.setProperty('display','none','important');
 document.getElementById('difficultyPanel')?.style.setProperty('display','none','important');
 document.getElementById('drillModePanel')?.style.setProperty('display','flex','important');
+document.getElementById('kickLevelPanel')?.style.setProperty('display','flex','important');
 updateModeBadge();
 updateKickButtonVisibility();
 renderStats(); updateModeBadge();
@@ -5144,6 +5309,29 @@ body.hud-v21.akm-ui .hud-drill-row .game-btn::before,
 body.hud-v21.akm-ui .hud-balloon-row .game-btn::before,
 body.hud-v21.akm-ui .hud-sparring-row .game-btn::before{
   width:2px !important;
+}
+
+/* ===== 2026-07-24 발차기 판정 난이도(쉬움/어려움) 패널 =====
+   "수동/자동" 패널 바로 아래 줄에 놓고, 라벨만 LEVEL → 난이도로 바꾼다. */
+body.hud-v21 .kick-level-panel,
+body.hud-v21.akm-ui .kick-level-panel{
+  top:56px !important;
+  right:22px !important;
+  z-index:70 !important;
+}
+body.hud-v21.akm-ui .kick-level-panel::before{
+  content:"난이도" !important;
+  letter-spacing:.6px !important;
+}
+body.hud-v21.akm-ui .kick-level-panel .diff-btn{
+  min-width:42px !important;
+}
+@media (orientation:landscape) and (max-width:1200px){
+  body.hud-v21 .kick-level-panel,
+  body.hud-v21.akm-ui .kick-level-panel{
+    top:58px !important;
+    right:72px !important;
+  }
 }
 </style>
 <script id="fix4-start-stop-text-helper">
