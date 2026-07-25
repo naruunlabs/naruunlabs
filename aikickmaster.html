@@ -3846,39 +3846,42 @@ const JUDGE_EASY={
   // 어려움 대비 문턱을 크게 낮춘다. 이 아래 숫자들만 손대면 되고, 어려움(JUDGE_HARD) 값은 절대 건드리지 않는다.
   THRESH_OFFSET:-20,
   MIN_FOOT_SPEED:0.0003,
-  MIN_RISE_T:0.060,
+  MIN_RISE_T:0.045,
   KNEE_VIS_MIN:0.30,
   ROUND:{
     // 돌려차기 인식 자체를 어려움보다 훨씬 후하게 — 점수가 아니라 "인정되냐 안되냐"에서 차이가 나도록.
-    LAT_T:0.055,
-    NET_T:0.022,
-    LAT_SUPPORT_T:0.040,
+    // 2026-07-25: 아이들 테스트 피드백으로 조금 더 완화(기존 대비 소폭).
+    LAT_T:0.045,
+    NET_T:0.018,
+    LAT_SUPPORT_T:0.032,
     HIP_TURN:0.92,
     HIP_TURN_WEAK:0.98,
     HIP_TURN_FRAMES:1,
     HIP_VIS_MIN:0.35,
-    KNEE_OPEN_T:0.035,
-    KNEE_NET_T:0.020,
+    KNEE_OPEN_T:0.030,
+    KNEE_NET_T:0.016,
     // 이 값은 일부러 어려움(25)보다 살짝만 낮춘다 — 너무 낮추면 앞차기 모드에서
     // "무릎을 펴는 정상 동작"까지 돌려차기 스냅으로 오인해 거부(VETO)로 새어 들어간다.
     KNEE_EXT_DEG:20,
-    CORRIDOR_SOFT_T:0.32,
-    CORRIDOR_HARD_T:0.55,
-    CORRIDOR_MIN_FIT:0.12,
+    CORRIDOR_SOFT_T:0.36,
+    CORRIDOR_HARD_T:0.60,
+    CORRIDOR_MIN_FIT:0.09,
     SCORE_RISE_SPAN:0.44,
     SCORE_LAT_SPAN:0.28
   },
   FRONT:{
-    CORRIDOR_SOFT_T:0.32,
-    CORRIDOR_HARD_T:0.55,
-    OUTSIDE_RATIO_MAX:0.65,
-    OUTSIDE_CONSEC_FRAMES:8,
-    RETURN_MIN_T:0.42,
-    RETURN_RATIO:0.30,
-    SCORE_PEAK_BASE:28,
+    // 2026-07-25: 아이들 테스트에서 쉬움 모드인데도 앞차기가 잘 안 잡혀서 큰 폭으로 완화.
+    // 돌려차기 오인 거부(VETO)는 그대로 둔다 — "돌려차기인데 앞차기로 인정" 같은 문제는 안 생김.
+    CORRIDOR_SOFT_T:0.42,
+    CORRIDOR_HARD_T:0.70,
+    OUTSIDE_RATIO_MAX:0.80,
+    OUTSIDE_CONSEC_FRAMES:12,
+    RETURN_MIN_T:0.55,
+    RETURN_RATIO:0.20,
+    SCORE_PEAK_BASE:22,
     SCORE_PEAK_SPAN:42,
     // 쉬움은 살짝만 접어도 인정 — 완전히 뻣뻣한 다리 들기만 걸러낸다.
-    MIN_KNEE_EXT_DEG:12,
+    MIN_KNEE_EXT_DEG:8,
     KNEE_SCORE_SPAN:35,
     /* 쉬움에서는 돌려차기 거부(VETO)를 크게 완화한다.
        목적이 바뀌었다 — "돌려차기를 최대한 잘 걸러내기"가 아니라
