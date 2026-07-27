@@ -1507,6 +1507,14 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
 @media(max-width:900px){.hero-copy>*{animation-duration:.7s}.contact-cta{padding:44px 26px!important}.motion-item.from-left,.motion-item.from-right{transform:translate3d(0,42px,0)}}
 </style>
 
+<style>
+.price-section{padding:90px 0;border-bottom:1px solid var(--ui-line)}
+.price-box{display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center;padding:42px;border:1px solid var(--ui-line);background:linear-gradient(135deg,#fff,#F8FAFD)}
+.price-label{font-size:12px;font-weight:900;letter-spacing:.16em;color:var(--kick-primary)}
+.price-title{font-size:clamp(30px,4vw,52px);color:var(--ui-deep);margin-top:10px}
+.price-values{text-align:right}.price-regular{font-size:18px;color:var(--ui-muted);text-decoration:line-through}.price-sale{font-size:clamp(38px,5vw,64px);font-weight:900;color:var(--kick-primary);line-height:1.1}.price-note{margin-top:8px;color:var(--ui-muted);font-weight:700}
+[hidden]{display:none!important}@media(max-width:700px){.price-box{grid-template-columns:1fr;padding:28px}.price-values{text-align:left}}
+</style>
 </head>
 <body>
 <header>
@@ -1631,10 +1639,10 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
       <p>새로운 장비를 복잡하게 운영하는 것이 아니라, 기존 수업 안에 자연스럽게 추가해 반복 훈련의 몰입도와 활용도를 높입니다.</p>
     </div>
     <div class="benefit-grid">
-      <article class="benefit-card"><span class="benefit-number">01</span><h3>아이들이 먼저 참여합니다</h3><p>점수와 콤보가 즉시 표시되어 반복 발차기 훈련을 게임처럼 즐길 수 있습니다.</p></article>
-      <article class="benefit-card"><span class="benefit-number">02</span><h3>반복 훈련이 지루하지 않습니다</h3><p>발차기·격파·겨루기 모드를 바꿔가며 같은 동작도 다양한 방식으로 훈련합니다.</p></article>
-      <article class="benefit-card"><span class="benefit-number">03</span><h3>수업 구성이 더 풍부해집니다</h3><p>기본기 수업, 미션 활동, 개인 도전과 단체 참여 등 여러 수업 방식에 활용할 수 있습니다.</p></article>
-      <article class="benefit-card"><span class="benefit-number">04</span><h3>추가 센서 없이 시작합니다</h3><p>전면 카메라가 작동되는 태블릿/노트북만 있으면 기존 공간에서 간편하게 사용할 수 있습니다.</p></article>
+      <article class="benefit-card"><span class="benefit-number">01</span><h3 id="benefit1Title">아이들이 먼저 참여합니다</h3><p id="benefit1Desc">점수와 콤보가 즉시 표시되어 반복 발차기 훈련을 게임처럼 즐길 수 있습니다.</p></article>
+      <article class="benefit-card"><span class="benefit-number">02</span><h3 id="benefit2Title">반복 훈련이 지루하지 않습니다</h3><p id="benefit2Desc">발차기·격파·겨루기 모드를 바꿔가며 같은 동작도 다양한 방식으로 훈련합니다.</p></article>
+      <article class="benefit-card"><span class="benefit-number">03</span><h3 id="benefit3Title">수업 구성이 더 풍부해집니다</h3><p id="benefit3Desc">기본기 수업, 미션 활동, 개인 도전과 단체 참여 등 여러 수업 방식에 활용할 수 있습니다.</p></article>
+      <article class="benefit-card"><span class="benefit-number">04</span><h3 id="benefit4Title">추가 센서 없이 시작합니다</h3><p id="benefit4Desc">전면 카메라가 작동되는 태블릿/노트북만 있으면 기존 공간에서 간편하게 사용할 수 있습니다.</p></article>
     </div>
   </div>
 </section>
@@ -1646,10 +1654,10 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
         <h2>도장에 바로 적용되는 4가지 기능</h2>
       </div>
       <div class="features">
-        <div class="feature"><b>발차기 측정</b><p>AI 자세 인식으로 발차기 스피드와 임팩트를 실시간으로 측정합니다.</p></div>
-        <div class="feature"><b>콤보 시스템</b><p>연속 동작을 인식해 콤보 점수를 쌓아가는 게임형 훈련 경험을 제공합니다.</p></div>
-        <div class="feature"><b>다양한 훈련 모드</b><p>발차기 연습과 격파, 겨루기 등 목적에 맞는 모드로 수련할 수 있습니다.</p></div>
-        <div class="feature"><b>바로 시작</b><p>번거로운 준비 없이 켜자마자 바로 측정을 시작할 수 있습니다.</p></div>
+        <div class="feature"><b id="feature1Title">발차기 측정</b><p id="feature1Desc">AI 자세 인식으로 발차기 스피드와 임팩트를 실시간으로 측정합니다.</p></div>
+        <div class="feature"><b id="feature2Title">콤보 시스템</b><p id="feature2Desc">연속 동작을 인식해 콤보 점수를 쌓아가는 게임형 훈련 경험을 제공합니다.</p></div>
+        <div class="feature"><b id="feature3Title">다양한 훈련 모드</b><p id="feature3Desc">발차기 연습과 격파, 겨루기 등 목적에 맞는 모드로 수련할 수 있습니다.</p></div>
+        <div class="feature"><b id="feature4Title">바로 시작</b><p id="feature4Desc">번거로운 준비 없이 켜자마자 바로 측정을 시작할 수 있습니다.</p></div>
       </div>
     </div>
   </section>
@@ -1661,15 +1669,17 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
       <p>발차기와 신체 활동을 지도하는 공간이라면 종목에 한정하지 않고 수업 목적에 맞춰 활용할 수 있습니다.</p>
     </div>
     <div class="recommended-grid">
-      <article class="recommended-card"><h3>태권도장</h3><p>기본 발차기, 격파, 겨루기 수업의 참여도를 높이고 싶은 도장</p></article>
-      <article class="recommended-card"><h3>합기도장</h3><p>발차기 반복 훈련에 새로운 방식과 게임 요소를 더하고 싶은 도장</p></article>
-      <article class="recommended-card"><h3>격투기 체육관</h3><p>킥 동작을 활용한 체력·민첩성 훈련 프로그램이 필요한 체육관</p></article>
-      <article class="recommended-card"><h3>학교·방과후 수업</h3><p>학생들이 함께 참여하는 체육 활동과 미션형 수업을 운영하는 곳</p></article>
-      <article class="recommended-card"><h3>체육 교육기관</h3><p>카메라 기반 신체 활동 콘텐츠를 간편하게 도입하려는 교육기관</p></article>
+      <article class="recommended-card"><h3 id="recommend1Title">태권도장</h3><p id="recommend1Desc">기본 발차기, 격파, 겨루기 수업의 참여도를 높이고 싶은 도장</p></article>
+      <article class="recommended-card"><h3 id="recommend2Title">합기도장</h3><p id="recommend2Desc">발차기 반복 훈련에 새로운 방식과 게임 요소를 더하고 싶은 도장</p></article>
+      <article class="recommended-card"><h3 id="recommend3Title">격투기 체육관</h3><p id="recommend3Desc">킥 동작을 활용한 체력·민첩성 훈련 프로그램이 필요한 체육관</p></article>
+      <article class="recommended-card"><h3 id="recommend4Title">학교·방과후 수업</h3><p id="recommend4Desc">학생들이 함께 참여하는 체육 활동과 미션형 수업을 운영하는 곳</p></article>
+      <article class="recommended-card"><h3 id="recommend5Title">체육 교육기관</h3><p id="recommend5Desc">카메라 기반 신체 활동 콘텐츠를 간편하게 도입하려는 교육기관</p></article>
     </div>
     <p class="recommended-note">발차기 훈련을 하는 모든 교육기관에서 활용할 수 있습니다.</p>
   </div>
 </section>
+
+<section class="price-section" id="price"><div class="wrap"><div class="price-box"><div><div class="price-label">LIFETIME LICENSE</div><h2 class="price-title">월 구독료 없는 영구 라이선스</h2></div><div class="price-values"><div class="price-regular" id="regularPrice">399,000원</div><div class="price-sale" id="salePrice">339,000원</div><div class="price-note" id="priceNote">출시 기념 할인가</div></div></div></div></section>
 
   <section class="purchase-section" id="purchase">
     <div class="wrap">
@@ -1678,10 +1688,10 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
         <h2>구매부터 사용까지<br>간단하게 진행됩니다</h2>
       </div>
       <div class="how">
-        <div class="step"><b>STEP 01</b><h3>구매 상담</h3><p>카카오톡 또는 전화로 사용 기기와 설치 환경을 확인하고 구매를 진행합니다.</p></div>
-        <div class="step"><b>STEP 02</b><h3>결제 및 라이선스 발급</h3><p>결제 확인 후 최대 2대의 기기에서 사용할 수 있는 영구 라이선스 키를 발급합니다.</p></div>
-        <div class="step"><b>STEP 03</b><h3>기기 인증</h3><p>전면 카메라가 작동되는 태블릿/노트북에서 프로그램을 열고 발급받은 라이선스 키를 한 번 입력합니다.</p></div>
-        <div class="step"><b>STEP 04</b><h3>바로 훈련 시작</h3><p>인증이 끝나면 발차기·격파·겨루기 모드를 선택해 바로 수업에 활용할 수 있습니다.</p></div>
+        <div class="step"><b>STEP 01</b><h3 id="step1Title">구매 상담</h3><p id="step1Desc">카카오톡 또는 전화로 사용 기기와 설치 환경을 확인하고 구매를 진행합니다.</p></div>
+        <div class="step"><b>STEP 02</b><h3 id="step2Title">결제 및 라이선스 발급</h3><p id="step2Desc">결제 확인 후 최대 2대의 기기에서 사용할 수 있는 영구 라이선스 키를 발급합니다.</p></div>
+        <div class="step"><b>STEP 03</b><h3 id="step3Title">기기 인증</h3><p id="step3Desc">전면 카메라가 작동되는 태블릿/노트북에서 프로그램을 열고 발급받은 라이선스 키를 한 번 입력합니다.</p></div>
+        <div class="step"><b>STEP 04</b><h3 id="step4Title">바로 훈련 시작</h3><p id="step4Desc">인증이 끝나면 발차기·격파·겨루기 모드를 선택해 바로 수업에 활용할 수 있습니다.</p></div>
       </div>
     </div>
   </section>
@@ -1696,17 +1706,17 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
       <div class="requirements-tier">
       <div class="requirements-tier-title"><span>MINIMUM</span><h3>최소사양</h3><p>프로그램을 실행하고 기본 측정을 사용할 수 있는 기준입니다.</p></div>
       <div class="requirements-grid">
-        <article class="requirement-card"><span class="label">WINDOWS</span><h3>Windows 노트북</h3><ul class="requirement-list"><li>Windows 10 64비트 이상</li><li>Intel Core i3 8세대 또는 Ryzen 3급 이상</li><li>RAM 4GB 이상 · 여유 저장공간 1GB 이상</li><li>Chrome 또는 Edge 최신 버전 · 작동되는 전면 카메라</li></ul></article>
-        <article class="requirement-card"><span class="label">ANDROID</span><h3>Android 태블릿</h3><ul class="requirement-list"><li>Android 10 이상</li><li>RAM 4GB 이상</li><li>Snapdragon 720G 또는 동급 이상</li><li>Chrome 최신 버전 · 전면 카메라</li></ul></article>
-        <article class="requirement-card"><span class="label">iOS / iPadOS</span><h3>iPad</h3><ul class="requirement-list"><li>iPadOS 16 이상</li><li>iPad 8세대(A12) 또는 동급 이상</li><li>Safari 최신 버전 · 전면 카메라 작동 및 권한 허용</li><li>가로 화면 사용 권장</li></ul></article>
+        <article class="requirement-card"><span class="label">WINDOWS</span><h3>Windows 노트북</h3><ul class="requirement-list" id="specMinWindows"><li>Windows 10 64비트 이상</li><li>Intel Core i3 8세대 또는 Ryzen 3급 이상</li><li>RAM 4GB 이상 · 여유 저장공간 1GB 이상</li><li>Chrome 또는 Edge 최신 버전 · 작동되는 전면 카메라</li></ul></article>
+        <article class="requirement-card"><span class="label">ANDROID</span><h3>Android 태블릿</h3><ul class="requirement-list" id="specMinAndroid"><li>Android 10 이상</li><li>RAM 4GB 이상</li><li>Snapdragon 720G 또는 동급 이상</li><li>Chrome 최신 버전 · 전면 카메라</li></ul></article>
+        <article class="requirement-card"><span class="label">iOS / iPadOS</span><h3>iPad</h3><ul class="requirement-list" id="specMinIpad"><li>iPadOS 16 이상</li><li>iPad 8세대(A12) 또는 동급 이상</li><li>Safari 최신 버전 · 전면 카메라 작동 및 권한 허용</li><li>가로 화면 사용 권장</li></ul></article>
       </div>
     </div>
     <div class="requirements-tier recommended">
       <div class="requirements-tier-title"><span>RECOMMENDED</span><h3>권장사양</h3><p>도장 수업에서 안정적인 인식과 대형 화면 출력을 위한 기준입니다.</p></div>
       <div class="requirements-grid">
-        <article class="requirement-card"><span class="label">WINDOWS</span><h3>Windows 노트북</h3><ul class="requirement-list"><li>Windows 11 64비트</li><li>Intel Core i5 10세대 또는 Ryzen 5급 이상</li><li>RAM 8GB 이상</li><li>FHD급 전면 카메라 · Chrome 또는 Edge 최신 버전</li></ul></article>
-        <article class="requirement-card"><span class="label">ANDROID</span><h3>Android 태블릿</h3><ul class="requirement-list"><li>Android 12 이상</li><li>RAM 6GB 이상</li><li>Snapdragon 778G 또는 동급 이상</li><li>FHD급 전면 카메라 · Chrome 최신 버전</li></ul></article>
-        <article class="requirement-card"><span class="label">iOS / iPadOS</span><h3>iPad</h3><ul class="requirement-list"><li>iPadOS 17 이상</li><li>iPad 9세대(A13) 또는 그 이후 모델</li><li>Safari 최신 버전 · 전면 카메라 작동 및 권한 허용</li><li>프로젝터·외부 화면 연결 시 최신 기종 권장</li></ul></article>
+        <article class="requirement-card"><span class="label">WINDOWS</span><h3>Windows 노트북</h3><ul class="requirement-list" id="specRecWindows"><li>Windows 11 64비트</li><li>Intel Core i5 10세대 또는 Ryzen 5급 이상</li><li>RAM 8GB 이상</li><li>FHD급 전면 카메라 · Chrome 또는 Edge 최신 버전</li></ul></article>
+        <article class="requirement-card"><span class="label">ANDROID</span><h3>Android 태블릿</h3><ul class="requirement-list" id="specRecAndroid"><li>Android 12 이상</li><li>RAM 6GB 이상</li><li>Snapdragon 778G 또는 동급 이상</li><li>FHD급 전면 카메라 · Chrome 최신 버전</li></ul></article>
+        <article class="requirement-card"><span class="label">iOS / iPadOS</span><h3>iPad</h3><ul class="requirement-list" id="specRecIpad"><li>iPadOS 17 이상</li><li>iPad 9세대(A13) 또는 그 이후 모델</li><li>Safari 최신 버전 · 전면 카메라 작동 및 권한 허용</li><li>프로젝터·외부 화면 연결 시 최신 기종 권장</li></ul></article>
       </div>
     </div>
     <p class="requirements-note">※ 실제 인식 성능은 기기 성능, 카메라 화질, 조명, 촬영 거리와 주변 환경에 따라 달라질 수 있습니다.</p>
@@ -1721,17 +1731,17 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
       <p>구매와 사용 전에 많이 궁금해하시는 내용을 정리했습니다.</p>
     </div>
     <div class="faq-list">
-      <details class="faq-item"><summary>어떤 기기에서 사용할 수 있나요?</summary><div class="faq-answer">전면 카메라가 작동되는 Windows 노트북, 안드로이드 태블릿, iPad에서 사용할 수 있습니다. 별도의 복잡한 설치 없이 웹브라우저에서 바로 실행할 수 있습니다.</div></details>
-      <details class="faq-item"><summary>인터넷이 필요한가요?</summary><div class="faq-answer">네. 프로그램 이용 시 인터넷 연결이 필요합니다. 원활한 AI 동작 분석과 라이선스 인증을 위해 안정적인 인터넷 환경에서 사용하시기를 권장합니다.</div></details>
-      <details class="faq-item"><summary>설치가 어렵나요?</summary><div class="faq-answer">아닙니다. 라이선스 키를 입력하면 바로 사용할 수 있으며, 설치 과정도 어렵지 않습니다. 필요 시 원격 지원도 가능합니다.</div></details>
-      <details class="faq-item"><summary>라이선스는 어떻게 제공되나요?</summary><div class="faq-answer">구매 후 라이선스 키를 발급해드립니다. 발급받은 라이선스 키를 입력하면 바로 사용할 수 있습니다.</div></details>
-      <details class="faq-item"><summary>몇 대까지 사용할 수 있나요?</summary><div class="faq-answer">기본 라이선스는 최대 2대의 기기에서 사용할 수 있습니다. 추가 기기 등록을 원하시는 경우 고객센터로 문의해 주세요.</div></details>
-      <details class="faq-item"><summary>월 이용료가 있나요?</summary><div class="faq-answer">아닙니다. AI KICK MASTER는 영구 라이선스 방식으로 제공되며, 별도의 월 구독료는 없습니다.</div></details>
-      <details class="faq-item"><summary>프로젝터가 없어도 사용할 수 있나요?</summary><div class="faq-answer">네. 전면 카메라가 작동되는 태블릿/노트북 화면만으로도 사용할 수 있으며, 프로젝터를 연결하면 더욱 큰 화면으로 수업을 진행할 수 있습니다.</div></details>
-      <details class="faq-item"><summary>카메라가 꼭 필요한가요?</summary><div class="faq-answer">네. AI가 발차기를 인식하려면 전면 카메라가 작동되는 태블릿/노트북이 필요합니다. 별도의 센서나 추가 장비는 필요하지 않습니다.</div></details>
-      <details class="faq-item"><summary>AI가 영상을 저장하나요?</summary><div class="faq-answer">아닙니다. 개인정보 보호를 위해 사진이나 영상은 별도로 저장되지 않습니다. 카메라는 실시간 동작 인식을 위해서만 사용됩니다.</div></details>
-      <details class="faq-item"><summary>업데이트는 어떻게 하나요?</summary><div class="faq-answer">새로운 기능이나 개선 사항이 제공되면 안내드리며, 최신 버전으로 쉽게 업데이트하여 사용할 수 있습니다.</div></details>
-      <details class="faq-item"><summary>환불이 가능한가요?</summary><div class="faq-answer">라이선스가 발급되기 전에는 환불이 가능합니다. 라이선스가 발급된 이후에는 디지털 콘텐츠의 특성상 환불이 제한될 수 있습니다.</div></details>
+      <details class="faq-item"><summary id="faq1Q">어떤 기기에서 사용할 수 있나요?</summary><div class="faq-answer" id="faq1A">전면 카메라가 작동되는 Windows 노트북, 안드로이드 태블릿, iPad에서 사용할 수 있습니다. 별도의 복잡한 설치 없이 웹브라우저에서 바로 실행할 수 있습니다.</div></details>
+      <details class="faq-item"><summary id="faq2Q">인터넷이 필요한가요?</summary><div class="faq-answer" id="faq2A">네. 프로그램 이용 시 인터넷 연결이 필요합니다. 원활한 AI 동작 분석과 라이선스 인증을 위해 안정적인 인터넷 환경에서 사용하시기를 권장합니다.</div></details>
+      <details class="faq-item"><summary id="faq3Q">설치가 어렵나요?</summary><div class="faq-answer" id="faq3A">아닙니다. 라이선스 키를 입력하면 바로 사용할 수 있으며, 설치 과정도 어렵지 않습니다. 필요 시 원격 지원도 가능합니다.</div></details>
+      <details class="faq-item"><summary id="faq4Q">라이선스는 어떻게 제공되나요?</summary><div class="faq-answer" id="faq4A">구매 후 라이선스 키를 발급해드립니다. 발급받은 라이선스 키를 입력하면 바로 사용할 수 있습니다.</div></details>
+      <details class="faq-item"><summary id="faq5Q">몇 대까지 사용할 수 있나요?</summary><div class="faq-answer" id="faq5A">기본 라이선스는 최대 2대의 기기에서 사용할 수 있습니다. 추가 기기 등록을 원하시는 경우 고객센터로 문의해 주세요.</div></details>
+      <details class="faq-item"><summary id="faq6Q">월 이용료가 있나요?</summary><div class="faq-answer" id="faq6A">아닙니다. AI KICK MASTER는 영구 라이선스 방식으로 제공되며, 별도의 월 구독료는 없습니다.</div></details>
+      <details class="faq-item"><summary id="faq7Q">프로젝터가 없어도 사용할 수 있나요?</summary><div class="faq-answer" id="faq7A">네. 전면 카메라가 작동되는 태블릿/노트북 화면만으로도 사용할 수 있으며, 프로젝터를 연결하면 더욱 큰 화면으로 수업을 진행할 수 있습니다.</div></details>
+      <details class="faq-item"><summary id="faq8Q">카메라가 꼭 필요한가요?</summary><div class="faq-answer" id="faq8A">네. AI가 발차기를 인식하려면 전면 카메라가 작동되는 태블릿/노트북이 필요합니다. 별도의 센서나 추가 장비는 필요하지 않습니다.</div></details>
+      <details class="faq-item"><summary id="faq9Q">AI가 영상을 저장하나요?</summary><div class="faq-answer" id="faq9A">아닙니다. 개인정보 보호를 위해 사진이나 영상은 별도로 저장되지 않습니다. 카메라는 실시간 동작 인식을 위해서만 사용됩니다.</div></details>
+      <details class="faq-item"><summary id="faq10Q">업데이트는 어떻게 하나요?</summary><div class="faq-answer" id="faq10A">새로운 기능이나 개선 사항이 제공되면 안내드리며, 최신 버전으로 쉽게 업데이트하여 사용할 수 있습니다.</div></details>
+      <details class="faq-item"><summary id="faq11Q">환불이 가능한가요?</summary><div class="faq-answer" id="faq11A">라이선스가 발급되기 전에는 환불이 가능합니다. 라이선스가 발급된 이후에는 디지털 콘텐츠의 특성상 환불이 제한될 수 있습니다.</div></details>
     </div>
   </div>
 </section>
@@ -1793,6 +1803,13 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
     setHtml('kickTitle', d.title);
     setText('kickLead', d.lead);
     setText('kickCtaDesc', d.cta_desc);
+    setText('regularPrice', d.regular_price); setText('salePrice', d.sale_price); setText('priceNote', d.price_note);
+    for(let i=1;i<=4;i++){setText('feature'+i+'Title',d['feature'+i+'_title']);setText('feature'+i+'Desc',d['feature'+i+'_desc']);setText('benefit'+i+'Title',d['benefit'+i+'_title']);setText('benefit'+i+'Desc',d['benefit'+i+'_desc']);setText('step'+i+'Title',d['step'+i+'_title']);setText('step'+i+'Desc',d['step'+i+'_desc']);}
+    for(let i=1;i<=5;i++){setText('recommend'+i+'Title',d['recommend'+i+'_title']);setText('recommend'+i+'Desc',d['recommend'+i+'_desc']);}
+    for(let i=1;i<=11;i++){setText('faq'+i+'Q',d['faq'+i+'_q']);setText('faq'+i+'A',d['faq'+i+'_a']);}
+    const setList=(id,val)=>{const el=document.getElementById(id);if(el&&val)el.innerHTML=String(val).split(/\n+/).filter(Boolean).map(x=>'<li>'+x.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))+'</li>').join('');};
+    setList('specMinWindows',d.spec_min_windows);setList('specRecWindows',d.spec_rec_windows);setList('specMinAndroid',d.spec_min_android);setList('specRecAndroid',d.spec_rec_android);setList('specMinIpad',d.spec_min_ipad);setList('specRecIpad',d.spec_rec_ipad);
+
     return fetch('https://ebgoolsymyzkftvavpyj.supabase.co/functions/v1/clever-worker', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'GET_HOME_DATA',payload:{target:'index'}})});
   }).then(r=>r&&r.json?r.json():null).then(res=>{
     const c=res&&res.data;if(!c)return;const kakao=(c.kakao_url||'').trim();const tel=(c.tel_url||'tel:01076573579').trim();const phone=(c.phone||'010-7657-3579').trim();
