@@ -2,7 +2,7 @@
   "name": "AI KICK MASTER",
   "short_name": "KICK MASTER",
   "description": "AI 발차기 훈련 시스템",
-  "start_url": "./aikickmaster.html",
+  "start_url": "/aikickmaster",
   "scope": "./",
   "display": "standalone",
   "orientation": "landscape",

@@ -330,7 +330,7 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
     </div>
     <div class="top-actions">
       <button class="btn-sm-act btn-ghost" onclick="openPwModal()">🔑 비밀번호 변경</button>
-      <button class="btn-sm-act btn-ghost" onclick="window.open('index.html','_blank')">👁 NARUUN LABS 미리보기</button>
+      <button class="btn-sm-act btn-ghost" onclick="window.open('/','_blank')">👁 NARUUN LABS 미리보기</button>
       <button class="btn-sm-act btn-danger-soft" onclick="logoutAdmin()">로그아웃</button>
     </div>
   </div>
@@ -565,8 +565,8 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
    공통
    ============================== */
 const ADMIN_EDGE_URL = 'https://ebgoolsymyzkftvavpyj.supabase.co/functions/v1/clever-worker';
-const KICK_LOGIN_URL = 'https://naruunlabs.kr/kickmaster.html';
-const JUMP_LOGIN_URL = 'https://naruunlabs.kr/jumpmaster.html';
+const KICK_LOGIN_URL = 'https://naruunlabs.kr/kickmaster';
+const JUMP_LOGIN_URL = 'https://naruunlabs.kr/jumpmaster';
 const AKM_VERSION = '1.0.0';
 const HOME_DATA_KEY = 'akm_home_data';
 // ※ ADMIN_SECRET 완전 제거 — 서버(Edge Function 환경변수)에만 존재
@@ -1004,8 +1004,8 @@ async function copyLicenseMsg(encoded) {
    ============================== */
 const HOME_TARGET_DEFAULTS = {
   index: {
-    program_url: "aikickmaster.html",
-    admin_url: "admin.html",
+    program_url: "/aikickmaster",
+    admin_url: "/admin",
     kakao_url: "#",
     tel_url: "tel:01076573579",
     phone: "010-7657-3579",
