@@ -3306,6 +3306,14 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
       <input type="range" id="sens" min="25" max="85" value="50" style="width:100%;accent-color:var(--gold);">
     </div>
 
+    <!-- 소리: 민감도와 완전히 같은 구조(settings-section + settings-label + range).
+         label이 flex-space-between이라 오른쪽 값 자리를 그대로 쓴다.
+         그 값을 누르면 음소거 토글 — 새 버튼을 추가하지 않아 레이아웃 영향이 없다. -->
+    <div class="settings-section">
+      <div class="settings-label">소리 <span id="volVal">🔊 70%</span></div>
+      <input type="range" id="sndRange" min="0" max="100" value="70" style="width:100%;accent-color:var(--gold);">
+    </div>
+
     <hr class="settings-divider">
 
     <button class="settings-pw-btn" onclick="logoutLicense()" style="margin-top:8px;background:rgba(227,23,46,0.15);color:#ff8795;border-color:rgba(227,23,46,0.3);">🚪 라이선스 로그아웃</button>
@@ -3622,25 +3630,265 @@ function nextSparringMission(){
 }
 function sparringModeLabel(){ return sparringMode==='practice' ? '연습모드' : '실전모드'; }
 
-/* ── 사운드 ── */
-let audioCtx=null;
-function ensureAudio(){ try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); }catch(e){} }
-function tone(freq,dur,type='sine',vol=0.18,delay=0){
-  if(!audioCtx) return;
+/* ══════════════════════════════════════════════════════════════════════
+   사운드 엔진 (2026-07-27 전면 교체)
+   음원 파일 없이 Web Audio 합성만 사용한다 — 용량 증가 0, 오프라인 동작.
+
+   신호 흐름:
+       소리 ─┬─────────────────┐
+             └→ 리버브(컨볼버) ─┴→ 마스터게인 → 컴프레서 → 스피커
+
+   격투게임식 타격감의 핵심은 "한 소리를 여러 층으로 겹치는 것"이다.
+     ① 저음 급강하(180→45Hz)  = 무게
+     ② 대역필터 노이즈         = 찰싹, 살의 느낌
+     ③ 왜곡시킨 사각파         = 날카로운 날
+   여기에 마스터 컴프레서를 걸어 여러 소리가 겹쳐도 깨지지 않게 한다.
+   리버브 임펄스는 코드로 생성하므로 별도 음원이 필요 없다.
+   ══════════════════════════════════════════════════════════════════════ */
+let audioCtx=null, sndMaster=null, sndRevBus=null, sndNoiseBuf=null;
+let sndVolume=0.7, sndMuted=false;
+
+function ensureAudio(){
+  try{
+    if(!audioCtx){
+      audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+
+      const comp=audioCtx.createDynamicsCompressor();
+      comp.threshold.value=-18; comp.knee.value=22;
+      comp.ratio.value=8; comp.attack.value=0.003; comp.release.value=0.18;
+      comp.connect(audioCtx.destination);
+
+      sndMaster=audioCtx.createGain();
+      sndMaster.gain.value=sndMuted?0:sndVolume;
+      sndMaster.connect(comp);
+
+      // 리버브 임펄스를 지수 감쇠 노이즈로 생성 (= 방 울림)
+      const conv=audioCtx.createConvolver();
+      const len=Math.floor(audioCtx.sampleRate*1.1);
+      const imp=audioCtx.createBuffer(2,len,audioCtx.sampleRate);
+      for(let ch=0;ch<2;ch++){
+        const d=imp.getChannelData(ch);
+        for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6);
+      }
+      conv.buffer=imp;
+      sndRevBus=audioCtx.createGain(); sndRevBus.gain.value=1;
+      sndRevBus.connect(conv); conv.connect(sndMaster);
+
+      // 화이트노이즈 (타격음 재료) — 한 번만 만들어 재사용
+      const nlen=audioCtx.sampleRate*2;
+      sndNoiseBuf=audioCtx.createBuffer(1,nlen,audioCtx.sampleRate);
+      const nd=sndNoiseBuf.getChannelData(0);
+      for(let i=0;i<nlen;i++) nd[i]=Math.random()*2-1;
+    }
+    if(audioCtx.state==='suspended') audioCtx.resume();
+  }catch(e){}
+}
+
+/* 웨이브셰이퍼 왜곡 곡선 — 배음을 늘려 소리를 거칠고 두껍게 */
+function sndDistCurve(amount){
+  const n=1024, c=new Float32Array(n), k=amount*100;
+  for(let i=0;i<n;i++){
+    const x=i*2/n-1;
+    c[i]=(3+k)*x*20*Math.PI/180/(Math.PI+k*Math.abs(x));
+  }
+  return c;
+}
+
+/* 오실레이터 한 겹 */
+function sOsc({f0,f1,type='sine',dur=0.2,vol=0.3,delay=0,attack=0.002,dist=0,send=0,detune=0}){
+  if(!audioCtx||!sndMaster) return;
   const t=audioCtx.currentTime+delay;
   const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-  o.type=type; o.frequency.value=freq;
-  g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(vol,t+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
-  o.connect(g).connect(audioCtx.destination); o.start(t); o.stop(t+dur+0.03);
+  o.type=type; o.frequency.setValueAtTime(f0,t);
+  if(f1 && f1!==f0) o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t+dur);
+  if(detune) o.detune.value=detune;
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.linearRampToValueAtTime(vol,t+attack);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  let node=o;
+  if(dist>0){
+    const ws=audioCtx.createWaveShaper();
+    ws.curve=sndDistCurve(dist); ws.oversample='4x';
+    o.connect(ws); node=ws;
+  }
+  node.connect(g); g.connect(sndMaster);
+  if(send>0 && sndRevBus){ const s=audioCtx.createGain(); s.gain.value=send; g.connect(s); s.connect(sndRevBus); }
+  o.start(t); o.stop(t+dur+0.05);
 }
-function sndKick(){ tone(170,0.09,'square',0.10); }
-function sndScore(s){ tone(280+Math.min(100,s)*5,0.16,'sine',0.18); }
-function sndCount(){ tone(520,0.12,'sine',0.2); }
-function sndGo(){ tone(740,0.30,'sine',0.22); }
-function sndPop(){ tone(880,0.05,'triangle',0.22); tone(360,0.08,'sine',0.18,0.04); }
-function sndRecord(){ [523,659,784,1047].forEach((f,i)=>tone(f,0.22,'sine',0.2,i*0.12)); }
-function sndSuccess(){ [440,554,659].forEach((f,i)=>tone(f,0.18,'sine',0.18,i*0.08)); }
-function sndFail(){ tone(220,0.25,'sawtooth',0.12); }
+
+/* 노이즈 한 겹 — 필터로 깎아 "퍽/짝/휙"을 만든다 */
+function sNoise({f0=1200,f1=null,q=1,type='bandpass',dur=0.12,vol=0.3,delay=0,attack=0.001,send=0}){
+  if(!audioCtx||!sndMaster||!sndNoiseBuf) return;
+  const t=audioCtx.currentTime+delay;
+  const src=audioCtx.createBufferSource(); src.buffer=sndNoiseBuf;
+  const flt=audioCtx.createBiquadFilter();
+  flt.type=type; flt.Q.value=q;
+  flt.frequency.setValueAtTime(f0,t);
+  if(f1 && f1!==f0) flt.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t+dur);
+  const g=audioCtx.createGain();
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.linearRampToValueAtTime(vol,t+attack);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  src.connect(flt).connect(g); g.connect(sndMaster);
+  if(send>0 && sndRevBus){ const s=audioCtx.createGain(); s.gain.value=send; g.connect(s); s.connect(sndRevBus); }
+  src.start(t); src.stop(t+dur+0.05);
+}
+
+/* 구버전 tone() 호환용 — 남아있는 호출이 있어도 마스터를 타도록 유지 */
+function tone(freq,dur,type='sine',vol=0.18,delay=0){
+  sOsc({f0:freq,type,dur,vol,delay,attack:0.012});
+}
+
+/* ── 타격음: 3층 레이어링 ── */
+function sndImpact(kind='body',opt={}){
+  if(!audioCtx) return;
+  const P={
+    light   :{low:130,lowEnd:42,nf:1900,nv:0.26,mv:0.10,dur:0.14,lv:0.55,rev:0.16},
+    body    :{low:185,lowEnd:44,nf:2600,nv:0.42,mv:0.18,dur:0.21,lv:0.85,rev:0.26},
+    head    :{low:235,lowEnd:58,nf:3600,nv:0.50,mv:0.24,dur:0.19,lv:0.78,rev:0.32},
+    critical:{low:210,lowEnd:38,nf:3100,nv:0.60,mv:0.34,dur:0.34,lv:1.00,rev:0.55}
+  }[kind]||{low:185,lowEnd:44,nf:2600,nv:0.42,mv:0.18,dur:0.21,lv:0.85,rev:0.26};
+  const d=opt.delay||0;
+  const rev=(opt.rev===undefined)?P.rev:opt.rev;
+  const dist=(opt.dist===undefined)?0.55:opt.dist;
+  sOsc({f0:P.low,f1:P.lowEnd,type:'sine',dur:P.dur,vol:P.lv,delay:d,attack:0.001,send:rev*0.5});
+  sNoise({f0:P.nf,f1:P.nf*0.22,q:1.1,dur:P.dur*0.45,vol:P.nv,delay:d,send:rev});
+  if(dist>0) sOsc({f0:P.low*2.3,f1:P.low*0.8,type:'square',dur:0.07,vol:P.mv,delay:d,dist:dist,attack:0.001,send:rev*0.4});
+  if(kind==='critical'){
+    sOsc({f0:300,f1:1500,type:'sawtooth',dur:0.26,vol:0.14,delay:d+0.02,dist:0.4,send:rev});
+    sNoise({f0:5000,f1:9000,q:0.8,dur:0.30,vol:0.10,delay:d+0.05,attack:0.08,send:rev});
+  }
+}
+
+/* ── 발차기 감지: 공기 가르는 소리 ── */
+function sndKick(){
+  if(!audioCtx) return;
+  sNoise({f0:280,f1:3400,q:2.2,dur:0.17,vol:0.20,attack:0.05});
+  sNoise({f0:900,f1:220,q:1.4,dur:0.13,vol:0.12,delay:0.06});
+}
+
+/* ── 100점 특별 연출 ── */
+function sndPerfect(){
+  if(!audioCtx) return;
+  sndImpact('critical',{rev:0.6});
+  [523,659,784,1047,1319].forEach((f,i)=>{
+    const d=0.10+i*0.085;
+    sOsc({f0:f,type:'triangle',dur:0.42,vol:0.24,delay:d,send:0.45});
+    sOsc({f0:f,type:'sawtooth',dur:0.36,vol:0.07,delay:d,detune:+9,dist:0.25,send:0.45});
+    sOsc({f0:f,type:'sawtooth',dur:0.36,vol:0.07,delay:d,detune:-9,dist:0.25,send:0.45});
+  });
+  [1047,1319,1568].forEach(f=>sOsc({f0:f,type:'triangle',dur:0.9,vol:0.16,delay:0.55,send:0.7}));
+  sNoise({f0:6000,f1:13000,q:0.6,dur:0.8,vol:0.09,delay:0.55,attack:0.25,send:0.9});
+  sOsc({f0:70,f1:40,type:'sine',dur:0.7,vol:0.5,delay:0.55,send:0.3});
+}
+
+/* ── 점수: 구간별로 층이 쌓인다 ── */
+function sndScore(s){
+  if(!audioCtx) return;
+  if(s>=100) return sndPerfect();
+  sndImpact(s>=88?'head':'body',{rev:s>=88?0.34:0.2});
+  if(s<75){
+    sOsc({f0:392,type:'triangle',dur:0.16,vol:0.20,delay:0.05,send:0.15});
+  }else if(s<88){
+    [523,659].forEach((f,i)=>sOsc({f0:f,type:'triangle',dur:0.20,vol:0.22,delay:0.05+i*0.075,send:0.22}));
+  }else{
+    [659,831,988].forEach((f,i)=>{
+      sOsc({f0:f,type:'triangle',dur:0.26,vol:0.24,delay:0.05+i*0.07,send:0.3});
+      sOsc({f0:f*2,type:'sine',dur:0.18,vol:0.08,delay:0.05+i*0.07,send:0.3});
+    });
+    sNoise({f0:7000,f1:11000,q:0.7,dur:0.34,vol:0.07,delay:0.12,attack:0.1,send:0.5});
+  }
+}
+
+/* ── 실패 / 거부 ── */
+function sndFail(){
+  if(!audioCtx) return;
+  sOsc({f0:260,f1:70,type:'sawtooth',dur:0.34,vol:0.22,dist:0.35,attack:0.004,send:0.2});
+  sNoise({f0:700,f1:180,q:0.9,dur:0.24,vol:0.16,delay:0.02,send:0.18});
+  sOsc({f0:150,f1:60,type:'sine',dur:0.30,vol:0.35,delay:0.02});
+}
+
+/* ── 카운트다운 / 시작 ── */
+function sndCount(){
+  if(!audioCtx) return;
+  sOsc({f0:440,f1:430,type:'triangle',dur:0.16,vol:0.28,send:0.2});
+  sNoise({f0:1800,f1:900,q:2,dur:0.06,vol:0.14});
+}
+function sndGo(){
+  if(!audioCtx) return;
+  sOsc({f0:200,f1:90,type:'sine',dur:0.35,vol:0.7,attack:0.001,send:0.3});
+  [523,784,1047].forEach((f,i)=>{
+    sOsc({f0:f,type:'triangle',dur:0.45,vol:0.24,delay:i*0.02,send:0.4});
+    sOsc({f0:f,type:'sawtooth',dur:0.35,vol:0.06,delay:i*0.02,detune:8,dist:0.3,send:0.4});
+  });
+  sNoise({f0:3000,f1:8000,q:0.8,dur:0.4,vol:0.11,attack:0.12,send:0.5});
+}
+
+/* ── 풍선 터뜨리기 ── */
+function sndPop(){
+  if(!audioCtx) return;
+  sNoise({f0:2200,f1:700,q:1.6,dur:0.07,vol:0.30,send:0.2});
+  sOsc({f0:760,f1:260,type:'triangle',dur:0.10,vol:0.22,attack:0.001,send:0.2});
+  sOsc({f0:120,f1:60,type:'sine',dur:0.09,vol:0.28,attack:0.001});
+}
+
+/* ── 세션 완료 / 신기록 / 승리 ── */
+function sndRecord(){
+  if(!audioCtx) return;
+  sndImpact('body',{rev:0.4});
+  [392,523,659,784,1047].forEach((f,i)=>sOsc({f0:f,type:'triangle',dur:0.5,vol:0.22,delay:0.08+i*0.1,send:0.5}));
+  sNoise({f0:5000,f1:12000,q:0.6,dur:0.7,vol:0.08,delay:0.5,attack:0.2,send:0.8});
+}
+
+/* ── 일반 성공 ── */
+function sndSuccess(){
+  if(!audioCtx) return;
+  sndImpact('body',{rev:0.28});
+  [523,659,784].forEach((f,i)=>sOsc({f0:f,type:'triangle',dur:0.24,vol:0.22,delay:0.05+i*0.07,send:0.3}));
+}
+
+/* ── 콤보: 연타할수록 반음씩 상승 (겨루기) ── */
+function sndCombo(n=0){
+  if(!audioCtx) return;
+  const semi=Math.min(n,14);
+  const f=330*Math.pow(2,semi/12);
+  sndImpact(n>=5?'critical':'body',{rev:0.2+semi*0.02});
+  sOsc({f0:f,type:'square',dur:0.13,vol:0.16,delay:0.03,dist:0.3,send:0.25});
+  sOsc({f0:f*1.5,type:'triangle',dur:0.16,vol:0.10,delay:0.03,send:0.25});
+}
+
+/* ── 음량 / 음소거 ── */
+function applySndVolume(){
+  if(sndMaster) sndMaster.gain.value=sndMuted?0:sndVolume;
+  const v=document.getElementById('volVal');
+  if(v) v.textContent=sndMuted?'🔇 꺼짐':('🔊 '+Math.round(sndVolume*100)+'%');
+  const r=document.getElementById('sndRange');
+  if(r) r.value=Math.round(sndVolume*100);
+  try{
+    localStorage.setItem('akm_snd_vol',String(sndVolume));
+    localStorage.setItem('akm_snd_mute',sndMuted?'1':'0');
+  }catch(e){}
+}
+function initSound(){
+  try{
+    const v=parseFloat(localStorage.getItem('akm_snd_vol'));
+    if(Number.isFinite(v) && v>=0 && v<=1) sndVolume=v;
+    sndMuted=localStorage.getItem('akm_snd_mute')==='1';
+  }catch(e){}
+  const r=document.getElementById('sndRange');
+  if(r){
+    r.value=Math.round(sndVolume*100);
+    r.oninput=()=>{ sndVolume=r.value/100; if(sndMuted&&sndVolume>0) sndMuted=false; applySndVolume(); };
+    // 조절을 끝냈을 때 한 번 들려줘서 크기를 가늠하게 한다
+    r.onchange=()=>{ ensureAudio(); if(!sndMuted) sndImpact('body'); };
+  }
+  const v=document.getElementById('volVal');
+  if(v){
+    v.style.cursor='pointer'; v.style.userSelect='none';
+    v.onclick=()=>{ sndMuted=!sndMuted; applySndVolume(); if(!sndMuted){ ensureAudio(); sndImpact('light'); } };
+  }
+  applySndVolume();
+}
 ['click','touchstart'].forEach(ev=>document.addEventListener(ev,ensureAudio));
 
 /* ── 컨페티 ── */
@@ -4825,10 +5073,9 @@ function showImpactFlash(kind='body'){
   flash.classList.add('show');
   setTimeout(()=>{ if(flash) flash.className=''; },360);
 }
-function sndImpact(kind='body'){
-  tone(kind==='head'?210:160,0.055,'square',0.16);
-  tone(kind==='head'?920:650,0.08,'triangle',0.13,0.025);
-}
+/* 2026-07-27: 구버전 sndImpact(오실레이터 2개짜리)를 여기서 삭제했다.
+   같은 이름의 함수가 뒤에 또 선언되면 앞의 것을 덮어쓰기 때문에,
+   위 사운드 엔진의 3층 레이어링 버전이 무시되고 있었다. */
 function enemyHitMotion(kind='body'){
   const target=document.getElementById('enemyTarget');
   if(!target) return;
@@ -4885,7 +5132,9 @@ function handleSparringKick(peak){
   const tech=(motion.type==='round'?' · 회전보너스 +'+motion.bonus:(motion.type==='front'?' · 앞차기':' · 판정애매'));
   showDamage('-'+dmg, zone);
   enemyHitMotion(zone);
-  sndImpact(zone);
+  // 2026-07-27: 콤보가 쌓일수록 음이 반음씩 올라간다(격투게임식).
+  // 첫 타는 부위별 타격음, 2타부터 콤보음.
+  if(sparringCombo>=2) sndCombo(sparringCombo-1); else sndImpact(zone);
   // 겨루기 데미지는 전용 데미지 팝업(-22)만 사용한다.
   trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajKneeAngle3D=[]; trajShoulderW=[]; trajActive=false; drillSide=0; resetPreRoll();
   if(sparringHp<=0) setTimeout(finishSparring,500);
@@ -5528,6 +5777,7 @@ drillCountArea.style.display='flex';
 gameArea.style.display='none';
 initDifficulty();
 initKickLevel();
+initSound();
 initDrillRunMode();
 initSparringMode();
 document.getElementById('sparringTypePanel')?.style.setProperty('display','none','important');
