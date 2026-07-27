@@ -3501,7 +3501,7 @@ function beginAutoDrillStage(index, announce=true){
   drillScores=[];
   lastScore=null; lastGrade=''; lastColor='var(--gold)';
   kicking=false; aboveFrames=0; belowFrames=0; peakPct=0;
-  trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajActive=false; drillSide=0;
+  trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajActive=false; drillSide=0; resetPreRoll();
   updateSelectedKickButtons();
   updateModeBadge();
   renderStats();
@@ -3544,6 +3544,21 @@ let smHipW=null; // 서 있을 때의 골반 폭(평소 기준값) — 돌려차
 // 발차기 궤적 추적 (연습 모드용)
 let trajX=[], trajY=[], trajHipX=[], trajTorso=[], trajHipW=[], trajKneeX=[], trajKneeAngle=[], trajHipVis=[], trajKneeVis=[], trajActive=false, drillSide=0; // drillSide: -1 왼쪽 시작, 1 오른쪽 시작
 // trajTorso: 프레임별 몸통 길이(정규화 기준), trajHipW: 프레임별 골반 폭 비율(평소 대비, 1=서 있는 상태)
+
+/* ── 프리롤 버퍼 (2026-07-27 추가, 앞차기 전용) ──────────────────────────
+   기존 궤적(trajX…)은 발이 기준 높이를 "넘은 뒤에야" 기록이 시작된다.
+   그래서 앞차기의 핵심인 체임버(무릎을 접는 구간)가 통째로 빠졌다.
+   시작 프레임도 최고점 프레임도 둘 다 무릎이 펴진 상태라, 양 끝 각도를
+   비교하던 kneeExtDeg가 실측에서 0~1도로 나왔다(2026-07-27 진단 로그).
+
+   프리롤은 발차기 여부와 관계없이 항상 최근 프레임을 쌓아둔다. 앞차기 판정에서만
+   "발차기 시작 시각 이전 PRE_LOOKBACK_MS 구간"을 되돌아본다.
+   ※ 돌려차기 판정 경로에서는 절대 참조하지 않는다 — 기존 동작 그대로 유지. */
+let preT=[], preFootY=[], preKneeAngle=[], preKneeVis=[];
+const PRE_MAX=60;            // 보관 프레임 수 (약 2초)
+const PRE_LOOKBACK_MS=600;   // 발차기 시작 시점에서 되돌아볼 시간
+let kickStartT=0;            // 발차기가 시작된 시각(performance.now)
+function resetPreRoll(){ preT=[]; preFootY=[]; preKneeAngle=[]; preKneeVis=[]; kickStartT=0; }
 
 // 연습 모드 상태
 let drillTarget=10, drillDone=0, drillScores=[], drillResultTimer=null;
@@ -4024,6 +4039,44 @@ function analyzeTraj(peakPctValue=null){
   const kneeOpen=kneeLatT>JUDGE.ROUND.KNEE_OPEN_T && kneeNetT>JUDGE.ROUND.KNEE_NET_T;
   const kneeSnap=kneeExtDeg>JUDGE.ROUND.KNEE_EXT_DEG;
 
+  /* ── 앞차기 전용 재측정 (2026-07-27) ───────────────────────────────────
+     체임버(무릎을 접는 구간)는 발이 기준 높이에 닿기 "전"에 일어난다.
+     그래서 프리롤(발차기 시작 전 구간) + 최고점까지의 궤적을 하나로 이어
+     그 창 안에서 무릎 각도의 최소→최대 폭을 잰다.
+     양 끝값 비교(kneeExtDeg)와 달리 중간에 접힌 구간을 놓치지 않는다.
+
+     riseTFront도 같은 창에서 "가장 낮았던 발 위치 → 최고점"으로 다시 잰다.
+     기록이 늦게 시작돼 riseT가 0으로 찍히던 문제를 막는다.
+
+     ※ kneeChamberDeg / riseTFront는 아래 앞차기 분기에서만 쓴다.
+        kneeExtDeg·kneeSnap·riseT는 손대지 않았으므로 돌려차기 판정은 종전과 동일. */
+  let kneeChamberDeg=kneeExtDeg, kneeChamberOk=kneeDataOk, riseTFront=riseT;
+  {
+    const cutoff=(kickStartT||0)-PRE_LOOKBACK_MS;
+    const angBuf=[], yBuf=[];
+    for(let i=0;i<preT.length;i++){
+      if(preT[i]<cutoff) continue;                       // 너무 오래된 프레임 제외
+      if(kickStartT && preT[i]>kickStartT) continue;     // 프리롤은 발차기 시작 전까지만
+      if(Number.isFinite(preKneeAngle[i]) && (preKneeVis[i]??0)>=JUDGE.KNEE_VIS_MIN) angBuf.push(preKneeAngle[i]);
+      if(Number.isFinite(preFootY[i])) yBuf.push(preFootY[i]);
+    }
+    for(const i of kneeValidIdx) angBuf.push(kneeAnglesRaw[i]);
+    for(let i=0;i<=peakIndex && i<trajY.length;i++) if(Number.isFinite(trajY[i])) yBuf.push(trajY[i]);
+
+    if(angBuf.length>=3){
+      // 한 프레임짜리 튐에 휘둘리지 않도록, 표본이 넉넉하면 양 끝 극값을 하나씩 버린다.
+      const s=[...angBuf].sort((a,b)=>a-b);
+      const lo=(s.length>=6)?s[1]:s[0];
+      const hi=(s.length>=6)?s[s.length-2]:s[s.length-1];
+      kneeChamberDeg=Math.max(0,hi-lo);
+      kneeChamberOk=true;
+    }
+    if(yBuf.length>=2){
+      const lowest=Math.max(...yBuf); // 화면 좌표는 아래로 갈수록 값이 크다
+      riseTFront=Math.max(0,lowest-peakY)/T;
+    }
+  }
+
   if(drillKickType()==='apcha'){
     // 앞차기: 시작점 기준 보이지 않는 세로 통로를 끝까지 벗어나지 않아야 한다.
     const deviations=xs.map(x=>Math.abs(x-startX)/T);
@@ -4043,16 +4096,26 @@ function analyzeTraj(peakPctValue=null){
       maxConsecutive>=JUDGE.FRONT.OUTSIDE_CONSEC_FRAMES ||
       returnedAfterExcursion;
 
-    if(riseT<=JUDGE.MIN_RISE_T || outsideCorridor){
-      return {score:null,ok:false,msg:'앞차기로 곧게 차주세요!',reason:'front_corridor_out',riseT,maxDev,kneeExt:kneeExtDeg,kneeDataOk};
+    /* ── 트래킹 튐 방어 (2026-07-27) ──
+       발이 몸통 길이의 1.3배 넘게 솟은 것으로 잡히면 사람이 낸 값이 아니다.
+       (진단 로그에서 riseT 2.268이 98점으로 통과한 사례가 있었다.)
+       이런 프레임은 점수를 주지 말고 다시 차게 한다. */
+    if(riseTFront>1.3){
+      return {score:null,ok:false,msg:'잘 안 보였어요. 다시 한 번!',reason:'front_track_bad',riseT:riseTFront,riseTRaw:riseT,maxDev,kneeExt:kneeExtDeg,kneeChamber:kneeChamberDeg,kneeDataOk};
+    }
+
+    if(riseTFront<=JUDGE.MIN_RISE_T || outsideCorridor){
+      return {score:null,ok:false,msg:'앞차기로 곧게 차주세요!',reason:'front_corridor_out',riseT:riseTFront,riseTRaw:riseT,maxDev,kneeExt:kneeExtDeg,kneeChamber:kneeChamberDeg,kneeDataOk};
     }
 
     /* ── 무릎 체임버 거부 ──
        무릎을 접었다 펴는 동작이 거의 없으면(뻣뻣하게 든 다리) 거부한다.
-       무릎 추적이 불안정해 kneeDataOk가 false면(가려짐 등) 거부하지 않는다 —
-       추적 실패를 "체임버 안 함"으로 오해하지 않기 위함. */
-    if(kneeDataOk && kneeExtDeg<JUDGE.FRONT.MIN_KNEE_EXT_DEG){
-      return {score:null,ok:false,msg:'무릎을 접었다 펴며 차보세요!',reason:'front_no_chamber',riseT,maxDev,kneeExt:kneeExtDeg,kneeDataOk};
+       무릎 추적이 불안정해 kneeChamberOk가 false면(가려짐 등) 거부하지 않는다 —
+       추적 실패를 "체임버 안 함"으로 오해하지 않기 위함.
+       2026-07-27: 판단 근거를 kneeExtDeg(양 끝 각도 차이)에서
+       kneeChamberDeg(프리롤 포함 구간의 최소→최대 폭)로 교체. */
+    if(kneeChamberOk && kneeChamberDeg<JUDGE.FRONT.MIN_KNEE_EXT_DEG){
+      return {score:null,ok:false,msg:'무릎을 접었다 펴며 차보세요!',reason:'front_no_chamber',riseT:riseTFront,riseTRaw:riseT,maxDev,kneeExt:kneeExtDeg,kneeChamber:kneeChamberDeg,kneeDataOk};
     }
 
     /* ── 돌려차기 거부 ──
@@ -4078,20 +4141,20 @@ function analyzeTraj(peakPctValue=null){
       (netT>V.NET_T && latT>V.LAT_T && sweepRatio>=V.SWEEP_RATIO);   // ⑤ 한 방향으로만 꾸준히 휘어 나갔다
 
     if(roundVeto){
-      return {score:null,ok:false,msg:'돌려차기예요! 앞차기로 곧게 차주세요',reason:'front_round_detected',riseT,maxDev,kneeExt:kneeExtDeg,kneeDataOk};
+      return {score:null,ok:false,msg:'돌려차기예요! 앞차기로 곧게 차주세요',reason:'front_round_detected',riseT:riseTFront,riseTRaw:riseT,maxDev,kneeExt:kneeExtDeg,kneeChamber:kneeChamberDeg,kneeDataOk};
     }
 
     const measuredPeak=(typeof peakPctValue==='number' && Number.isFinite(peakPctValue))
-      ? peakPctValue : Math.max(0,Math.min(100,50 + riseT*T*250));
+      ? peakPctValue : Math.max(0,Math.min(100,50 + riseTFront*T*250));
     const heightScore=clamp01((measuredPeak-JUDGE.FRONT.SCORE_PEAK_BASE)/Math.max(1,JUDGE.FRONT.SCORE_PEAK_SPAN));
     const straightScore=clamp01(1-(maxDev/JUDGE.FRONT.CORRIDOR_HARD_T));
     const stayScore=clamp01(1-outsideRatio/Math.max(JUDGE.FRONT.OUTSIDE_RATIO_MAX,0.01));
-    const kneeScore=kneeDataOk?clamp01((kneeExtDeg-JUDGE.FRONT.MIN_KNEE_EXT_DEG)/Math.max(1,JUDGE.FRONT.KNEE_SCORE_SPAN)):0.5;
+    const kneeScore=kneeChamberOk?clamp01((kneeChamberDeg-JUDGE.FRONT.MIN_KNEE_EXT_DEG)/Math.max(1,JUDGE.FRONT.KNEE_SCORE_SPAN)):0.5;
     let score=Math.round(60 + heightScore*18 + straightScore*10 + stayScore*5 + kneeScore*7);
     score=Math.max(60,Math.min(98,score));
     if(heightScore>0.97 && straightScore>0.95 && stayScore>0.96 && kneeScore>0.85) score=100;
     const msg=score>=98?'완벽한 앞차기!':score>=88?'아주 좋아요!':score>=75?'좋아요!':'성공!';
-    return {score,ok:true,msg,reason:'front_corridor',riseT,maxDev,kneeExt:kneeExtDeg,kneeDataOk};
+    return {score,ok:true,msg,reason:'front_corridor',riseT:riseTFront,riseTRaw:riseT,maxDev,kneeExt:kneeExtDeg,kneeChamber:kneeChamberDeg,kneeDataOk};
   }
 
   // 돌려차기: 최고점까지의 상승 진행률에 따라 옆으로 휘는 보이지 않는 곡선 통로를 만든다.
@@ -4457,7 +4520,7 @@ function onDrillKick(peak, traj){
     lastColor='#FFB14A';
     sndFail();
     popup(result.msg,'#FFB14A');
-    trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajActive=false; drillSide=0;
+    trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajActive=false; drillSide=0; resetPreRoll();
     return;
   }
 
@@ -4471,7 +4534,7 @@ function onDrillKick(peak, traj){
   popup(result.score+'점','#4caf50');
   renderStats();
 
-  trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajActive=false; drillSide=0;
+  trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajActive=false; drillSide=0; resetPreRoll();
 
   if(drillDone>=drillTarget){
     if(drillRunMode==='auto') setTimeout(finishAutoDrillStage,700);
@@ -4597,7 +4660,7 @@ function handleSparringPracticeKick(peak){
   popup(String(score), lastColor);
   sndScore(score);
   nextSparringMission();
-  trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajActive=false; drillSide=0;
+  trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajActive=false; drillSide=0; resetPreRoll();
 }
 function updateSparringHud(){
   if(enemyHpFill) enemyHpFill.style.width=Math.max(0,(sparringHp/250)*100)+'%';
@@ -4691,7 +4754,7 @@ function handleSparringKick(peak){
   enemyHitMotion(zone);
   sndImpact(zone);
   // 겨루기 데미지는 전용 데미지 팝업(-22)만 사용한다.
-  trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajActive=false; drillSide=0;
+  trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajActive=false; drillSide=0; resetPreRoll();
   if(sparringHp<=0) setTimeout(finishSparring,500);
 }
 function startSparring(){
@@ -4919,7 +4982,7 @@ function resetCounters(){
   sparringHp=250; sparringDamage=0; sparringCombo=0; sparringMaxCombo=0; sparringLastHitT=0;
   updateSparringHud();
   kicking=false; aboveFrames=0; belowFrames=0; peakPct=0; lastRankTs=null;
-  trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajActive=false; drillSide=0;
+  trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajActive=false; drillSide=0; resetPreRoll();
   popOverlay.classList.remove('show');
   drillResult.classList.remove('show','auto-summary','final-result'); sparringHud?.classList.remove('show');
   if(drillResultTimer){ clearTimeout(drillResultTimer); drillResultTimer=null; }
@@ -4973,6 +5036,9 @@ function diagLogPush(result){
   if(typeof result.latT==='number') entry.latT=+result.latT.toFixed(3);
   if(typeof result.netT==='number') entry.netT=+result.netT.toFixed(3);
   if(typeof result.kneeExt==='number') entry.kneeExt=Math.round(result.kneeExt);
+  // 2026-07-27 추가: 앞차기 임계값 재보정을 위한 실측 수집용 필드
+  if(typeof result.kneeChamber==='number') entry.kneeChamber=Math.round(result.kneeChamber);
+  if(typeof result.riseTRaw==='number') entry.riseTRaw=+result.riseTRaw.toFixed(3);
   entry.kneeDataOk=!!result.kneeDataOk;
   diagLog.push(entry);
   if(diagLog.length>50) diagLog.shift();
@@ -5109,6 +5175,7 @@ function runKick(pct,m=null){
       if(!aboveFrames) aboveFrames=now;
       if(now-aboveFrames>=ABOVE_MS){
         kicking=true; peakPct=pct; belowFrames=0; trajActive=true;
+        kickStartT=now; // 프리롤을 어디까지 되돌아볼지의 기준점
         if(m){
           drillSide=(m.footX < m.hipX)?-1:1;
           trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[];
@@ -5237,6 +5304,16 @@ function loop(){
 
           if(running) runKick(m.pct,m);
           else { kicking=false; aboveFrames=0; belowFrames=0; peakPct=0; trajActive=false; }
+
+          /* 프리롤 수집: 발차기 중인지와 무관하게 항상 쌓는다.
+             앞차기 체임버 측정에서만 되돌아본다. (2026-07-27) */
+          if((isDrillMode()||currentMode==='sparring')&&running){
+            preT.push(performance.now());
+            preFootY.push(Number.isFinite(m.footY)?m.footY:null);
+            preKneeAngle.push(Number.isFinite(m.kneeAngle)?m.kneeAngle:null);
+            preKneeVis.push(Number.isFinite(m.kneeVis)?m.kneeVis:0);
+            if(preT.length>PRE_MAX){ preT.shift(); preFootY.shift(); preKneeAngle.shift(); preKneeVis.shift(); }
+          }
 
           // 발차기 궤적 수집: 연습/겨루기 공통
           if((isDrillMode()||currentMode==='sparring')&&running&&trajActive){
