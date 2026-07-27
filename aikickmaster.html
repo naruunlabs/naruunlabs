@@ -4042,33 +4042,47 @@ function analyzeTraj(peakPctValue=null){
   /* ── 앞차기 전용 재측정 (2026-07-27) ───────────────────────────────────
      체임버(무릎을 접는 구간)는 발이 기준 높이에 닿기 "전"에 일어난다.
      그래서 프리롤(발차기 시작 전 구간) + 최고점까지의 궤적을 하나로 이어
-     그 창 안에서 무릎 각도의 최소→최대 폭을 잰다.
+     "접힌 정도 → 펴진 정도"를 방향까지 맞춰서 잰다.
      양 끝값 비교(kneeExtDeg)와 달리 중간에 접힌 구간을 놓치지 않는다.
 
-     riseTFront도 같은 창에서 "가장 낮았던 발 위치 → 최고점"으로 다시 잰다.
-     기록이 늦게 시작돼 riseT가 0으로 찍히던 문제를 막는다.
+     2026-07-27 2차 수정: 1차에서는 창 안의 단순 최소~최대 폭을 썼는데,
+     트래킹이 튄 프레임 하나가 각도를 0도 근처로 만들면 폭이 175도까지
+     부풀어 실측이 전부 무의미해졌다(어린이 테스트 로그). 그래서
+       ① 해부학적으로 불가능한 각도(KNEE_ANGLE_MIN 미만)는 버리고
+       ② 3점 중앙값으로 한 프레임짜리 튐을 지우고
+       ③ 신전은 최고점 부근에서, 체임버는 그 이전 구간에서 따로 잰다.
 
-     ※ kneeChamberDeg / riseTFront는 아래 앞차기 분기에서만 쓴다.
-        kneeExtDeg·kneeSnap·riseT는 손대지 않았으므로 돌려차기 판정은 종전과 동일. */
+     ※ kneeChamberDeg는 아래 앞차기 분기에서만 쓴다.
+        kneeExtDeg·kneeSnap·riseT는 손대지 않았으므로 돌려차기 판정은 종전과 동일.
+     ※ riseTFront는 판정에 쓰지 않는다 — 진단 로그 수집 전용.
+        기준이 "발이 바닥에 있을 때"부터라 종전 riseT와 스케일이 완전히 달라
+        (실측 2.5~4.3배) MIN_RISE_T 같은 기존 임계값과 섞어 쓰면 안 된다. */
+  const KNEE_ANGLE_MIN=25; // 무릎이 이보다 접히는 건 사람 관절로는 불가능 → 트래킹 실패
   let kneeChamberDeg=kneeExtDeg, kneeChamberOk=kneeDataOk, riseTFront=riseT;
   {
     const cutoff=(kickStartT||0)-PRE_LOOKBACK_MS;
-    const angBuf=[], yBuf=[];
+    const ang=[], yBuf=[];
+    const pushAng=(v,vis)=>{
+      if(!Number.isFinite(v)) return;
+      if((vis??0)<JUDGE.KNEE_VIS_MIN) return;
+      if(v<KNEE_ANGLE_MIN || v>180) return;
+      ang.push(v);
+    };
     for(let i=0;i<preT.length;i++){
       if(preT[i]<cutoff) continue;                       // 너무 오래된 프레임 제외
       if(kickStartT && preT[i]>kickStartT) continue;     // 프리롤은 발차기 시작 전까지만
-      if(Number.isFinite(preKneeAngle[i]) && (preKneeVis[i]??0)>=JUDGE.KNEE_VIS_MIN) angBuf.push(preKneeAngle[i]);
+      pushAng(preKneeAngle[i], preKneeVis[i]);
       if(Number.isFinite(preFootY[i])) yBuf.push(preFootY[i]);
     }
-    for(const i of kneeValidIdx) angBuf.push(kneeAnglesRaw[i]);
+    for(const i of kneeValidIdx) pushAng(kneeAnglesRaw[i], kneeVisRaw[i]);
     for(let i=0;i<=peakIndex && i<trajY.length;i++) if(Number.isFinite(trajY[i])) yBuf.push(trajY[i]);
 
-    if(angBuf.length>=3){
-      // 한 프레임짜리 튐에 휘둘리지 않도록, 표본이 넉넉하면 양 끝 극값을 하나씩 버린다.
-      const s=[...angBuf].sort((a,b)=>a-b);
-      const lo=(s.length>=6)?s[1]:s[0];
-      const hi=(s.length>=6)?s[s.length-2]:s[s.length-1];
-      kneeChamberDeg=Math.max(0,hi-lo);
+    if(ang.length>=4){
+      const sm=ang.map((v,i)=>(i===0||i===ang.length-1)?v:[ang[i-1],v,ang[i+1]].sort((a,b)=>a-b)[1]);
+      const tailFrom=Math.max(1,sm.length-3);
+      const extend=Math.max(...sm.slice(tailFrom));   // 최고점 부근 = 가장 펴진 상태
+      const chamber=Math.min(...sm.slice(0,tailFrom)); // 그 이전 = 가장 접힌 상태
+      kneeChamberDeg=Math.max(0,extend-chamber);
       kneeChamberOk=true;
     }
     if(yBuf.length>=2){
@@ -4096,16 +4110,13 @@ function analyzeTraj(peakPctValue=null){
       maxConsecutive>=JUDGE.FRONT.OUTSIDE_CONSEC_FRAMES ||
       returnedAfterExcursion;
 
-    /* ── 트래킹 튐 방어 (2026-07-27) ──
-       발이 몸통 길이의 1.3배 넘게 솟은 것으로 잡히면 사람이 낸 값이 아니다.
-       (진단 로그에서 riseT 2.268이 98점으로 통과한 사례가 있었다.)
-       이런 프레임은 점수를 주지 말고 다시 차게 한다. */
-    if(riseTFront>1.3){
-      return {score:null,ok:false,msg:'잘 안 보였어요. 다시 한 번!',reason:'front_track_bad',riseT:riseTFront,riseTRaw:riseT,maxDev,kneeExt:kneeExtDeg,kneeChamber:kneeChamberDeg,kneeDataOk};
-    }
-
-    if(riseTFront<=JUDGE.MIN_RISE_T || outsideCorridor){
-      return {score:null,ok:false,msg:'앞차기로 곧게 차주세요!',reason:'front_corridor_out',riseT:riseTFront,riseTRaw:riseT,maxDev,kneeExt:kneeExtDeg,kneeChamber:kneeChamberDeg,kneeDataOk};
+    /* 2026-07-27: 여기 있던 riseTFront>1.3 "트래킹 튐" 거부를 철회했다.
+       1.3이라는 기준을 종전 riseT 스케일에서 가져왔는데, riseTFront는
+       바닥에서부터 재는 값이라 정상 발차기도 2.5~4.3이 나온다.
+       그 결과 어린이 테스트에서 15번 전부 거부됐다. 기준을 실측으로
+       잡기 전까지는 거부하지 않고 로그로만 남긴다. */
+    if(riseT<=JUDGE.MIN_RISE_T || outsideCorridor){
+      return {score:null,ok:false,msg:'앞차기로 곧게 차주세요!',reason:'front_corridor_out',riseT,riseTFront,maxDev,kneeExt:kneeExtDeg,kneeChamber:kneeChamberDeg,kneeDataOk};
     }
 
     /* ── 무릎 체임버 거부 ──
@@ -4115,7 +4126,7 @@ function analyzeTraj(peakPctValue=null){
        2026-07-27: 판단 근거를 kneeExtDeg(양 끝 각도 차이)에서
        kneeChamberDeg(프리롤 포함 구간의 최소→최대 폭)로 교체. */
     if(kneeChamberOk && kneeChamberDeg<JUDGE.FRONT.MIN_KNEE_EXT_DEG){
-      return {score:null,ok:false,msg:'무릎을 접었다 펴며 차보세요!',reason:'front_no_chamber',riseT:riseTFront,riseTRaw:riseT,maxDev,kneeExt:kneeExtDeg,kneeChamber:kneeChamberDeg,kneeDataOk};
+      return {score:null,ok:false,msg:'무릎을 접었다 펴며 차보세요!',reason:'front_no_chamber',riseT,riseTFront,maxDev,kneeExt:kneeExtDeg,kneeChamber:kneeChamberDeg,kneeDataOk};
     }
 
     /* ── 돌려차기 거부 ──
@@ -4141,11 +4152,11 @@ function analyzeTraj(peakPctValue=null){
       (netT>V.NET_T && latT>V.LAT_T && sweepRatio>=V.SWEEP_RATIO);   // ⑤ 한 방향으로만 꾸준히 휘어 나갔다
 
     if(roundVeto){
-      return {score:null,ok:false,msg:'돌려차기예요! 앞차기로 곧게 차주세요',reason:'front_round_detected',riseT:riseTFront,riseTRaw:riseT,maxDev,kneeExt:kneeExtDeg,kneeChamber:kneeChamberDeg,kneeDataOk};
+      return {score:null,ok:false,msg:'돌려차기예요! 앞차기로 곧게 차주세요',reason:'front_round_detected',riseT,riseTFront,maxDev,kneeExt:kneeExtDeg,kneeChamber:kneeChamberDeg,kneeDataOk};
     }
 
     const measuredPeak=(typeof peakPctValue==='number' && Number.isFinite(peakPctValue))
-      ? peakPctValue : Math.max(0,Math.min(100,50 + riseTFront*T*250));
+      ? peakPctValue : Math.max(0,Math.min(100,50 + riseT*T*250));
     const heightScore=clamp01((measuredPeak-JUDGE.FRONT.SCORE_PEAK_BASE)/Math.max(1,JUDGE.FRONT.SCORE_PEAK_SPAN));
     const straightScore=clamp01(1-(maxDev/JUDGE.FRONT.CORRIDOR_HARD_T));
     const stayScore=clamp01(1-outsideRatio/Math.max(JUDGE.FRONT.OUTSIDE_RATIO_MAX,0.01));
@@ -4154,7 +4165,7 @@ function analyzeTraj(peakPctValue=null){
     score=Math.max(60,Math.min(98,score));
     if(heightScore>0.97 && straightScore>0.95 && stayScore>0.96 && kneeScore>0.85) score=100;
     const msg=score>=98?'완벽한 앞차기!':score>=88?'아주 좋아요!':score>=75?'좋아요!':'성공!';
-    return {score,ok:true,msg,reason:'front_corridor',riseT:riseTFront,riseTRaw:riseT,maxDev,kneeExt:kneeExtDeg,kneeChamber:kneeChamberDeg,kneeDataOk};
+    return {score,ok:true,msg,reason:'front_corridor',riseT,riseTFront,maxDev,kneeExt:kneeExtDeg,kneeChamber:kneeChamberDeg,kneeDataOk};
   }
 
   // 돌려차기: 최고점까지의 상승 진행률에 따라 옆으로 휘는 보이지 않는 곡선 통로를 만든다.
@@ -5038,7 +5049,7 @@ function diagLogPush(result){
   if(typeof result.kneeExt==='number') entry.kneeExt=Math.round(result.kneeExt);
   // 2026-07-27 추가: 앞차기 임계값 재보정을 위한 실측 수집용 필드
   if(typeof result.kneeChamber==='number') entry.kneeChamber=Math.round(result.kneeChamber);
-  if(typeof result.riseTRaw==='number') entry.riseTRaw=+result.riseTRaw.toFixed(3);
+  if(typeof result.riseTFront==='number') entry.riseTFront=+result.riseTFront.toFixed(3);
   entry.kneeDataOk=!!result.kneeDataOk;
   diagLog.push(entry);
   if(diagLog.length>50) diagLog.shift();
