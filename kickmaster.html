@@ -1515,6 +1515,77 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
 .price-values{text-align:right}.price-regular{font-size:18px;color:var(--ui-muted);text-decoration:line-through}.price-sale{font-size:clamp(38px,5vw,64px);font-weight:900;color:var(--kick-primary);line-height:1.1}.price-note{margin-top:8px;color:var(--ui-muted);font-weight:700}
 [hidden]{display:none!important}@media(max-width:700px){.price-box{grid-template-columns:1fr;padding:28px}.price-values{text-align:left}}
 </style>
+
+<style id="hero-price-refinement-20260728">
+/* HERO PRODUCT NAME — white lettering behind the tablet */
+.hero::before{
+  content:"AI KICK MASTER"!important;
+  position:absolute!important;
+  top:54px!important;
+  right:-26px!important;
+  width:auto!important;
+  height:auto!important;
+  border-radius:0!important;
+  background:none!important;
+  color:rgba(255,255,255,.92)!important;
+  -webkit-text-fill-color:rgba(255,255,255,.92)!important;
+  font-family:'Space Grotesk','Pretendard',system-ui,sans-serif!important;
+  font-size:clamp(92px,10.3vw,176px)!important;
+  font-weight:900!important;
+  font-style:italic!important;
+  line-height:.88!important;
+  letter-spacing:-.075em!important;
+  white-space:nowrap!important;
+  opacity:1!important;
+  filter:none!important;
+  text-shadow:0 10px 28px rgba(7,28,73,.08)!important;
+  z-index:1!important;
+  pointer-events:none!important;
+}
+.hero-inner{position:relative!important;z-index:2!important;}
+.hero-copy{position:relative!important;z-index:4!important;}
+.hero-visual{position:relative!important;z-index:3!important;}
+
+/* PRICE — compact, text-first layout without purchase button */
+.price-section{padding:52px 0!important;background:#fff!important;}
+.price-box{
+  grid-template-columns:minmax(0,1fr) auto!important;
+  gap:28px!important;
+  padding:24px 28px!important;
+  border:1px solid var(--ui-line)!important;
+  background:#fff!important;
+  box-shadow:none!important;
+}
+.price-label{font-size:10px!important;letter-spacing:.14em!important;}
+.price-title{
+  margin-top:6px!important;
+  font-size:clamp(22px,2.4vw,32px)!important;
+  line-height:1.2!important;
+  letter-spacing:-.045em!important;
+}
+.price-values{display:flex!important;align-items:center!important;gap:16px!important;text-align:right!important;white-space:nowrap!important;}
+.price-regular{font-size:15px!important;font-weight:700!important;}
+.price-sale{font-size:clamp(30px,3.4vw,44px)!important;line-height:1!important;}
+.price-note{
+  margin-top:0!important;
+  padding:5px 8px!important;
+  border:1px solid color-mix(in srgb,var(--kick-primary) 22%,#fff)!important;
+  color:var(--kick-primary)!important;
+  font-size:11px!important;
+  font-weight:850!important;
+}
+@media(max-width:900px){
+  .hero::before{top:40px!important;right:-18px!important;font-size:clamp(72px,15vw,128px)!important;}
+}
+@media(max-width:700px){
+  .price-section{padding:38px 0!important;}
+  .price-box{grid-template-columns:1fr!important;gap:18px!important;padding:22px!important;}
+  .price-values{justify-content:flex-start!important;flex-wrap:wrap!important;text-align:left!important;}
+}
+@media(max-width:520px){
+  .hero::before{top:28px!important;right:-74px!important;font-size:72px!important;}
+}
+</style>
 </head>
 <body>
 <header>
