@@ -14,6 +14,10 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 fbq('init', '1364933702413818');
 fbq('track', 'PageView');
+fbq('track', 'ViewContent', {
+  content_name: 'AI KICK MASTER',
+  content_category: 'AI sports training software'
+});
 </script>
 <noscript><img height="1" width="1" style="display:none"
 src="https://www.facebook.com/tr?id=1364933702413818&ev=PageView&noscript=1"
@@ -2257,5 +2261,21 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
 })();
 </script>
 
+
+<!-- Meta Pixel: Kakao inquiry click tracking -->
+<script>
+(function () {
+  document.addEventListener('click', function (event) {
+    var link = event.target.closest && event.target.closest('a.js-kakao-link');
+    if (!link) return;
+    if (typeof window.fbq === 'function') {
+      window.fbq('track', 'Contact', {
+        content_name: 'AI KICK MASTER',
+        contact_method: 'KakaoTalk'
+      });
+    }
+  }, true);
+})();
+</script>
 </body>
 </html>
