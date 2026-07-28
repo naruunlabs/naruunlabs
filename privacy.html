@@ -104,12 +104,45 @@ footer{
   .toc a{display:inline-block;margin-right:14px}
   .hero{padding:56px 0 34px}
 }
+
+.policy-header-logo{
+  display:block;
+  width:300px;
+  height:64px;
+  object-fit:contain;
+  object-position:left center;
+}
+.logo{
+  display:flex;
+  align-items:center;
+  min-width:248px;
+}
+@media(max-width:760px){
+  .policy-header-logo{
+    width:210px;
+    height:50px;
+  }
+  .logo{
+    min-width:0;
+  }
+}
+@media(max-width:520px){
+  .policy-header-logo{
+    width:168px;
+    height:44px;
+  }
+  .nav-links{
+    gap:9px;
+    font-size:11px;
+  }
+}
+
 </style>
 </head>
 <body>
 <header>
   <div class="wrap nav">
-    <a class="logo" href="/kickmaster.html"><span>AI</span> KICK MASTER</a>
+    <a class="logo" href="/kickmaster.html" aria-label="AI KICK MASTER 제품 소개"><img class="policy-header-logo" src="kick1.svg" alt="AI KICK MASTER"></a>
     <nav class="nav-links" aria-label="정책 페이지 메뉴">
       <a href="/kickmaster.html">제품 소개</a>
       <a href="/">전체 제품</a>
@@ -164,7 +197,7 @@ footer{
 <p>개인정보 보유 목적이 종료되면 지체 없이 안전한 방법으로 파기합니다.</p>
 </section><section id="s10"><h2>9. 개인정보 보호책임자</h2>
 <ul><li>상호: NARUUN LABS</li><li>문의 채널: NARUUN LABS 공식 카카오톡 또는 홈페이지</li><li>전화: 010-7657-3579</li></ul>
-<div class="note">대표자명과 이메일 주소가 확정되면 이 항목에 추가하는 것이 좋습니다.</div>
+
 </section><section id="s11"><h2>10. 개인정보처리방침 변경</h2>
 <p>본 방침은 관련 법령 또는 서비스 변경에 따라 수정될 수 있으며, 변경 시 홈페이지를 통해 안내합니다.</p>
 </section>
