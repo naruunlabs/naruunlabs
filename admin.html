@@ -359,6 +359,7 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
       <div class="stat-card"><div class="num" id="statInactive" style="color:var(--red)">-</div><div class="label">비활성</div></div>
       <div class="stat-card"><div class="num" id="statLifetime" style="color:var(--gold)">-</div><div class="label">영구 라이선스</div></div>
       <div class="stat-card"><div class="num" id="statExpiring" style="color:var(--amber)">-</div><div class="label">만료 임박 (7일)</div></div>
+      <div class="stat-card"><div class="num" id="statTrial" style="color:#4fa3ff">-</div><div class="label">체험판 진행중</div></div>
     </div>
 
     <div class="toolbar">
@@ -369,6 +370,7 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
         <option value="inactive">비활성</option>
         <option value="expiring">만료 임박</option>
         <option value="expired">만료됨</option>
+        <option value="trial">체험판</option>
       </select>
       <button class="btn-add btn-ghost" onclick="clearFilters()">초기화</button>
     </div>
@@ -502,9 +504,10 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
     <label>도장명 *</label>
     <input id="mDojang" class="f-input" type="text" placeholder="예) 구미태권도장" />
     <label>라이선스 종류 *</label>
-    <select id="mLicenseType" class="f-input" onchange="onTypeChange()">
+    <select id="mLicenseType" class="f-input" onchange="onTypeChange(true)">
       <option value="lifetime">♾️ 영구 (Lifetime)</option>
       <option value="package">📦 태블릿 패키지</option>
+      <option value="trial">🎁 체험판 (Trial)</option>
     </select>
     <label>버전</label>
     <input id="mVersion" class="f-input" type="text" placeholder="예) 1.0.0" value="1.0.0" />
@@ -525,6 +528,19 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
         <label>만료일</label>
         <input id="mExpireDate" class="f-input" type="date" />
         <div class="modal-help">비워두면 만료일 없음(영구)으로 처리됩니다.</div>
+      </div>
+    </div>
+    <div id="trialSection" style="display:none;">
+      <div class="modal-section">
+        <div class="modal-section-title">🎁 체험 기간 설정</div>
+        <label>체험 일수</label>
+        <input id="mTrialDays" class="f-input" type="number" min="1" max="30" value="3" />
+        <div class="modal-help">
+          발급일이 아니라 <b>고객이 처음 인증에 성공한 날</b>부터 계산됩니다.<br>
+          키를 보내놓고 며칠 뒤에 열어도 온전히 이 일수만큼 사용할 수 있습니다.<br>
+          체험판은 기기 <b>1대</b>로 자동 설정됩니다.
+        </div>
+        <div id="trialStatusBox" class="modal-help" style="margin-top:10px;"></div>
       </div>
     </div>
     <div class="modal-section">
@@ -734,6 +750,13 @@ function updateStats() {
   document.getElementById('statInactive').textContent = list.filter(d => !d.is_active).length;
   document.getElementById('statLifetime').textContent = list.filter(d => d.license_type === 'lifetime').length;
   document.getElementById('statExpiring').textContent = expiringCount;
+  const trialLive = list.filter(d => {
+    if (d.license_type !== 'trial' || !d.is_active) return false;
+    if (!d.trial_started_at) return true; // 아직 시작 전도 진행중으로 집계
+    const days = Number(d.trial_days) || 3;
+    return (new Date(d.trial_started_at).getTime() + days * 86400000) > Date.now();
+  }).length;
+  document.getElementById('statTrial').textContent = trialLive;
 }
 
 function clearFilters() {
@@ -756,6 +779,7 @@ function renderTable() {
     else if (filter === 'inactive') statusMatch = !d.is_active;
     else if (filter === 'expiring') statusMatch = d.is_active && isExpiring;
     else if (filter === 'expired') statusMatch = isExpired;
+    else if (filter === 'trial') statusMatch = d.license_type === 'trial';
     return (!q || hay.includes(q)) && statusMatch;
   });
   if (!rows.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">표시할 라이선스가 없습니다.</td></tr>'; return; }
@@ -768,9 +792,14 @@ function renderTable() {
     if (d.is_active && isExpired) { statusCls = 'expired'; statusText = '만료됨'; }
     else if (d.is_active && isExpiring) { statusCls = 'soon'; statusText = `D-${days}`; }
     const rowCls = isExpired ? 'row-expired' : (isExpiring ? 'row-expiring' : '');
-    const typeLabel = d.license_type === 'package' ? '📦 패키지' : '♾️ 영구';
+    const isTrial = d.license_type === 'trial';
+    const typeLabel = isTrial ? `🎁 체험 ${Number(d.trial_days)||3}일`
+                    : (d.license_type === 'package' ? '📦 패키지' : '♾️ 영구');
     const lastVerified = d.last_verified_at ? d.last_verified_at.slice(0,10) : '미사용';
-    const expireDisplay = d.expire_date ? `${d.expire_date}<br><span style="font-size:11px;color:${isExpired?'#ff687a':isExpiring?'#ffd76b':'#71859d'}">${isExpired?'만료됨':`D-${days}`}</span>` : '<span style="color:#4f637c">-</span>';
+    let expireDisplay = d.expire_date ? `${d.expire_date}<br><span style="font-size:11px;color:${isExpired?'#ff687a':isExpiring?'#ffd76b':'#71859d'}">${isExpired?'만료됨':`D-${days}`}</span>` : '<span style="color:#4f637c">-</span>';
+    if (isTrial && !d.trial_started_at) {
+      expireDisplay = '<span style="color:#4fa3ff;font-size:12px">시작 전<br><span style="font-size:11px;color:#71859d">첫 인증 시 시작</span></span>';
+    }
     const payDisplay = d.pay_amount ? `${formatMoney(d.pay_amount)}<span class="sub-text">${d.pay_date||''}</span>` : '-';
     const encoded = encodeURIComponent(JSON.stringify(d));
     return `<tr class="${rowCls}">
@@ -791,9 +820,30 @@ function renderTable() {
   }).join('');
 }
 
-function onTypeChange() {
+function onTypeChange(fromUser) {
   const type = document.getElementById('mLicenseType').value;
   document.getElementById('expireSection').style.display = type === 'package' ? 'block' : 'none';
+  document.getElementById('trialSection').style.display = type === 'trial' ? 'block' : 'none';
+  // 체험판은 기기 1대 고정. 사용자가 직접 종류를 바꿨을 때만 값을 되돌린다.
+  if (type === 'trial') {
+    document.getElementById('mMaxDevices').value = 1;
+  } else if (fromUser && Number(document.getElementById('mMaxDevices').value) === 1) {
+    document.getElementById('mMaxDevices').value = 2;
+  }
+}
+
+/* ── 체험판 상태 텍스트 ── */
+function trialStatusText(d) {
+  if (!d || d.license_type !== 'trial') return '';
+  const days = Number(d.trial_days) || 3;
+  if (!d.trial_started_at) return `아직 시작 전 · 첫 인증 시 ${days}일 시작`;
+  const started = new Date(d.trial_started_at);
+  const ends = new Date(started.getTime() + days * 86400000);
+  const leftMs = ends - new Date();
+  if (leftMs <= 0) return `체험 종료됨 (${ends.toLocaleString('ko-KR')})`;
+  const leftDays = Math.floor(leftMs / 86400000);
+  const leftHours = Math.floor((leftMs % 86400000) / 3600000);
+  return `체험 중 · 남은 기간 ${leftDays}일 ${leftHours}시간 (종료 ${ends.toLocaleString('ko-KR')})`;
 }
 
 function openAddModal() {
@@ -811,6 +861,8 @@ function openAddModal() {
   document.getElementById('mPhone').value = '';
   document.getElementById('mMemo').value = '';
   document.getElementById('mMaxDevices').value = 2;
+  document.getElementById('mTrialDays').value = 3;
+  document.getElementById('trialStatusBox').textContent = '';
   currentEditDeviceSlots = [];
   currentEditLicenseId = null;
   document.getElementById('deviceSlotSection').style.display = 'none';
@@ -836,6 +888,8 @@ function openEditModal(encoded) {
   document.getElementById('mPhone').value = d.phone || '';
   document.getElementById('mMemo').value = d.memo || '';
   document.getElementById('mMaxDevices').value = d.max_devices || 2;
+  document.getElementById('mTrialDays').value = Number(d.trial_days) || 3;
+  document.getElementById('trialStatusBox').textContent = trialStatusText(d);
   currentEditDeviceSlots = Array.isArray(d.device_slots) ? d.device_slots : [];
   currentEditLicenseId = d.id;
   document.getElementById('deviceSlotSection').style.display = 'block';
@@ -949,18 +1003,24 @@ async function saveLicense() {
   const license_type = document.getElementById('mLicenseType').value;
   const version = document.getElementById('mVersion').value.trim() || AKM_VERSION;
   const license_key = document.getElementById('mKey').value.trim();
-  const expire_date = document.getElementById('mExpireDate').value || null;
+  // 체험판은 만료일을 서버가 첫 인증 시점에 자동 계산하므로 여기서는 비워 보낸다
+  const expire_date = license_type === 'trial'
+    ? null
+    : (document.getElementById('mExpireDate').value || null);
   const pay_amount = document.getElementById('mPayAmount').value ? Number(document.getElementById('mPayAmount').value) : null;
   const pay_date = document.getElementById('mPayDate').value || null;
   const pay_memo = document.getElementById('mPayMemo').value.trim() || null;
   const phone = document.getElementById('mPhone').value.trim() || null;
   const memo = document.getElementById('mMemo').value.trim() || null;
   const max_devices = Number(document.getElementById('mMaxDevices').value) || 2;
+  const trial_days = license_type === 'trial'
+    ? Math.min(30, Math.max(1, Number(document.getElementById('mTrialDays').value) || 3))
+    : null;
   if (!dojang_name) { errEl.textContent = '도장명은 필수입니다.'; return; }
   if (!license_key) { errEl.textContent = '라이선스 키는 필수입니다.'; return; }
   saveBtn.disabled = true; errEl.textContent = '';
   try {
-    const payload = { dojang_name, license_key, license_type, version, expire_date, pay_amount, pay_date, pay_memo, phone, memo, max_devices };
+    const payload = { dojang_name, license_key, license_type, version, expire_date, pay_amount, pay_date, pay_memo, phone, memo, max_devices, trial_days };
     if (id) { await edgeCall('UPDATE_LICENSE', { id, ...payload }); }
     else { await edgeCall('INSERT_LICENSE', { ...payload, is_active: true }); }
     closeModal(); await loadLicenses();
@@ -992,9 +1052,15 @@ async function copyLicenseMsg(encoded) {
   const productName = isJump ? 'AI JUMP MASTER' : 'AI KICK MASTER';
   const loginUrl = isJump ? JUMP_LOGIN_URL : KICK_LOGIN_URL;
   const actionLabel = isJump ? '줄넘기 프로그램 실행' : '발차기 프로그램 실행';
-  const typeLabel = d.license_type === 'package' ? '태블릿 패키지' : '영구 라이선스';
-  const expireLine = d.expire_date ? `📅 만료일: ${d.expire_date}\n` : '';
-  const msg = `[${productName} 라이선스 안내]\n\n안녕하세요, ${d.dojang_name} 관장님!\n${productName} 라이선스를 보내드립니다.\n\n🔑 라이선스 키\n${d.license_key}\n\n📋 라이선스 종류: ${typeLabel}\n${expireLine}🔗 접속 링크: ${loginUrl}\n\n✅ 사용 방법\n1. 위 홈페이지로 접속하세요\n2. [${actionLabel}] 버튼을 누르세요\n3. 라이선스 키를 입력하세요\n4. 최초 1회 입력 후 자동으로 실행됩니다\n\n⚠️ 라이선스 키는 소중히 보관해주세요.\n문의사항은 카카오톡으로 연락 주세요.`;
+  const isTrial = d.license_type === 'trial';
+  const trialDays = Number(d.trial_days) || 3;
+  const typeLabel = isTrial ? `${trialDays}일 체험판`
+                  : (d.license_type === 'package' ? '태블릿 패키지' : '영구 라이선스');
+  const expireLine = (!isTrial && d.expire_date) ? `📅 만료일: ${d.expire_date}\n` : '';
+
+  const msg = isTrial
+    ? `[${productName} ${trialDays}일 체험판 안내]\n\n안녕하세요, ${d.dojang_name} 관장님!\n${productName}를 직접 써보실 수 있는 체험판 키를 보내드립니다.\n\n🔑 체험판 라이선스 키\n${d.license_key}\n\n⏱ 체험 기간: 처음 인증하신 시점부터 ${trialDays}일\n   (키를 받은 날이 아니라, 처음 여신 날부터 계산됩니다)\n🖥 사용 기기: 1대\n\n🔗 접속 링크: ${loginUrl}\n\n✅ 사용 방법\n1. 위 홈페이지로 접속하세요\n2. [${actionLabel}] 버튼을 누르세요\n3. 체험판 키를 입력하세요\n4. 최초 1회 입력 후 자동으로 실행됩니다\n\n💡 편하실 때 여셔도 ${trialDays}일이 그대로 보장되니 부담 없이 사용해보세요.\n체험 후 궁금한 점은 카카오톡으로 편하게 문의 주세요!`
+    : `[${productName} 라이선스 안내]\n\n안녕하세요, ${d.dojang_name} 관장님!\n${productName} 라이선스를 보내드립니다.\n\n🔑 라이선스 키\n${d.license_key}\n\n📋 라이선스 종류: ${typeLabel}\n${expireLine}🔗 접속 링크: ${loginUrl}\n\n✅ 사용 방법\n1. 위 홈페이지로 접속하세요\n2. [${actionLabel}] 버튼을 누르세요\n3. 라이선스 키를 입력하세요\n4. 최초 1회 입력 후 자동으로 실행됩니다\n\n⚠️ 라이선스 키는 소중히 보관해주세요.\n문의사항은 카카오톡으로 연락 주세요.`;
   try { await navigator.clipboard.writeText(msg); showToast('✅ 카톡 안내문을 복사했습니다!'); }
   catch { prompt('복사 실패. 아래 내용을 직접 복사하세요.', msg); }
 }
