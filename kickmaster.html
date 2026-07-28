@@ -1586,12 +1586,256 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
   .hero::before{top:28px!important;right:-74px!important;font-size:72px!important;}
 }
 </style>
+
+<style id="header-footer-refinement-20260728">
+/* Sticky header navigation */
+.nav{
+  gap:28px!important;
+}
+.header-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:26px;
+  margin-left:auto;
+  white-space:nowrap;
+}
+.header-link{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  min-height:38px;
+  padding:6px 0;
+  color:var(--ui-deep);
+  font-size:13px;
+  font-weight:850;
+  letter-spacing:-.02em;
+  transition:color .18s ease;
+}
+.header-link::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:2px;
+  height:1px;
+  background:currentColor;
+  transform:scaleX(.18);
+  transform-origin:left;
+  opacity:.4;
+  transition:transform .18s ease,opacity .18s ease;
+}
+.header-link:hover{
+  color:var(--product-primary);
+}
+.header-link:hover::after{
+  transform:scaleX(1);
+  opacity:1;
+}
+.header-link-primary{
+  min-height:40px;
+  padding:0 16px;
+  border:1px solid var(--product-primary);
+  color:var(--product-primary);
+}
+.header-link-primary::after{
+  display:none;
+}
+.header-link-primary:hover{
+  background:var(--product-primary);
+  color:#fff;
+}
+
+/* Removed duplicated hero CTA buttons */
+.hero-copy .lead{
+  margin-bottom:0!important;
+}
+
+/* Expanded footer */
+.site-footer{
+  padding:54px 0 30px!important;
+  background:#071426!important;
+  border-top:0!important;
+  color:rgba(255,255,255,.72)!important;
+}
+.footer-inner{
+  display:grid;
+  grid-template-columns:minmax(190px,.75fr) minmax(360px,1.6fr);
+  gap:34px 70px;
+}
+.footer-brand{
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+}
+.footer-brand strong{
+  color:#fff;
+  font-size:20px;
+  letter-spacing:.06em;
+}
+.footer-brand span{
+  font-size:13px;
+  color:rgba(255,255,255,.58);
+}
+.footer-info{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(150px,1fr));
+  gap:14px 28px;
+}
+.footer-info div{
+  display:grid;
+  grid-template-columns:70px 1fr;
+  gap:10px;
+  align-items:start;
+  font-size:13px;
+}
+.footer-info b{
+  color:rgba(255,255,255,.48);
+  font-weight:700;
+}
+.footer-info a,
+.footer-info span{
+  color:rgba(255,255,255,.82);
+}
+.footer-info a:hover{
+  color:#fff;
+}
+.footer-business{
+  grid-column:1/-1;
+  padding-top:22px;
+  border-top:1px solid rgba(255,255,255,.10);
+  font-size:12.5px;
+  color:rgba(255,255,255,.42);
+}
+.footer-bottom{
+  grid-column:1/-1;
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
+  padding-top:20px;
+  border-top:1px solid rgba(255,255,255,.10);
+  font-size:12px;
+  color:rgba(255,255,255,.42);
+}
+
+@media(max-width:900px){
+  .product-header-logo{
+    width:240px!important;
+    height:54px!important;
+  }
+  .header-actions{
+    gap:16px;
+  }
+  .header-link{
+    font-size:12px;
+  }
+  .footer-inner{
+    grid-template-columns:1fr;
+    gap:28px;
+  }
+  .footer-business,
+  .footer-bottom{
+    grid-column:auto;
+  }
+}
+@media(max-width:700px){
+  .nav{
+    height:auto!important;
+    min-height:72px;
+    padding:10px 0;
+    align-items:center!important;
+  }
+  .product-header-logo{
+    width:190px!important;
+    height:46px!important;
+  }
+  .brand{
+    min-width:0!important;
+  }
+  .header-actions{
+    gap:8px;
+  }
+  .header-link{
+    font-size:0;
+    min-width:38px;
+    justify-content:center;
+    padding:0 8px;
+    border:1px solid var(--ui-line);
+  }
+  .header-link:nth-child(1)::before{content:"제품";font-size:11px;}
+  .header-link:nth-child(2)::before{content:"문의";font-size:11px;}
+  .header-link:nth-child(3)::before{content:"실행";font-size:11px;}
+  .header-link::after{
+    display:none;
+  }
+  .header-link-primary{
+    min-height:38px;
+    border-color:var(--product-primary);
+  }
+  .footer-info{
+    grid-template-columns:1fr;
+  }
+  .footer-bottom{
+    flex-direction:column;
+    gap:6px;
+  }
+}
+@media(max-width:480px){
+  .product-header-logo{
+    width:154px!important;
+    height:42px!important;
+  }
+  .header-actions{
+    gap:5px;
+  }
+  .header-link{
+    min-width:34px;
+    padding:0 6px;
+  }
+}
+</style>
+
+
+<style id="policy-links-20260728">
+.footer-business{
+  display:flex;
+  justify-content:space-between;
+  gap:18px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.footer-policy-links{
+  display:flex;
+  gap:18px;
+  flex-wrap:wrap;
+}
+.footer-policy-links a{
+  color:rgba(255,255,255,.72);
+}
+.footer-policy-links a:hover{
+  color:#fff;
+}
+.footer-business-pending{
+  color:rgba(255,255,255,.34);
+}
+@media(max-width:700px){
+  .footer-business{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+}
+</style>
+
 </head>
 <body>
 <header>
   <div class="wrap nav">
     <a class="brand" href="/" aria-label="NARUUN LABS 홈"><img class="product-header-logo" src="kick1.svg" alt="AI KICK MASTER"></a>
-    <a class="back" href="/">← 전체 제품 보기</a>
+    <nav class="header-actions" aria-label="AI KICK MASTER 주요 메뉴">
+      <a class="header-link" href="/">전체 제품 보기</a>
+      <a class="header-link js-kakao-link" href="/#contact">문의하기</a>
+      <a class="header-link header-link-primary" href="/aikickmaster">프로그램 실행</a>
+    </nav>
   </div>
 </header>
 
@@ -1602,10 +1846,6 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
         <div class="badge" id="kickBadge">AI 자세 인식 · 발차기 훈련 프로그램</div>
         <h1 id="kickTitle">발차기가<br><span>게임이 되는 순간.</span></h1>
         <p class="lead" id="kickLead">전면 카메라가 작동되는 태블릿/노트북으로 발차기 동작을 실시간으로 인식합니다. 수련생은 화면의 즉각적인 반응과 점수를 보며 즐겁게 반복하고, 지도자는 기존 수업 흐름 안에서 간편하게 활용할 수 있습니다.</p>
-        <div class="actions">
-          <a class="btn primary" href="/aikickmaster">AI KICK MASTER 시작하기</a>
-          <a class="btn ghost js-kakao-link" href="/#contact">카카오톡 1:1 상담</a>
-        </div>
       </div>
 
       <div class="hero-visual" aria-label="AI KICK MASTER 실제 도장 사용 화면">
@@ -1804,39 +2044,51 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
     <div class="faq-list">
       <details class="faq-item"><summary id="faq1Q">어떤 기기에서 사용할 수 있나요?</summary><div class="faq-answer" id="faq1A">전면 카메라가 작동되는 Windows 노트북, 안드로이드 태블릿, iPad에서 사용할 수 있습니다. 별도의 복잡한 설치 없이 웹브라우저에서 바로 실행할 수 있습니다.</div></details>
       <details class="faq-item"><summary id="faq2Q">인터넷이 필요한가요?</summary><div class="faq-answer" id="faq2A">네. 프로그램 이용 시 인터넷 연결이 필요합니다. 원활한 AI 동작 분석과 라이선스 인증을 위해 안정적인 인터넷 환경에서 사용하시기를 권장합니다.</div></details>
-      <details class="faq-item"><summary id="faq3Q">설치가 어렵나요?</summary><div class="faq-answer" id="faq3A">아닙니다. 라이선스 키를 입력하면 바로 사용할 수 있으며, 설치 과정도 어렵지 않습니다. 필요 시 원격 지원도 가능합니다.</div></details>
+      <details class="faq-item"><summary id="faq3Q">설치가 어렵나요?</summary><div class="faq-answer" id="faq3A">별도의 프로그램 설치 없이 웹페이지에 접속한 후 라이선스 키를 입력하면 바로 사용할 수 있습니다. 처음 사용하는 경우에도 복잡한 설치 과정은 없으며, 필요 시 사용 방법을 안내해드립니다.</div></details>
       <details class="faq-item"><summary id="faq4Q">라이선스는 어떻게 제공되나요?</summary><div class="faq-answer" id="faq4A">구매 후 라이선스 키를 발급해드립니다. 발급받은 라이선스 키를 입력하면 바로 사용할 수 있습니다.</div></details>
       <details class="faq-item"><summary id="faq5Q">몇 대까지 사용할 수 있나요?</summary><div class="faq-answer" id="faq5A">기본 라이선스는 최대 2대의 기기에서 사용할 수 있습니다. 추가 기기 등록을 원하시는 경우 고객센터로 문의해 주세요.</div></details>
       <details class="faq-item"><summary id="faq6Q">월 이용료가 있나요?</summary><div class="faq-answer" id="faq6A">아닙니다. AI KICK MASTER는 영구 라이선스 방식으로 제공되며, 별도의 월 구독료는 없습니다.</div></details>
       <details class="faq-item"><summary id="faq7Q">프로젝터가 없어도 사용할 수 있나요?</summary><div class="faq-answer" id="faq7A">네. 전면 카메라가 작동되는 태블릿/노트북 화면만으로도 사용할 수 있으며, 프로젝터를 연결하면 더욱 큰 화면으로 수업을 진행할 수 있습니다.</div></details>
       <details class="faq-item"><summary id="faq8Q">카메라가 꼭 필요한가요?</summary><div class="faq-answer" id="faq8A">네. AI가 발차기를 인식하려면 전면 카메라가 작동되는 태블릿/노트북이 필요합니다. 별도의 센서나 추가 장비는 필요하지 않습니다.</div></details>
       <details class="faq-item"><summary id="faq9Q">AI가 영상을 저장하나요?</summary><div class="faq-answer" id="faq9A">아닙니다. 개인정보 보호를 위해 사진이나 영상은 별도로 저장되지 않습니다. 카메라는 실시간 동작 인식을 위해서만 사용됩니다.</div></details>
-      <details class="faq-item"><summary id="faq10Q">업데이트는 어떻게 하나요?</summary><div class="faq-answer" id="faq10A">새로운 기능이나 개선 사항이 제공되면 안내드리며, 최신 버전으로 쉽게 업데이트하여 사용할 수 있습니다.</div></details>
+      <details class="faq-item"><summary id="faq10Q">업데이트는 어떻게 하나요?</summary><div class="faq-answer" id="faq10A">웹 프로그램이므로 업데이트가 적용되면 별도의 파일 설치 없이 최신 버전을 사용할 수 있습니다. 주요 기능 변경이나 별도 안내가 필요한 경우에는 사전에 안내해드립니다.</div></details>
       <details class="faq-item"><summary id="faq11Q">환불이 가능한가요?</summary><div class="faq-answer" id="faq11A">라이선스가 발급되기 전에는 환불이 가능합니다. 라이선스가 발급된 이후에는 디지털 콘텐츠의 특성상 환불이 제한될 수 있습니다.</div></details>
     </div>
   </div>
 </section>
 
-<section>
-    <div class="wrap">
-      <div class="cta contact-cta">
-        <div>
-          <h2>AI KICK MASTER를 도장에 도입해보세요</h2>
-          <p id="kickCtaDesc">구매, 설치 환경, 사용 방법을 안내해드립니다.</p>
-          <p class="contact-notice">도장 수업 중에는 답변이 늦어질 수 있습니다. 확인하는 대로 순차적으로 답변드리겠습니다.</p>
-          <a class="contact-phone" id="kickPhone" href="tel:01076573579">전화 문의 010-7657-3579</a>
-        </div>
-        <div class="cta-actions">
-          <a class="btn primary" href="/aikickmaster">AI KICK MASTER 시작하기</a>
-          <a class="btn ghost js-kakao-link" href="/#contact">카카오톡 1:1 상담하기</a>
-        </div>
-      </div>
-    </div>
-  </section>
 </main>
 
-<footer>
-  <div class="wrap product-footer"><span>© 2026 NARUUN LABS · AI KICK MASTER · naruunlabs.kr</span><span><a class="js-kakao-link" href="/#contact">카카오톡 1:1 상담</a> · <a id="kickFooterPhone" href="tel:01076573579">010-7657-3579</a></span></div>
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <strong>NARUUN LABS</strong>
+      <span>AI 스포츠 교육 솔루션</span>
+    </div>
+
+    <div class="footer-info">
+      <div><b>제품</b><span>AI KICK MASTER</span></div>
+      <div><b>홈페이지</b><a href="https://naruunlabs.kr">naruunlabs.kr</a></div>
+      <div><b>문의</b><a class="js-kakao-link" href="/#contact">카카오톡 문의</a></div>
+      <div><b>전화</b><a id="kickFooterPhone" href="tel:01076573579">010-7657-3579</a></div>
+    </div>
+
+    <!-- 사업자 정보는 실제 정보 확인 후 아래 영역에 추가 -->
+    <div class="footer-business" aria-label="사업자 정보 및 정책">
+      <div class="footer-policy-links">
+        <a href="/terms.html">이용약관</a>
+        <a href="/privacy.html">개인정보처리방침</a>
+        <a href="/license.html">라이선스 정책</a>
+        <a href="/refund-policy.html">환불 정책</a>
+      </div>
+      <span class="footer-business-pending">사업자 상세정보는 확인 후 추가 예정</span>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 NARUUN LABS. All rights reserved.</span>
+      <span>AI KICK MASTER™</span>
+    </div>
+  </div>
 </footer>
 
 <script>
