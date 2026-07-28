@@ -2,6 +2,33 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<!-- ===== Google Analytics (GA4) / 관리자 제외 스위치 포함 ===== -->
+<!-- 관리자 본인 제외:  주소 뒤에 ?me=1 을 붙여 한 번 접속하면 그 브라우저는 이후 집계 제외 -->
+<!-- 제외 해제:        주소 뒤에 ?me=0 을 붙여 한 번 접속 -->
+<script>
+(function () {
+  var KEY = 'naruunlabs_ga_optout';
+  try {
+    var q = new URLSearchParams(location.search);
+    if (q.get('me') === '1') { localStorage.setItem(KEY, '1'); }
+    if (q.get('me') === '0') { localStorage.removeItem(KEY); }
+    if (localStorage.getItem(KEY) === '1') { return; }
+  } catch (e) {}
+  var h = location.hostname;
+  if (h === 'localhost' || h === '127.0.0.1' || h === '' || h.endsWith('.local')) { return; }
+  var s = document.createElement('script');
+  s.async = true;
+  s.src = 'https://www.googletagmanager.com/gtag/js?id=G-8SN72HTTK4';
+  document.head.appendChild(s);
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  window.gtag = gtag;
+  gtag('js', new Date());
+  gtag('config', 'G-8SN72HTTK4');
+})();
+</script>
+<!-- ===== Google Analytics 끝 ===== -->
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NARUUN LABS | 움직임을 성장으로</title>
 <meta name="description" content="NARUUN LABS는 AI 기반 스포츠 교육 프로그램으로 수련을 더 즐겁고, 더 정확하며, 더 오래 이어지는 성장 경험으로 만듭니다.">
