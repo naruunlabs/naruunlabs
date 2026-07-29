@@ -285,7 +285,9 @@ body.hud-v21.playing-ui .hud-kick-row{opacity:.16; pointer-events:none;}
 body.hud-v21 .hud-drill-row{display:none;}
 body.hud-v21 .hud-balloon-row{position:absolute; top:128px; left:14px; width:130px; display:flex; z-index:8;}
 body.hud-v21 .hud-sparring-row{position:absolute; top:166px; left:14px; width:130px; display:flex; z-index:8;}
-body.hud-v21 .hud-balloon-row .game-btn, body.hud-v21 .hud-sparring-row .game-btn{width:100%; min-height:30px !important; font-size:11px !important;}
+body.hud-v21 .hud-lab-row{position:absolute; top:204px; left:14px; width:130px; display:flex; z-index:8;}
+body.hud-v21 .hud-balloon-row .game-btn, body.hud-v21 .hud-sparring-row .game-btn,
+body.hud-v21 .hud-balloon-row .game-btn, body.hud-v21 .hud-lab-row .game-btn{width:100%; min-height:30px !important; font-size:11px !important;}
 
 /* 시작/선택 패널 */
 body.hud-v21 #drillCountArea, body.hud-v21 #gameArea{
@@ -329,6 +331,22 @@ body.hud-v21 .bar-track{height:18px;}
   align-items:center; justify-content:center;
 }
 #settingsModal.show{ display:flex; }
+
+/* ── 발차기 연구소 (2026-07-29) ──────────────────────────────────────
+   설정 모달과 똑같이 동작한다. 아래 :not(.beta-on) 규칙이 핵심 잠금장치로,
+   베타 라이선스가 아니면 왼쪽 버튼이 아예 존재하지 않는 것처럼 감춰진다.
+   왼쪽 모드 버튼 그룹 CSS 에 display:flex !important 가 걸려 있어서
+   인라인 style 로는 못 숨긴다. 그래서 선택자를 한 단계 더 길게 잡았다. */
+#kickLabModal{
+  display:none; position:fixed; inset:0; z-index:99991;
+  background:rgba(0,0,0,0.72);
+  align-items:center; justify-content:center;
+}
+#kickLabModal.show{ display:flex; }
+html body:not(.beta-on) .hud-lab-row,
+html body:not(.beta-on) #kickLabModal{
+  display:none !important; visibility:hidden !important; pointer-events:none !important;
+}
 .settings-modal-box{
   background:#0d1c30;
   border:1.5px solid rgba(76,163,255,0.35);
@@ -559,7 +577,8 @@ body.hud-v21.akm-ui .stat-num{
 /* 2) 왼쪽 모드 선택 파란 라인 제거 */
 body.hud-v21.akm-ui .hud-drill-row .game-btn,
 body.hud-v21.akm-ui .hud-balloon-row .game-btn,
-body.hud-v21.akm-ui .hud-sparring-row .game-btn{
+body.hud-v21.akm-ui .hud-sparring-row .game-btn,
+body.hud-v21.akm-ui .hud-lab-row .game-btn{
   border-bottom:none !important;
   box-shadow:none !important;
 }
@@ -568,7 +587,9 @@ body.hud-v21.akm-ui .hud-drill-row .game-btn::after,
 body.hud-v21.akm-ui .hud-balloon-row .game-btn::before,
 body.hud-v21.akm-ui .hud-balloon-row .game-btn::after,
 body.hud-v21.akm-ui .hud-sparring-row .game-btn::before,
-body.hud-v21.akm-ui .hud-sparring-row .game-btn::after{
+body.hud-v21.akm-ui .hud-lab-row .game-btn::before,
+body.hud-v21.akm-ui .hud-sparring-row .game-btn::after,
+body.hud-v21.akm-ui .hud-lab-row .game-btn::after{
   content:none !important;
   display:none !important;
   border:none !important;
@@ -578,7 +599,8 @@ body.hud-v21.akm-ui .hud-sparring-row .game-btn::after{
 
 body.hud-v21.akm-ui .hud-drill-row .game-btn.active,
 body.hud-v21.akm-ui .hud-balloon-row .game-btn.active,
-body.hud-v21.akm-ui .hud-sparring-row .game-btn.active{
+body.hud-v21.akm-ui .hud-sparring-row .game-btn.active,
+body.hud-v21.akm-ui .hud-lab-row .game-btn.active{
   border-bottom:none !important;
   box-shadow:none !important;
 }
@@ -601,7 +623,8 @@ body.hud-v21.akm-ui #enemyHpFill,
 /* Left mode buttons */
 body.hud-v21 .hud-drill-row,
 body.hud-v21 .hud-balloon-row,
-body.hud-v21 .hud-sparring-row{
+body.hud-v21 .hud-sparring-row,
+body.hud-v21 .hud-lab-row{
   position:absolute !important;
   left:14px !important;
   width:132px !important;
@@ -614,10 +637,12 @@ body.hud-v21 .hud-sparring-row{
 body.hud-v21 .hud-drill-row{ top:128px !important; }
 body.hud-v21 .hud-balloon-row{ top:168px !important; }
 body.hud-v21 .hud-sparring-row{ top:208px !important; }
+body.hud-v21 .hud-lab-row{ top:248px !important; }
 
 body.hud-v21 .hud-drill-row .game-btn,
 body.hud-v21 .hud-balloon-row .game-btn,
-body.hud-v21 .hud-sparring-row .game-btn{
+body.hud-v21 .hud-sparring-row .game-btn,
+body.hud-v21 .hud-lab-row .game-btn{
   width:100% !important;
   min-height:32px !important;
   display:block !important;
@@ -771,6 +796,7 @@ body.hud-v21 #status{
 body.hud-v21 .hud-drill-row{ top:150px !important; }
 body.hud-v21 .hud-balloon-row{ top:192px !important; }
 body.hud-v21 .hud-sparring-row{ top:234px !important; }
+body.hud-v21 .hud-lab-row{ top:276px !important; }
 
 /* Keep difficulty selector compact near settings */
 body.hud-v21 .difficulty-panel{
@@ -1136,13 +1162,15 @@ body.hud-v21 .ctrl{
 /* 왼쪽 모드 버튼: 박스 느낌 제거, 선택된 것만 밑줄/글자 강조 */
 body.hud-v21 .hud-drill-row,
 body.hud-v21 .hud-balloon-row,
-body.hud-v21 .hud-sparring-row{
+body.hud-v21 .hud-sparring-row,
+body.hud-v21 .hud-lab-row{
   width:142px !important;
 }
 
 body.hud-v21 .hud-drill-row .game-btn,
 body.hud-v21 .hud-balloon-row .game-btn,
-body.hud-v21 .hud-sparring-row .game-btn{
+body.hud-v21 .hud-sparring-row .game-btn,
+body.hud-v21 .hud-lab-row .game-btn{
   background:transparent !important;
   border:none !important;
   box-shadow:none !important;
@@ -1158,7 +1186,8 @@ body.hud-v21 .hud-sparring-row .game-btn{
 
 body.hud-v21 .hud-drill-row .game-btn.active,
 body.hud-v21 .hud-balloon-row .game-btn.active,
-body.hud-v21 .hud-sparring-row .game-btn.active{
+body.hud-v21 .hud-sparring-row .game-btn.active,
+body.hud-v21 .hud-lab-row .game-btn.active{
   background:transparent !important;
   color:#fff !important;
   border:none !important;
@@ -1168,7 +1197,8 @@ body.hud-v21 .hud-sparring-row .game-btn.active{
 
 body.hud-v21 .hud-drill-row .game-btn.active::after,
 body.hud-v21 .hud-balloon-row .game-btn.active::after,
-body.hud-v21 .hud-sparring-row .game-btn.active::after{
+body.hud-v21 .hud-sparring-row .game-btn.active::after,
+body.hud-v21 .hud-lab-row .game-btn.active::after{
   content:"" !important;
   position:absolute !important;
   left:0 !important;
@@ -1535,17 +1565,20 @@ body.hud-v21 #status{
 /* 왼쪽 모드 메뉴도 난이도 버튼처럼 더 가볍게 */
 body.hud-v21 .hud-drill-row,
 body.hud-v21 .hud-balloon-row,
-body.hud-v21 .hud-sparring-row{
+body.hud-v21 .hud-sparring-row,
+body.hud-v21 .hud-lab-row{
   left:16px !important;
   width:126px !important;
 }
 body.hud-v21 .hud-drill-row{ top:92px !important; }
 body.hud-v21 .hud-balloon-row{ top:126px !important; }
 body.hud-v21 .hud-sparring-row{ top:160px !important; }
+body.hud-v21 .hud-lab-row{ top:194px !important; }
 
 body.hud-v21 .hud-drill-row .game-btn,
 body.hud-v21 .hud-balloon-row .game-btn,
-body.hud-v21 .hud-sparring-row .game-btn{
+body.hud-v21 .hud-sparring-row .game-btn,
+body.hud-v21 .hud-lab-row .game-btn{
   min-height:24px !important;
   padding:3px 0 !important;
   background:transparent !important;
@@ -1559,13 +1592,15 @@ body.hud-v21 .hud-sparring-row .game-btn{
 }
 body.hud-v21 .hud-drill-row .game-btn.active,
 body.hud-v21 .hud-balloon-row .game-btn.active,
-body.hud-v21 .hud-sparring-row .game-btn.active{
+body.hud-v21 .hud-sparring-row .game-btn.active,
+body.hud-v21 .hud-lab-row .game-btn.active{
   color:#fff !important;
   text-shadow:0 0 12px rgba(76,163,255,.75) !important;
 }
 body.hud-v21 .hud-drill-row .game-btn.active::after,
 body.hud-v21 .hud-balloon-row .game-btn.active::after,
-body.hud-v21 .hud-sparring-row .game-btn.active::after{
+body.hud-v21 .hud-sparring-row .game-btn.active::after,
+body.hud-v21 .hud-lab-row .game-btn.active::after{
   bottom:-2px !important;
   width:34px !important;
   height:3px !important;
@@ -1796,6 +1831,7 @@ body.hud-v21 .btn-new{
   body.hud-v21 .hud-drill-row{ top:86px !important; }
   body.hud-v21 .hud-balloon-row{ top:118px !important; }
   body.hud-v21 .hud-sparring-row{ top:150px !important; }
+  body.hud-v21 .hud-lab-row{ top:182px !important; }
   body.hud-v21 .mode-row.hud-kick-row{
     gap:11px !important;
     bottom:14px !important;
@@ -2133,15 +2169,18 @@ body.hud-v21.akm-ui #scoreGrade{font-size:14px !important; font-weight:1000 !imp
 /* 모드 버튼: 좌측 미션 선택 */
 body.hud-v21.akm-ui .hud-drill-row,
 body.hud-v21.akm-ui .hud-balloon-row,
-body.hud-v21.akm-ui .hud-sparring-row{
+body.hud-v21.akm-ui .hud-sparring-row,
+body.hud-v21.akm-ui .hud-lab-row{
   left:22px !important; width:174px !important; z-index:65 !important; display:flex !important; position:absolute !important;
 }
 body.hud-v21.akm-ui .hud-drill-row{top:118px !important;}
 body.hud-v21.akm-ui .hud-balloon-row{top:160px !important;}
 body.hud-v21.akm-ui .hud-sparring-row{top:202px !important;}
+body.hud-v21.akm-ui .hud-lab-row{top:244px !important;}
 body.hud-v21.akm-ui .hud-drill-row .game-btn,
 body.hud-v21.akm-ui .hud-balloon-row .game-btn,
-body.hud-v21.akm-ui .hud-sparring-row .game-btn{
+body.hud-v21.akm-ui .hud-sparring-row .game-btn,
+body.hud-v21.akm-ui .hud-lab-row .game-btn{
   width:100% !important; height:28px !important; min-height:28px !important; padding:0 !important;
   border:0 !important; border-left:4px solid rgba(255,255,255,.22) !important; border-radius:0 !important;
   background:linear-gradient(90deg,rgba(0,0,0,.46),rgba(0,0,0,0)) !important; box-shadow:none !important;
@@ -2150,7 +2189,8 @@ body.hud-v21.akm-ui .hud-sparring-row .game-btn{
 }
 body.hud-v21.akm-ui .hud-drill-row .game-btn.active,
 body.hud-v21.akm-ui .hud-balloon-row .game-btn.active,
-body.hud-v21.akm-ui .hud-sparring-row .game-btn.active{
+body.hud-v21.akm-ui .hud-sparring-row .game-btn.active,
+body.hud-v21.akm-ui .hud-lab-row .game-btn.active{
   color:#fff !important; border-left-color:var(--arcade-red) !important;
   text-shadow:0 2px 12px rgba(0,0,0,.95),0 0 14px rgba(255,48,79,.78) !important;
 }
@@ -2577,9 +2617,11 @@ body.hud-v21 .panel{
   body.hud-v21 .hud-drill-row{top:126px !important; left:12px !important;}
   body.hud-v21 .hud-balloon-row{top:162px !important; left:12px !important;}
   body.hud-v21 .hud-sparring-row{top:198px !important; left:12px !important;}
+  body.hud-v21 .hud-lab-row{top:234px !important; left:12px !important;}
   body.hud-v21 .hud-drill-row .game-btn,
   body.hud-v21 .hud-balloon-row .game-btn,
-  body.hud-v21 .hud-sparring-row .game-btn{font-size:12px !important; min-height:26px !important;}
+  body.hud-v21 .hud-sparring-row .game-btn,
+  body.hud-v21 .hud-lab-row .game-btn{font-size:12px !important; min-height:26px !important;}
 
   body.hud-v21 .stats-row,
   body.hud-v21.balloon-mode .stats-row,
@@ -3341,6 +3383,12 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
     <div class="mode-row hud-sparring-row">
       <button class="game-btn" id="m_sparring" onclick="setMode('sparring')">겨루기 모드</button>
     </div>
+    <!-- 2026-07-29 · 발차기 연구소 (베타 라이선스 전용)
+         body 에 beta-on 클래스가 붙었을 때만 보인다. 일반 구매자에게는
+         CSS 로 완전히 감춰져 있고, 눌러도 라이선스를 다시 확인한다. -->
+    <div class="mode-row hud-lab-row">
+      <button class="game-btn" id="m_lab" onclick="openKickLab()">🔬 발차기 연구소</button>
+    </div>
     <div class="game-area" id="gameArea">
       <div class="drill-count-row balloon-time-row">
         <label>제한 시간</label>
@@ -3423,23 +3471,58 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
     <hr class="settings-divider">
     <button class="settings-home-btn" type="button" onclick="location.href='/kickmaster'">🏠 홈페이지로 돌아가기</button>
 
-    <div class="settings-section" id="betaKickSection" style="display:none;">
+    <!-- 2026-07-29: 진단 로그와 베타 측정은 '발차기 연구소'로 옮겼다.
+         설정에 흩어져 있던 것을 한곳에 모으고, 도장명 5번 탭 대신
+         겨루기 모드 아래 전용 버튼으로 들어간다. -->
+    <div class="settings-section" id="labHintSection" style="display:none;">
       <hr class="settings-divider">
-      <div class="settings-label">베타 · 발차기 측정</div>
-      <button class="settings-home-btn" type="button" id="betaKickToggleBtn" onclick="toggleBetaKickSet()">옆·뒤차기 측정 켜기</button>
-      <div style="font-size:12px;opacity:.65;margin-top:6px;line-height:1.5;">
-        켜면 가운데 연습 버튼이 <b>옆R · 옆L · 뒤R · 뒤L</b> 로 바뀝니다.<br>
-        기준값을 정하기 위한 자료 수집용이라 점수는 임시입니다.<br>
-        새로고침하면 꺼집니다.
+      <div style="font-size:12px;opacity:.65;line-height:1.5;">
+        측정·기록은 왼쪽 <b>🔬 발차기 연구소</b> 버튼에 모여 있습니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 발차기 연구소 (2026-07-29, 베타 라이선스 전용) ══════════════════
+     설정 모달과 같은 구조·같은 클래스를 쓴다. 새 CSS 를 거의 만들지 않아
+     화면 배치에 영향이 없다. -->
+<div id="kickLabModal">
+  <div class="settings-modal-box" style="width:400px;">
+    <h3>🔬 <span>발차기 연구소</span> <button class="settings-close-btn" onclick="closeKickLab()">닫기</button></h3>
+
+    <div class="settings-section">
+      <div class="settings-label">기록 <span id="labRecState">꺼짐</span></div>
+      <button class="settings-home-btn" type="button" id="labRecBtn" onclick="toggleLabRecording()" style="margin-top:0;">기록 시작</button>
+      <div style="font-size:12px;opacity:.6;margin-top:6px;line-height:1.5;">
+        켜 두면 차는 발차기마다 특징값이 쌓입니다. 이름·영상은 저장하지 않습니다.
       </div>
     </div>
 
-    <div class="settings-section" id="diagLogSection" style="display:none;">
-      <hr class="settings-divider">
-      <div class="settings-label">진단 로그 <span id="diagCount">0건</span></div>
+    <hr class="settings-divider">
+
+    <div class="settings-section">
+      <div class="settings-label">쌓인 자료 <span id="diagCount">0건</span></div>
       <div id="diagRange" style="font-size:12px;opacity:.65;margin:-4px 0 8px;"></div>
-      <button class="settings-home-btn" type="button" onclick="downloadDiagLog()">⬇ JSON으로 다운로드</button>
+      <button class="settings-home-btn" type="button" onclick="downloadDiagLog()" style="margin-top:0;">⬇ JSON으로 다운로드</button>
       <button class="settings-home-btn" type="button" onclick="clearDiagLog()">🗑 기록 비우기</button>
+    </div>
+
+    <hr class="settings-divider">
+
+    <div class="settings-section">
+      <div class="settings-label">측정용 발차기</div>
+      <button class="settings-home-btn" type="button" id="betaKickToggleBtn" onclick="toggleBetaKickSet()" style="margin-top:0;">옆·뒤차기 측정 켜기</button>
+      <div style="font-size:12px;opacity:.6;margin-top:6px;line-height:1.5;">
+        가운데 연습 버튼이 <b>옆R · 옆L · 뒤R · 뒤L</b> 로 바뀝니다.<br>
+        기준값을 정하기 위한 자료 수집용이라 점수는 임시입니다.
+      </div>
+    </div>
+
+    <hr class="settings-divider">
+
+    <div class="settings-section">
+      <div class="settings-label">마지막 발차기</div>
+      <div id="labLastKick" style="font-size:12px;line-height:1.7;color:#cdd8e8;font-family:ui-monospace,monospace;">아직 없습니다</div>
     </div>
   </div>
 </div>
@@ -5650,7 +5733,11 @@ window.logoutLicense=()=>{
    담는 것은 숫자뿐이다 — 영상도, 이름도, 개인을 식별할 수 있는 값도 없다. */
 const DIAG_LS_KEY='akm_diag_log_v1';
 const DIAG_LOG_MAX=2000;
-let diagMode=false;
+/* 2026-07-29: 기록 스위치도 저장한다. 연구소가 라이선스로 잠겨 있으므로
+   구매자가 실수로 켠 채 남길 일이 없고, 수업 중 앱이 다시 떠도 안 끊긴다. */
+let diagMode=(function(){
+  try{ return localStorage.getItem('akm_diag_on_v1')==='1'; }catch(e){ return false; }
+})();
 let diagLog=[];
 
 function diagLogLoad(){
@@ -5710,6 +5797,9 @@ function diagLogPush(result){
      거부되면 그 사유에 관련된 값만 남던 문제를 없애, 나중에 발차기 종류
      분류기를 실측으로 설계할 수 있게 한다. */
   if(result.diag && typeof result.diag==='object') Object.assign(entry,result.diag);
+  // 2026-07-29: 연구소 화면의 "마지막 발차기"에 그대로 띄운다
+  labLastEntry=entry;
+  if(document.getElementById('kickLabModal')?.classList.contains('show')) updateLabLastKick();
   diagLog.push(entry);
   while(diagLog.length>DIAG_LOG_MAX) diagLog.shift();
   diagLogSave();
@@ -5736,40 +5826,76 @@ window.clearDiagLog=function(){
   updateDiagCount();
 };
 
-window.toggleDiagMode=function(){
+/* ══════════════════════════════════════════════════════════════════════
+   발차기 연구소 (2026-07-29)
+   ──────────────────────────────────────────────────────────────────────
+   종전의 "도장명 5번 탭 → 진단 모드"를 없애고, 흩어져 있던 기록·측정 기능을
+   여기 한곳으로 모았다. 5번 탭이라는 숨김 방식은 구매자가 우연히 발견할 수
+   있는 데다, 새로고침하면 꺼져서 수업 중에 기록이 끊기는 문제가 있었다.
+
+   지금은 라이선스(is_beta)로 잠근다. 구매자 기기에서는 왼쪽 버튼이 CSS 로
+   완전히 감춰지고, 설령 버튼을 불러내더라도 openKickLab() 이 다시 확인한다.
+   구조적으로 막히므로 더 이상 "숨길" 필요가 없어졌다.
+
+   기록 스위치(diagMode)는 이제 새로고침해도 유지된다. 켜 둔 채로 수업을
+   해도 되고, 앱이 다시 떠도 이어서 쌓인다.
+   ══════════════════════════════════════════════════════════════════════ */
+const DIAG_MODE_LS_KEY='akm_diag_on_v1';
+
+function updateLabRecUi(){
+  const st=document.getElementById('labRecState');
+  const btn=document.getElementById('labRecBtn');
+  if(st) st.textContent=diagMode?'켜짐 · 쌓는 중':'꺼짐';
+  if(btn) btn.textContent=diagMode?'■ 기록 멈추기':'● 기록 시작';
+}
+
+window.toggleLabRecording=function(){
   diagMode=!diagMode;
-  /* 2026-07-29: 켤 때 기존 기록을 지우던 동작을 없앴다.
-     수업이 재시작돼도 앞부분이 날아가지 않게 하는 것이 이번 변경의 목적이다. */
-  const sec=document.getElementById('diagLogSection');
-  if(sec) sec.style.display=diagMode?'block':'none';
+  try{ localStorage.setItem(DIAG_MODE_LS_KEY, diagMode?'1':'0'); }catch(e){}
+  updateLabRecUi();
   updateDiagCount();
-  const toast=document.getElementById('diagToast');
-  if(toast){
-    toast.textContent=diagMode?'진단 모드 ON':'진단 모드 OFF';
-    toast.style.display='block';
-    clearTimeout(window.__diagToastTimer);
-    window.__diagToastTimer=setTimeout(()=>{ toast.style.display='none'; },1500);
-  }
 };
 
-(function(){
-  const el=document.getElementById('panelDojangName');
+window.openKickLab=function(){
+  if(!(window.akmIsBeta && window.akmIsBeta())) return;   // 이중 방어
+  updateLabRecUi();
+  updateDiagCount();
+  updateLabLastKick();
+  document.getElementById('kickLabModal').classList.add('show');
+};
+window.closeKickLab=function(){
+  document.getElementById('kickLabModal').classList.remove('show');
+};
+
+/* 마지막으로 찬 발차기의 특징값을 그대로 보여준다.
+   다운로드해서 열어보기 전에도 "옆차기는 어깨폭이 얼마까지 떨어지는지"를
+   그 자리에서 확인할 수 있어야 측정이 빨라진다. */
+let labLastEntry=null;
+function updateLabLastKick(){
+  const el=document.getElementById('labLastKick');
   if(!el) return;
-  let tapCount=0, tapTimer=null;
-  el.addEventListener('click', function(){
-    tapCount++;
-    if(tapTimer) clearTimeout(tapTimer);
-    tapTimer=setTimeout(()=>{ tapCount=0; }, 900);
-    if(tapCount>=5){
-      tapCount=0;
-      if(tapTimer) clearTimeout(tapTimer);
-      window.toggleDiagMode();
-    }
-  });
-})();
+  const e=labLastEntry;
+  if(!e){ el.textContent='아직 없습니다'; return; }
+  const row=(k,v)=>'<div><span style="opacity:.55">'+k+'</span> '+v+'</div>';
+  const n=(v,d=3)=>(typeof v==='number' && Number.isFinite(v))?v.toFixed(d):'—';
+  el.innerHTML=
+    row('시킨 것', (e.want||'—')+' / '+(e.mode||'—'))+
+    row('분류 결과', e.kind||'—')+
+    row('결과', e.result==='ok' ? (e.score+'점') : ('거부 · '+(e.reason||'')))+
+    '<div style="height:6px"></div>'+
+    row('높이 riseTFront', n(e.riseTFront,2))+
+    row('좌우 latT', n(e.latT))+
+    row('곧기 maxDev', n(e.maxDev))+
+    row('골반폭 hipWRatio', n(e.hipWRatio))+
+    row('어깨폭 shoulderWRatio', n(e.shoulderWRatio))+
+    row('체임버 kneeChamber', n(e.kneeChamber3D,1));
+}
 
 // 설정 모달 바깥 클릭 시 닫기
 document.getElementById('settingsModal').addEventListener('click', function(e){
+  if(e.target === this) this.classList.remove('show');
+});
+document.getElementById('kickLabModal').addEventListener('click', function(e){
   if(e.target === this) this.classList.remove('show');
 });
 function updateKickButtonVisibility(){
@@ -5849,14 +5975,19 @@ function applyKickButtonSet(){
 /* 설정 화면에 베타 항목을 드러낼지 결정한다.
    라이선스가 베타가 아니면 아무것도 하지 않는다 = 항목이 존재하지 않는다. */
 window.applyBetaVisibility=function(){
-  const sec=document.getElementById('betaKickSection');
-  if(!sec) return;
   const on=!!(window.akmIsBeta && window.akmIsBeta());
-  sec.style.display=on?'block':'none';
-  if(!on && betaKickSet){               // 혹시라도 켜져 있었다면 정상 세트로 되돌린다
-    betaKickSet=false;
-    applyKickButtonSet();
-    setMode(NORMAL_KICK_MODES[0]);
+  /* beta-on 클래스 하나로 연구소 버튼과 모달이 함께 열리고 닫힌다.
+     이 클래스가 없으면 CSS 가 둘 다 완전히 감춘다. */
+  document.body.classList.toggle('beta-on', on);
+  const hint=document.getElementById('labHintSection');
+  if(hint) hint.style.display=on?'block':'none';
+  if(!on){
+    if(betaKickSet){                    // 혹시라도 켜져 있었다면 정상 세트로 되돌린다
+      betaKickSet=false;
+      applyKickButtonSet();
+      setMode(NORMAL_KICK_MODES[0]);
+    }
+    diagMode=false;                     // 베타가 아니면 기록도 하지 않는다
   }
 };
 
@@ -6266,12 +6397,14 @@ body.hud-v21 .btns.fullscreen-only #fsBtn{width:100% !important;flex:1 1 100% !i
 
 body.hud-v21.akm-ui .hud-drill-row .game-btn,
 body.hud-v21.akm-ui .hud-balloon-row .game-btn,
-body.hud-v21.akm-ui .hud-sparring-row .game-btn{
+body.hud-v21.akm-ui .hud-sparring-row .game-btn,
+body.hud-v21.akm-ui .hud-lab-row .game-btn{
   position:relative !important;
 }
 body.hud-v21.akm-ui .hud-drill-row .game-btn::before,
 body.hud-v21.akm-ui .hud-balloon-row .game-btn::before,
-body.hud-v21.akm-ui .hud-sparring-row .game-btn::before{
+body.hud-v21.akm-ui .hud-sparring-row .game-btn::before,
+body.hud-v21.akm-ui .hud-lab-row .game-btn::before{
   content:"" !important;
   display:block !important;
   position:absolute !important;
@@ -6284,7 +6417,8 @@ body.hud-v21.akm-ui .hud-sparring-row .game-btn::before{
 }
 body.hud-v21.akm-ui .hud-drill-row .game-btn.active::before,
 body.hud-v21.akm-ui .hud-balloon-row .game-btn.active::before,
-body.hud-v21.akm-ui .hud-sparring-row .game-btn.active::before{
+body.hud-v21.akm-ui .hud-sparring-row .game-btn.active::before,
+body.hud-v21.akm-ui .hud-lab-row .game-btn.active::before{
   background:var(--arcade-red) !important;
   box-shadow:0 0 12px rgba(255,48,79,.72) !important;
 }
@@ -6293,7 +6427,8 @@ body.hud-v21.akm-ui .hud-sparring-row .game-btn.active::before{
 /* 기존 모드 선택 표시보다 두꺼워진 세로바를 얇게 복원 */
 body.hud-v21.akm-ui .hud-drill-row .game-btn::before,
 body.hud-v21.akm-ui .hud-balloon-row .game-btn::before,
-body.hud-v21.akm-ui .hud-sparring-row .game-btn::before{
+body.hud-v21.akm-ui .hud-sparring-row .game-btn::before,
+body.hud-v21.akm-ui .hud-lab-row .game-btn::before{
   width:2px !important;
 }
 
