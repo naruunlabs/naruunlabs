@@ -3595,10 +3595,15 @@ function initDrillRunMode(){
   document.body.classList.toggle('auto-drill-selected',saved==='auto');
 }
 function updateSelectedKickButtons(){
-  ['apcha_r','apcha_l','dollo_r','dollo_l'].forEach(m=>{
+  // 2026-07-29: 격파/겨루기 버튼도 함께 갱신한다.
+  // 예전에는 발차기 4개만 갱신해서, 내부 모드는 발차기인데 화면에는
+  // 격파/겨루기가 눌려 있는 것처럼 보이는 어긋남이 생길 수 있었다.
+  ['apcha_r','apcha_l','dollo_r','dollo_l','balloon','sparring'].forEach(m=>{
     const el=document.getElementById('m_'+m);
     if(el) el.classList.toggle('active',m===currentMode);
   });
+  const drillHome=document.getElementById('m_drillhome');
+  if(drillHome) drillHome.classList.toggle('active',isDrillMode());
 }
 function autoDrillStageLabel(){
   return (autoDrillIndex+1)+' / '+AUTO_DRILL_SEQUENCE.length;
@@ -3629,18 +3634,32 @@ window.restartDrillFromResult=()=>{
   drillResult.classList.remove('show','auto-summary','final-result');
   drillResultSub.classList.remove('auto-result-summary');
   autoDrillIndex=0; autoDrillResults={}; autoDrillTransitioning=false;
-  if(drillRunMode==='auto'){
+  // 2026-07-29 버그 수정
+  // 이 '다시 시작' 버튼은 격파/겨루기 결과창에도 함께 뜬다.
+  // 예전에는 자동모드(drillRunMode==='auto')이기만 하면 무조건
+  // currentMode 를 첫 번째 발차기(앞차기 오른발)로 바꿔버려서,
+  // 화면은 격파/겨루기가 선택된 채인데 실제로는 발차기가 시작됐다.
+  // → 지금 모드가 '발차기 모드일 때만' 자동훈련을 처음으로 되감는다.
+  if(isDrillMode() && drillRunMode==='auto'){
     currentMode=AUTO_DRILL_SEQUENCE[0];
-    updateSelectedKickButtons();
   }
+  updateSelectedKickButtons();
   resetCounters();
   updateModeBadge();
   renderStats();
   setStartBtn(false,'시작!');
   statusEl.style.opacity='1';
-  statusEl.textContent=drillRunMode==='auto'
-    ?'시작 버튼을 눌러 자동 발차기 훈련을 시작하세요'
-    :'시작 버튼을 눌러 '+MODE_CFG[currentMode].label+' 연습을 시작하세요';
+  if(currentMode==='balloon'){
+    statusEl.textContent='시작 버튼을 눌러 격파 훈련을 다시 시작하세요';
+  } else if(currentMode==='sparring'){
+    statusEl.textContent=sparringMode==='practice'
+      ?'시작 버튼을 눌러 랜덤 미션을 다시 시작하세요'
+      :'시작 버튼을 눌러 겨루기를 다시 시작하세요';
+  } else {
+    statusEl.textContent=drillRunMode==='auto'
+      ?'시작 버튼을 눌러 자동 발차기 훈련을 시작하세요'
+      :'시작 버튼을 눌러 '+MODE_CFG[currentMode].label+' 연습을 시작하세요';
+  }
 };
 
 
