@@ -3521,6 +3521,13 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
     <hr class="settings-divider">
 
     <div class="settings-section">
+      <div class="settings-label">지금 (실시간)</div>
+      <div id="labLive" style="font-size:12px;line-height:1.7;color:#cdd8e8;font-family:ui-monospace,monospace;">카메라를 켜면 표시됩니다</div>
+    </div>
+
+    <hr class="settings-divider">
+
+    <div class="settings-section">
       <div class="settings-label">마지막 발차기</div>
       <div id="labLastKick" style="font-size:12px;line-height:1.7;color:#cdd8e8;font-family:ui-monospace,monospace;">아직 없습니다</div>
     </div>
@@ -3824,12 +3831,99 @@ let preT=[], preFootY=[], preKneeAngle=[], preKneeVis=[], preKneeAngle3D=[];
 const PRE_MAX=60;            // 보관 프레임 수 (약 2초)
 const PRE_LOOKBACK_MS=600;   // 발차기 시작 시점에서 되돌아볼 시간
 let kickStartT=0;            // 발차기가 시작된 시각(performance.now)
-function resetPreRoll(){ preT=[]; preFootY=[]; preKneeAngle=[]; preKneeVis=[]; preKneeAngle3D=[]; kickStartT=0; }
+function resetPreRoll(){ preT=[]; preFootY=[]; preKneeAngle=[]; preKneeVis=[]; preKneeAngle3D=[]; kickStartT=0; preTraj=[]; }
+
+/* ── 전체 궤적 프리롤 (2026-07-29, 측정 전용 모드에서만 사용) ──────────
+   기존 궤적(trajX…)은 발이 기준선을 넘은 뒤에야 기록이 시작된다.
+   앞차기·돌려차기는 발이 기준선 위에 오래 머물러서 문제가 없었다.
+
+   그런데 뒤차기는 뒤꿈치를 순간적으로 밀었다 빼는 동작이라 기준선 위에
+   머무는 시간이 0.2초뿐이다. 7월 29일 실측에서 뒤차기 오른발은 궤적이
+   평균 7프레임밖에 안 잡혔고(옆차기는 28프레임), 그 짧은 토막으로
+   상승량을 재니까 실제보다 훨씬 작게 나왔다. peakPct 는 100 인데
+   riseTFront 는 1.27 로 찍히는 모순이 그래서 생겼다.
+
+   그래서 발차기 여부와 무관하게 매 프레임 전체 표본을 쌓아 두었다가,
+   측정 전용 모드에서 발차기가 시작되는 순간 궤적 앞에 이어 붙인다.
+
+   ⚠ 앞차기·돌려차기·격파·겨루기에서는 이 함수가 호출되지 않는다.
+      기존 판정 결과를 바꾸지 않기 위한 의도적인 제한이다. */
+const PRE_TRAJ_MAX=24;   // 약 0.8초
+let preTraj=[];
+function pushPreTraj(m){
+  preTraj.push({
+    footX:m.footX, footY:m.footY, hipX:m.hipX, torso:m.torso,
+    hipW:(smHipW && smHipW>0.005 && typeof m.hipW==='number' && (m.hipVis??0)>=JUDGE.ROUND.HIP_VIS_MIN) ? m.hipW/smHipW : 1,
+    kneeX:Number.isFinite(m.kneeX)?m.kneeX:m.hipX,
+    kneeAngle:Number.isFinite(m.kneeAngle)?m.kneeAngle:null,
+    hipVis:m.hipVis??0,
+    kneeVis:Number.isFinite(m.kneeVis)?m.kneeVis:0,
+    kneeAngle3D:Number.isFinite(m.kneeAngle3D)?m.kneeAngle3D:null,
+    shoulderW:shoulderRatioNow(m)
+  });
+  if(preTraj.length>PRE_TRAJ_MAX) preTraj.shift();
+}
+/* 발차기 시작 순간, 쌓아둔 프리롤을 궤적 배열의 앞쪽에 깔아준다.
+   발이 올라오기 시작한 지점부터만 가져온다 — 가만히 서 있던 구간까지
+   끌어오면 "상승량"이 부풀려지기 때문이다. */
+function seedTrajFromPreroll(){
+  if(!preTraj.length) return;
+  let start=0;
+  for(let i=preTraj.length-1;i>=0;i--){
+    // 발이 가장 낮았던 지점을 찾아 그때부터 시작 (footY 는 값이 클수록 아래)
+    if(preTraj[i].footY>=preTraj[start].footY) start=i;
+  }
+  for(let i=start;i<preTraj.length;i++){
+    const p=preTraj[i];
+    trajX.push(p.footX); trajY.push(p.footY); trajHipX.push(p.hipX);
+    trajTorso.push(p.torso); trajHipW.push(p.hipW);
+    trajKneeX.push(p.kneeX); trajKneeAngle.push(p.kneeAngle);
+    trajHipVis.push(p.hipVis); trajKneeVis.push(p.kneeVis);
+    trajKneeAngle3D.push(p.kneeAngle3D); trajShoulderW.push(p.shoulderW);
+  }
+}
 
 /* 계측 전용 궤적 (2026-07-27). 판정에는 쓰지 않고 진단 로그에만 남긴다.
    trajKneeAngle3D: 3D 무릎 각도, trajShoulderW: 어깨 폭 비율(평소 대비) */
 let trajKneeAngle3D=[], trajShoulderW=[];
-let smShoulderW=null; // 서 있을 때의 어깨 폭 기준값
+/* ── 어깨 폭 기준값 (2026-07-29 전면 교체) ──────────────────────────────
+   종전에는 골반 폭과 똑같이 지수평균(EMA)으로 계속 갱신했다.
+     smShoulderW = smShoulderW*0.94 + 지금값*0.06
+   앞차기·돌려차기는 정면을 보고 차니까 이 방식으로 문제가 없었다.
+
+   그런데 옆차기·뒤차기는 몸을 먼저 돌리고 자세를 잡은 다음 찬다.
+   그 준비하는 1초 사이에 "발이 낮고 가만히 있는" 조건이 그대로 성립해서,
+   기준값이 돌아간 어깨폭으로 갈아치워졌다.
+   결과: 몸을 90도 돌렸는데 shoulderWRatio 가 1.00 으로 찍혔다.
+   7월 29일 실측 20건 중 6건이 이 경우였다 — 찍히는 값이 실력이 아니라
+   준비 시간에 좌우된 셈이다.
+
+   이제는 최근 표본 중 "가장 넓었던 쪽"을 기준으로 삼는다.
+   사람 어깨는 정면일 때가 가장 넓으므로, 최근 몇 초 안에 정면을 한 번이라도
+   봤다면 올바른 기준이 잡힌다. 한 프레임짜리 튐에 끌려가지 않도록
+   최대값이 아니라 90퍼센타일을 쓴다.
+
+   ⚠ 골반 폭(smHipW)은 일부러 손대지 않았다. 그 값은 돌려차기 채점에
+   실제로 쓰이므로, 건드리면 기존 사용자의 점수가 바뀐다. */
+const SHOULDER_BASE_MS=10000;   // 되돌아보는 시간 (10초)
+let shoulderSamples=[];         // {t, w}
+function pushShoulderSample(w){
+  const now=performance.now();
+  shoulderSamples.push({t:now,w:w});
+  while(shoulderSamples.length && now-shoulderSamples[0].t>SHOULDER_BASE_MS) shoulderSamples.shift();
+  if(shoulderSamples.length>400) shoulderSamples.shift();
+}
+function shoulderBaseline(){
+  if(!shoulderSamples.length) return null;
+  const ws=shoulderSamples.map(s=>s.w).sort((a,b)=>a-b);
+  return ws[Math.min(ws.length-1, Math.floor(ws.length*0.9))];
+}
+/* 지금 어깨가 기준 대비 얼마나 좁아졌나. 1 = 정면, 0 에 가까울수록 옆·뒤로 돌아섬 */
+function shoulderRatioNow(m){
+  const base=shoulderBaseline();
+  if(!base || base<=0.005 || !m || typeof m.shoulderW!=='number') return 1;
+  return Math.max(0, Math.min(1.5, m.shoulderW/base));
+}
 
 // 연습 모드 상태
 let drillTarget=10, drillDone=0, drillScores=[], drillResultTimer=null;
@@ -5856,14 +5950,17 @@ window.toggleLabRecording=function(){
   updateDiagCount();
 };
 
+let labModalOpen=false;
 window.openKickLab=function(){
   if(!(window.akmIsBeta && window.akmIsBeta())) return;   // 이중 방어
   updateLabRecUi();
   updateDiagCount();
   updateLabLastKick();
+  labModalOpen=true;
   document.getElementById('kickLabModal').classList.add('show');
 };
 window.closeKickLab=function(){
+  labModalOpen=false;
   document.getElementById('kickLabModal').classList.remove('show');
 };
 
@@ -5871,6 +5968,29 @@ window.closeKickLab=function(){
    다운로드해서 열어보기 전에도 "옆차기는 어깨폭이 얼마까지 떨어지는지"를
    그 자리에서 확인할 수 있어야 측정이 빨라진다. */
 let labLastEntry=null;
+
+/* 실시간 표시 (2026-07-29)
+   뒤차기가 왜 인식이 안 되는지 눈으로 확인하기 위한 것이다.
+   발 높이가 기준선을 못 넘는 것인지, 아니면 몸을 돌리는 순간 발 자체를
+   놓치는 것인지는 로그만 봐서는 알 수 없다 — 인식이 안 되면 로그가
+   아예 안 남기 때문이다. 그래서 매 프레임 상태를 그대로 띄운다. */
+function updateLabLive(m){
+  const el=document.getElementById('labLive');
+  if(!el) return;
+  if(!m){ el.textContent='사람이 안 보입니다'; return; }
+  const TH=effThreshPct();
+  const over=m.pct>=TH;
+  const vis=m.visibility??0;
+  const row=(k,v,warn)=>'<div><span style="opacity:.55">'+k+'</span> <span style="color:'+(warn?'#ff8795':'#cdd8e8')+'">'+v+'</span></div>';
+  el.innerHTML=
+    row('발 높이', Math.round(m.pct)+'% (기준 '+Math.round(TH)+'%)', !over)+
+    row('기준선 넘음', over?'예':'아니오', !over)+
+    row('발 보임', vis.toFixed(2), vis<0.5)+
+    row('무릎 보임', (m.kneeVis??0).toFixed(2), (m.kneeVis??0)<0.5)+
+    row('어깨폭 비율', shoulderRatioNow(m).toFixed(2), false)+
+    row('추적 중', trajActive?('예 · '+trajX.length+'프레임'):'아니오', false);
+}
+
 function updateLabLastKick(){
   const el=document.getElementById('labLastKick');
   if(!el) return;
@@ -5896,7 +6016,7 @@ document.getElementById('settingsModal').addEventListener('click', function(e){
   if(e.target === this) this.classList.remove('show');
 });
 document.getElementById('kickLabModal').addEventListener('click', function(e){
-  if(e.target === this) this.classList.remove('show');
+  if(e.target === this){ this.classList.remove('show'); labModalOpen=false; }
 });
 function updateKickButtonVisibility(){
   const show=isDrillMode();
@@ -6047,6 +6167,8 @@ function runKick(pct,m=null){
         if(m){
           drillSide=(m.footX < m.hipX)?-1:1;
           trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajKneeAngle3D=[]; trajShoulderW=[];
+          // 2026-07-29: 측정 전용 모드만 프리롤을 앞에 깔아준다 (기존 판정 경로는 그대로)
+          if(isMeasureOnlyMode()) seedTrajFromPreroll();
         }
       }
     } else aboveFrames=0;
@@ -6197,8 +6319,8 @@ function loop(){
           // 서 있을 때(발이 낮을 때)만 골반 폭 기준값 갱신 → 발차기 중 회전은 기준에 섞이지 않음
           if(typeof m.hipW==='number' && m.pct<30 && m.speed<0.015 && (m.hipVis??0)>=JUDGE.ROUND.HIP_VIS_MIN){
             smHipW=(smHipW==null)?m.hipW:smHipW*0.94+m.hipW*0.06;
-            // 어깨 폭 기준값도 같은 조건에서 갱신 (계측 전용)
-            if(typeof m.shoulderW==='number') smShoulderW=(smShoulderW==null)?m.shoulderW:smShoulderW*0.94+m.shoulderW*0.06;
+            // 2026-07-29: 어깨 폭은 평균이 아니라 최근 표본을 쌓아 90퍼센타일을 쓴다
+            if(typeof m.shoulderW==='number') pushShoulderSample(m.shoulderW);
           }
           const mirrored=camWrap.classList.contains('mirrored');
           const fx=(mirrored?1-m.ankleX:m.ankleX)*100, fy=m.ankleY*100;
@@ -6215,7 +6337,11 @@ function loop(){
             preKneeVis.push(Number.isFinite(m.kneeVis)?m.kneeVis:0);
             preKneeAngle3D.push(Number.isFinite(m.kneeAngle3D)?m.kneeAngle3D:null);
             if(preT.length>PRE_MAX){ preT.shift(); preFootY.shift(); preKneeAngle.shift(); preKneeVis.shift(); preKneeAngle3D.shift(); }
+            // 2026-07-29: 측정 전용 모드용 전체 궤적 프리롤 (짧은 발차기 대비)
+            if(!trajActive) pushPreTraj(m);
           }
+          // 연구소 실시간 표시 (열려 있을 때만)
+          if(labModalOpen) updateLabLive(m);
 
           // 발차기 궤적 수집: 연습/겨루기 공통
           if((isDrillMode()||currentMode==='sparring')&&running&&trajActive){
@@ -6229,7 +6355,7 @@ function loop(){
             trajKneeVis.push(Number.isFinite(m.kneeVis)?m.kneeVis:0);
             // 계측 전용 두 줄 (판정 미사용)
             trajKneeAngle3D.push(Number.isFinite(m.kneeAngle3D)?m.kneeAngle3D:null);
-            trajShoulderW.push((smShoulderW && smShoulderW>0.005 && typeof m.shoulderW==='number') ? m.shoulderW/smShoulderW : 1);
+            trajShoulderW.push(shoulderRatioNow(m));
             if(trajX.length>MAX_TRAJ){ trajX.shift(); trajY.shift(); trajHipX.shift(); trajTorso.shift(); trajHipW.shift(); trajKneeX.shift(); trajKneeAngle.shift(); trajHipVis.shift(); trajKneeVis.shift(); trajKneeAngle3D.shift(); trajShoulderW.shift(); }
           }
           // 연습 가이드 라인
@@ -6250,7 +6376,7 @@ function loop(){
     } else {
       barFill.style.width='0%';
       if(!running){ statusEl.style.opacity='1'; statusEl.textContent='🔍 사람을 찾는 중…'; }
-      kicking=false; aboveFrames=0; belowFrames=0; smHipY=null; smTorso=null; smHipX=null; smHipW=null; smShoulderW=null;
+      kicking=false; aboveFrames=0; belowFrames=0; smHipY=null; smTorso=null; smHipX=null; smHipW=null; shoulderSamples=[];
     }
   }
   requestAnimationFrame(loop);
