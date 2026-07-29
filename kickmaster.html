@@ -14,10 +14,6 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 fbq('init', '1364933702413818');
 fbq('track', 'PageView');
-fbq('track', 'ViewContent', {
-  content_name: 'AI KICK MASTER',
-  content_category: 'AI sports training software'
-});
 </script>
 <noscript><img height="1" width="1" style="display:none"
 src="https://www.facebook.com/tr?id=1364933702413818&ev=PageView&noscript=1"
@@ -1874,6 +1870,39 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
 }
 </style>
 
+
+<style id="free-trial-refinement-20260729">
+/* 3-day free trial — compact hero notice */
+.hero-trial{
+  display:inline-flex;
+  align-items:center;
+  gap:12px;
+  margin-top:22px;
+  padding:9px 0;
+  border-bottom:1px solid rgba(227,23,46,.28);
+  color:var(--ui-deep);
+  font-size:13px;
+  line-height:1.4;
+}
+.hero-trial strong{
+  color:var(--product-primary);
+  font-weight:900;
+  letter-spacing:-.02em;
+}
+.hero-trial span{color:var(--ui-muted);font-weight:650;}
+.hero-trial a{
+  margin-left:2px;
+  color:var(--product-primary);
+  font-weight:850;
+  white-space:nowrap;
+}
+.hero-trial a:hover{text-decoration:underline;text-underline-offset:3px;}
+@media(max-width:560px){
+  .hero-trial{align-items:flex-start;gap:6px 10px;flex-wrap:wrap;margin-top:18px;font-size:12.5px;}
+  .hero-trial span{width:100%;}
+}
+</style>
+
 </head>
 <body>
 <header>
@@ -1894,6 +1923,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
         <div class="badge" id="kickBadge">AI 자세 인식 · 발차기 훈련 프로그램</div>
         <h1 id="kickTitle">발차기가<br><span>게임이 되는 순간.</span></h1>
         <p class="lead" id="kickLead">전면 카메라가 작동되는 태블릿/노트북으로 발차기 동작을 실시간으로 인식합니다. 수련생은 화면의 즉각적인 반응과 점수를 보며 즐겁게 반복하고, 지도자는 기존 수업 흐름 안에서 간편하게 활용할 수 있습니다.</p>
+        <div class="hero-trial" aria-label="3일 무료체험 안내"><strong>3일 무료체험</strong><span>실제 수업에서 먼저 사용해보고 결정하세요.</span><a href="/aikickmaster">무료체험 시작 →</a></div>
       </div>
 
       <div class="hero-visual" aria-label="AI KICK MASTER 실제 도장 사용 화면">
@@ -2261,21 +2291,5 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
 })();
 </script>
 
-
-<!-- Meta Pixel: Kakao inquiry click tracking -->
-<script>
-(function () {
-  document.addEventListener('click', function (event) {
-    var link = event.target.closest && event.target.closest('a.js-kakao-link');
-    if (!link) return;
-    if (typeof window.fbq === 'function') {
-      window.fbq('track', 'Contact', {
-        content_name: 'AI KICK MASTER',
-        contact_method: 'KakaoTalk'
-      });
-    }
-  }, true);
-})();
-</script>
 </body>
 </html>
