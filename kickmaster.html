@@ -794,7 +794,10 @@ footer{
   aspect-ratio:16/10;
   background:#111;
 }
-.tablet-screen img{
+/* 2026-07-29: 화면 안에 <video> 도 들어가므로 img 와 똑같이 다룬다.
+   아래 다른 블록의 .tablet-screen img 규칙에도 전부 video 를 같이 적어뒀다. */
+.tablet-screen img,
+.tablet-screen video{
   display:block;
   width:100%;
   height:100%;
@@ -1080,7 +1083,8 @@ footer{
   transform:translateZ(5px)!important;
   background:#020305!important;
 }
-.tablet-screen img{
+.tablet-screen img,
+.tablet-screen video{
   border-radius:20px 17px 18px 21px!important;
 }
 .tablet-screen::after{
@@ -1194,7 +1198,8 @@ footer{
   .tablet-screen{
     border-radius:15px!important;
   }
-  .tablet-screen img{
+  .tablet-screen img,
+  .tablet-screen video{
     border-radius:13px!important;
   }
   .hero-visual .tablet-side-buttons{
@@ -1270,7 +1275,8 @@ footer{
     inset 0 0 12px rgba(0,0,0,.62),
     0 1px 0 rgba(255,255,255,.12)!important;
 }
-.tablet-screen img{
+.tablet-screen img,
+.tablet-screen video{
   border-radius:18px!important;
   filter:saturate(.99) contrast(1.02)!important;
 }
@@ -1333,7 +1339,8 @@ footer{
   .tablet-screen{
     border-radius:14px!important;
   }
-  .tablet-screen img{
+  .tablet-screen img,
+  .tablet-screen video{
     border-radius:12px!important;
   }
 }
@@ -1976,7 +1983,16 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
         
         <div class="tablet-mockup">
           <div class="tablet-screen">
-            <img src="hero-kickmaster.png" alt="AI KICK MASTER 겨루기 실전모드 실제 사용 화면">
+            <!-- 2026-07-29: 정지 이미지 → 영상으로 교체.
+                 홍보 영상에서 앞차기·격파·겨루기 구간을 5초씩 뽑아 15초로 이어붙였다.
+                 muted 가 없으면 브라우저가 자동재생을 막는다. 절대 빼지 말 것.
+                 playsinline 이 없으면 아이폰에서 전체화면으로 튄다.
+                 poster 는 영상이 로딩되는 동안 보여줄 첫 장면. -->
+            <video
+              src="hero-kickmaster.mp4"
+              poster="hero-kickmaster-poster.jpg"
+              autoplay muted loop playsinline preload="metadata"
+              aria-label="AI KICK MASTER 실제 사용 화면 — 앞차기, 격파, 겨루기 실전모드"></video>
           </div>
         </div>
         <div class="hero-visual-note">
