@@ -3423,10 +3423,23 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
     <hr class="settings-divider">
     <button class="settings-home-btn" type="button" onclick="location.href='/kickmaster'">🏠 홈페이지로 돌아가기</button>
 
+    <div class="settings-section" id="betaKickSection" style="display:none;">
+      <hr class="settings-divider">
+      <div class="settings-label">베타 · 발차기 측정</div>
+      <button class="settings-home-btn" type="button" id="betaKickToggleBtn" onclick="toggleBetaKickSet()">옆·뒤차기 측정 켜기</button>
+      <div style="font-size:12px;opacity:.65;margin-top:6px;line-height:1.5;">
+        켜면 가운데 연습 버튼이 <b>옆R · 옆L · 뒤R · 뒤L</b> 로 바뀝니다.<br>
+        기준값을 정하기 위한 자료 수집용이라 점수는 임시입니다.<br>
+        새로고침하면 꺼집니다.
+      </div>
+    </div>
+
     <div class="settings-section" id="diagLogSection" style="display:none;">
       <hr class="settings-divider">
       <div class="settings-label">진단 로그 <span id="diagCount">0건</span></div>
+      <div id="diagRange" style="font-size:12px;opacity:.65;margin:-4px 0 8px;"></div>
       <button class="settings-home-btn" type="button" onclick="downloadDiagLog()">⬇ JSON으로 다운로드</button>
+      <button class="settings-home-btn" type="button" onclick="clearDiagLog()">🗑 기록 비우기</button>
     </div>
   </div>
 </div>
@@ -3494,7 +3507,36 @@ const MODE_CFG={
   apcha_l:  {rank:false, isDrill:true,  label:'앞차기 왼발',   kick:'apcha', foot:'left'},
   dollo_r:  {rank:false, isDrill:true,  label:'돌려차기 오른발', kick:'dollo', foot:'right'},
   dollo_l:  {rank:false, isDrill:true,  label:'돌려차기 왼발',   kick:'dollo', foot:'left'},
+
+  /* ── 2026-07-29 · 베타 측정 전용 (옆차기·뒤차기) ─────────────────────
+     아직 정식 발차기가 아니다. 베타 라이선스에서 설정 스위치를 켰을 때만
+     버튼에 나타나며, 일반 구매자에게는 존재하지 않는 것과 같다.
+
+     measureOnly:true 의 의미 — "무슨 발차기인지" 검사를 하지 않는다.
+     classifyKick() 은 앞차기·돌려차기 두 가지만 아는 함수이고,
+     여기에 옆차기·뒤차기를 끼워 넣으면 기존 사용자의 분류가 함께 흔들린다.
+     그래서 지금 단계에서는 판정 코드를 전혀 건드리지 않고,
+     높이만 보는 임시 점수를 주면서 특징값을 진단 로그에 쌓는 데만 쓴다.
+     실측 분포가 모이면 그때 비로소 classifyKick() 에 정식으로 넣는다.
+
+     kick 값을 'apcha'/'dollo' 가 아닌 새 이름으로 둔 것도 같은 이유다.
+     drawApchaGuide()/drawDolloGuide() 가 그려지지 않으므로
+     엉뚱한 가이드 화살표가 아이를 헷갈리게 하지 않는다. */
+  yeop_r:   {rank:false, isDrill:true,  measureOnly:true, label:'옆차기 오른발', kick:'yeop', foot:'right'},
+  yeop_l:   {rank:false, isDrill:true,  measureOnly:true, label:'옆차기 왼발',   kick:'yeop', foot:'left'},
+  dwi_r:    {rank:false, isDrill:true,  measureOnly:true, label:'뒤차기 오른발', kick:'dwi',  foot:'right'},
+  dwi_l:    {rank:false, isDrill:true,  measureOnly:true, label:'뒤차기 왼발',   kick:'dwi',  foot:'left'},
 };
+/* 측정 전용 모드인가 — 채점을 우회할지 판단하는 유일한 기준 */
+function isMeasureOnlyMode(){ return MODE_CFG[currentMode]?.measureOnly===true; }
+
+/* 베타 측정 스위치 (2026-07-29)
+   켜면 가운데 4칸이 옆R·옆L·뒤R·뒤L 로 바뀐다. 화면 배치는 바뀌지 않는다.
+   localStorage 에 저장하지 않는다 — 새로고침하면 항상 꺼진 상태로 시작한다. */
+let betaKickSet=false;
+const BETA_KICK_MODES=['yeop_r','yeop_l','dwi_r','dwi_l'];
+const NORMAL_KICK_MODES=['apcha_r','apcha_l','dollo_r','dollo_l'];
+function activeKickModes(){ return betaKickSet?BETA_KICK_MODES:NORMAL_KICK_MODES; }
 function isDrillMode(){ return MODE_CFG[currentMode]?.isDrill===true; }
 function currentGuideMode(){
   if(currentMode==='sparring' && sparringMode==='practice' && sparringMission) return sparringMission.mode;
@@ -3563,6 +3605,14 @@ function initDifficulty(){
 
 window.setDrillRunMode=(mode)=>{
   if(mode!=='manual' && mode!=='auto') return;
+  /* 2026-07-29: 베타 측정 세트가 켜져 있으면 자동모드로 못 간다.
+     자동모드 순서(AUTO_DRILL_SEQUENCE)는 앞차기·돌려차기 네 가지 고정이라
+     측정 세트와 섞이면 화면과 실제 모드가 어긋난다. */
+  if(mode==='auto' && betaKickSet){
+    statusEl.style.opacity='1';
+    statusEl.textContent='측정 모드에서는 자동모드를 쓸 수 없습니다.';
+    return;
+  }
   if(running) stopGame();
   drillRunMode=mode;
   try{ localStorage.setItem('akm_drill_run_mode',mode); }catch(e){}
@@ -3573,7 +3623,12 @@ window.setDrillRunMode=(mode)=>{
   if(mode==='auto'){
     autoDrillIndex=0;
     autoDrillResults={};
-    currentMode=AUTO_DRILL_SEQUENCE[0];
+    // 2026-07-29: '다시 시작' 버그와 같은 종류의 구멍을 막는다.
+    // 발차기 모드가 아닐 때(격파/겨루기) 여기서 currentMode 를 앞차기로
+    // 바꿔버리면, setMode 처럼 화면 패널까지 바꿔주진 않기 때문에
+    // "보이는 모드 ≠ 실제 모드" 상태가 만들어진다.
+    // → 발차기 모드일 때만 시퀀스를 처음으로 되감는다.
+    if(isDrillMode()) currentMode=AUTO_DRILL_SEQUENCE[0];
     updateSelectedKickButtons();
     statusEl.style.opacity='1';
     statusEl.textContent='자동모드: 네 가지 발차기를 순서대로 연결합니다.';
@@ -3598,7 +3653,7 @@ function updateSelectedKickButtons(){
   // 2026-07-29: 격파/겨루기 버튼도 함께 갱신한다.
   // 예전에는 발차기 4개만 갱신해서, 내부 모드는 발차기인데 화면에는
   // 격파/겨루기가 눌려 있는 것처럼 보이는 어긋남이 생길 수 있었다.
-  ['apcha_r','apcha_l','dollo_r','dollo_l','balloon','sparring'].forEach(m=>{
+  activeKickModes().concat(['balloon','sparring']).forEach(m=>{
     const el=document.getElementById('m_'+m);
     if(el) el.classList.toggle('active',m===currentMode);
   });
@@ -4112,6 +4167,11 @@ function modeTitleText(){
   if(currentMode==='apcha_l') return [autoPrefix+'앞차기 왼발','왼발로 중앙선 위로 곧게 차기'];
   if(currentMode==='dollo_r') return [autoPrefix+'돌려차기 오른발','오른발 화살표를 따라 회전'];
   if(currentMode==='dollo_l') return [autoPrefix+'돌려차기 왼발','왼발 화살표를 따라 회전'];
+  // 2026-07-29 베타 측정 — 점수가 임시라는 것을 화면에 분명히 적어둔다
+  if(currentMode==='yeop_r') return ['옆차기 오른발','측정용 · 몸을 옆으로 돌려 차기'];
+  if(currentMode==='yeop_l') return ['옆차기 왼발','측정용 · 몸을 옆으로 돌려 차기'];
+  if(currentMode==='dwi_r')  return ['뒤차기 오른발','측정용 · 등을 보이며 뒤로 차기'];
+  if(currentMode==='dwi_l')  return ['뒤차기 왼발','측정용 · 등을 보이며 뒤로 차기'];
   if(currentMode==='balloon') return ['격파 모드', diffCfg().label+' · '+(diffCfg().targetEmoji||'🎈')+' 타겟 격파'];
   return ['AI KICK MASTER','태권도 AI 발차기 훈련'];
 }
@@ -4420,6 +4480,26 @@ function scoreKick(f,want){ // want는 재할당될 수 있다(겨루기 실전)
 
   return {ok:true,score,reason:(want==='apcha')?'front_ok':'round_ok',msg,
           hScore:+hScore.toFixed(3),cScore:+cScore.toFixed(3),factor:+factor.toFixed(3)};
+}
+
+/* ── 측정 전용 채점 (2026-07-29, 옆차기·뒤차기) ────────────────────────
+   scoreKick() 을 쓰지 않는다. 그 함수는 앞차기·돌려차기 두 가지만 아는
+   classifyKick() 을 거치기 때문에, 옆차기를 넣으면 무조건
+   "돌려차기예요!" 같은 거부가 돌아온다.
+
+   여기서는 종류를 아예 따지지 않고 높이 하나만 본다. 목적이 채점이 아니라
+   자료 수집이기 때문이다. 아이가 찼는데 아무 반응이 없으면 안 되니
+   점수는 주되, 이 값으로 실력을 판단해서는 안 된다.
+
+   기준값이 실측으로 확정되면 이 함수는 지우고 scoreKick() 에 합친다. */
+function scoreMeasureOnly(f){
+  const P=V3();
+  const c01=(v)=>Math.max(0,Math.min(1,v));
+  if(!(f.riseTFront>P.RISE_MIN))
+    return {ok:false,score:null,reason:'track_bad',msg:'잘 안 보였어요. 다시 한 번!'};
+  const hScore=c01((f.riseTFront-P.H_LO)/(P.H_HI-P.H_LO));
+  const score=Math.max(P.BASE,Math.min(100,Math.round(P.BASE+P.SPAN*hScore)));
+  return {ok:true,score,reason:'measure_only',msg:'기록했어요!',hScore:+hScore.toFixed(3)};
 }
 
 /* 현재 적용 중인 기준값. 난이도 버튼을 누르면 통째로 교체된다. */
@@ -4731,9 +4811,13 @@ function analyzeTraj(peakPctValue=null){
     riseTFront, maxDev, latT, netT, hipWRatio,
     kneeChamber3D:(kneeChamber3D==null)?null:kneeChamber3D
   };
-  const want=drillKickType();               // 'apcha' | 'dollo'
-  const r=scoreKick(feat,want);
+  const want=drillKickType();               // 'apcha' | 'dollo' | (베타) 'yeop' | 'dwi'
+  /* 2026-07-29: 측정 전용 모드(옆차기·뒤차기)만 다른 길로 보낸다.
+     isMeasureOnlyMode() 는 기존 모드 전부에서 false 이므로
+     앞차기·돌려차기·격파·겨루기의 판정 경로는 종전과 완전히 동일하다. */
+  const r=isMeasureOnlyMode() ? scoreMeasureOnly(feat) : scoreKick(feat,want);
   DIAG.kind=classifyKick(feat);             // 실제로 무슨 발차기로 분류됐는지 로그에 남긴다
+  DIAG.want=want||'';                       // 무엇을 차라고 시켰는지 (측정 자료 짝맞춤용)
   if(r.hScore!==undefined){ DIAG.hScore=r.hScore; DIAG.cScore=r.cScore; DIAG.factor=r.factor; }
 
   return {
@@ -5483,7 +5567,9 @@ window.startGame=()=>{
     balloon:'',
     sparring:(sparringMode==='practice'?'랜덤 화살표 미션을 보고 차세요!':'키에 맞춘 타겟을 공격하세요!'),
     apcha_r:'앞차기 오른발 — 위로 쭉 차올려요!', apcha_l:'앞차기 왼발 — 위로 쭉 차올려요!',
-    dollo_r:'돌려차기 오른발 — 화살표 방향으로 차요!', dollo_l:'돌려차기 왼발 — 화살표 방향으로 차요!'
+    dollo_r:'돌려차기 오른발 — 화살표 방향으로 차요!', dollo_l:'돌려차기 왼발 — 화살표 방향으로 차요!',
+    yeop_r:'옆차기 오른발 — 몸을 옆으로 돌려서!', yeop_l:'옆차기 왼발 — 몸을 옆으로 돌려서!',
+    dwi_r:'뒤차기 오른발 — 등을 보이며 뒤로!', dwi_l:'뒤차기 왼발 — 등을 보이며 뒤로!'
   };
   runReadyCountdown(subTexts[startMode]||'',()=>{
     if(currentMode!==startMode) return;
@@ -5543,21 +5629,73 @@ window.logoutLicense=()=>{
 };
 /* ===== 진단 모드 (관장님 전용, 숨김) =====
    도장명 텍스트를 5번 연속 빠르게 탭하면 켜짐/꺼짐이 토글된다.
-   localStorage에 저장하지 않는다 — 새로고침하면 항상 꺼진 상태로 시작.
-   켜져 있는 동안에만 발차기 시도가 diagLog에 쌓이고(최근 50개),
-   설정 화면의 진단 로그 섹션도 그동안만 나타난다. */
+   진단 모드 자체는 localStorage에 저장하지 않는다 — 새로고침하면 항상 꺼진
+   상태로 시작한다. 구매자가 실수로 켠 채 남기는 일을 막기 위한 의도다.
+
+   ── 2026-07-29 변경 ────────────────────────────────────────────────
+   종전에는 기록이 메모리에만 있어서 (1) 최근 50건만 남고 (2) 새로고침하면
+   통째로 증발하고 (3) 진단 모드를 켤 때마다 기존 기록을 지웠다.
+   그래서 아이 네댓 명만 테스트해도 앞사람 기록이 밀려 사라졌다.
+
+   이제 기록은 localStorage에 저장된다. 달라지는 점:
+     · 최대 2000건 (넘으면 오래된 것부터 밀려남)
+     · 새로고침·앱 재시작해도 기록은 살아있음
+       (단 "쌓는 스위치"인 diagMode 는 여전히 꺼진 채로 시작한다.
+        다시 5번 탭하면 지워지지 않고 이어서 쌓인다)
+     · 진단 모드를 켤 때 기존 기록을 지우지 않는다.
+       지우려면 설정의 "기록 비우기"를 눌러야 한다.
+     · 각 기록에 날짜(date)를 함께 남긴다. 종전에는 시각만 있어서
+       며칠 치가 쌓이면 어느 날 것인지 구분할 수 없었다.
+
+   담는 것은 숫자뿐이다 — 영상도, 이름도, 개인을 식별할 수 있는 값도 없다. */
+const DIAG_LS_KEY='akm_diag_log_v1';
+const DIAG_LOG_MAX=2000;
 let diagMode=false;
 let diagLog=[];
+
+function diagLogLoad(){
+  try{
+    const raw=localStorage.getItem(DIAG_LS_KEY);
+    const arr=raw?JSON.parse(raw):[];
+    diagLog=Array.isArray(arr)?arr:[];
+  }catch(e){ diagLog=[]; }
+}
+function diagLogSave(){
+  try{
+    localStorage.setItem(DIAG_LS_KEY, JSON.stringify(diagLog));
+  }catch(e){
+    /* 저장 공간이 꽉 찼을 때 — 오래된 절반을 버리고 한 번만 다시 시도한다.
+       여기서 실패해도 기록은 메모리에 남으므로 수업은 그대로 진행된다. */
+    try{
+      diagLog=diagLog.slice(Math.floor(diagLog.length/2));
+      localStorage.setItem(DIAG_LS_KEY, JSON.stringify(diagLog));
+    }catch(e2){}
+  }
+}
+diagLogLoad();
 
 function updateDiagCount(){
   const el=document.getElementById('diagCount');
   if(el) el.textContent=diagLog.length+'건';
+  const range=document.getElementById('diagRange');
+  if(range){
+    if(!diagLog.length){ range.textContent='기록 없음'; }
+    else{
+      const days=[...new Set(diagLog.map(e=>e.date).filter(Boolean))];
+      const first=days[0]||'?', last=days[days.length-1]||'?';
+      range.textContent=(days.length<=1)
+        ? (first+' · '+diagLog.length+'건')
+        : (first+' ~ '+last+' · '+days.length+'일치');
+    }
+  }
 }
 
 function diagLogPush(result){
   if(!diagMode || !result) return;
+  const now=new Date();
   const entry={
-    time:new Date().toLocaleTimeString('ko-KR',{hour12:false}),
+    date:now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0'),
+    time:now.toLocaleTimeString('ko-KR',{hour12:false}),
     mode:currentMode, level:(typeof kickLevel!=='undefined'?kickLevel:'hard'),
     result:result.ok?'ok':'reject'
   };
@@ -5573,7 +5711,8 @@ function diagLogPush(result){
      분류기를 실측으로 설계할 수 있게 한다. */
   if(result.diag && typeof result.diag==='object') Object.assign(entry,result.diag);
   diagLog.push(entry);
-  if(diagLog.length>50) diagLog.shift();
+  while(diagLog.length>DIAG_LOG_MAX) diagLog.shift();
+  diagLogSave();
   updateDiagCount();
 }
 
@@ -5588,9 +5727,19 @@ window.downloadDiagLog=function(){
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
 
+/* 2026-07-29 추가 — 기록은 이제 저절로 지워지지 않으므로 비우는 수단이 필요하다. */
+window.clearDiagLog=function(){
+  if(!diagLog.length){ alert('지울 기록이 없습니다.'); return; }
+  if(!confirm('진단 기록 '+diagLog.length+'건을 모두 지울까요?\n되돌릴 수 없습니다. 필요하면 먼저 다운로드하세요.')) return;
+  diagLog=[];
+  try{ localStorage.removeItem(DIAG_LS_KEY); }catch(e){}
+  updateDiagCount();
+};
+
 window.toggleDiagMode=function(){
   diagMode=!diagMode;
-  if(diagMode) diagLog=[];
+  /* 2026-07-29: 켤 때 기존 기록을 지우던 동작을 없앴다.
+     수업이 재시작돼도 앞부분이 날아가지 않게 하는 것이 이번 변경의 목적이다. */
   const sec=document.getElementById('diagLogSection');
   if(sec) sec.style.display=diagMode?'block':'none';
   updateDiagCount();
@@ -5657,7 +5806,7 @@ window.setMode=(mode)=>{
   if(levelPanel) levelPanel.style.setProperty('display',drillSelected?'flex':'none','important');
   if(diffPanel) diffPanel.style.setProperty('display',(mode==='balloon')?'flex':'none','important');
   if(sparPanel) sparPanel.style.setProperty('display',(mode==='sparring')?'flex':'none','important');
-  const all=['apcha_r','apcha_l','dollo_r','dollo_l','balloon','sparring'];
+  const all=activeKickModes().concat(['balloon','sparring']);
   all.forEach(m=>{ const el=document.getElementById('m_'+m); if(el) el.classList.toggle('active',m===mode); });
   const isDrill=MODE_CFG[mode].isDrill;
   const drillHome=document.getElementById('m_drillhome');
@@ -5670,6 +5819,62 @@ window.setMode=(mode)=>{
   if(isDrill) statusEl.textContent='시작 버튼을 눌러 '+MODE_CFG[mode].label+' 연습을 시작하세요';
   else if(mode==='sparring') statusEl.textContent=sparringMode==='practice'?'연습모드: 랜덤 화살표 미션을 시작하세요':'실전모드: 키에 맞춘 타겟을 공격하세요';
   else statusEl.textContent='시작 버튼을 누르세요';
+};
+
+/* ══════════════════════════════════════════════════════════════════════
+   베타 측정 세트 (2026-07-29) — 옆차기·뒤차기 자료 수집용
+   ──────────────────────────────────────────────────────────────────────
+   화면에 버튼을 새로 만들지 않는다. 가운데 4칸의 글자와 눌렀을 때 갈 모드만
+   바꿔 끼운다. 이 파일의 배치 CSS 는 화면 크기별 !important 오버라이드가
+   여러 겹 쌓여 있어서, 요소를 하나라도 늘리면 태블릿 배치가 틀어진다.
+   그래서 개수·위치·크기를 건드리지 않는 방법을 골랐다.
+   ══════════════════════════════════════════════════════════════════════ */
+const KICK_BTN_SHORT={
+  apcha_r:'앞R', apcha_l:'앞L', dollo_r:'돌R', dollo_l:'돌L',
+  yeop_r:'옆R',  yeop_l:'옆L',  dwi_r:'뒤R',  dwi_l:'뒤L'
+};
+function applyKickButtonSet(){
+  const row=document.querySelector('.mode-row.hud-kick-row1');
+  if(!row) return;
+  const modes=activeKickModes();
+  row.querySelectorAll('.drill-btn').forEach((btn,i)=>{
+    const m=modes[i];
+    if(!m) return;
+    btn.id='m_'+m;                       // 다른 코드가 'm_모드이름' 으로 찾으므로 id도 함께 바꾼다
+    btn.textContent=KICK_BTN_SHORT[m]||m;
+    btn.onclick=()=>setMode(m);          // 인라인 onclick 을 덮어쓴다
+  });
+}
+
+/* 설정 화면에 베타 항목을 드러낼지 결정한다.
+   라이선스가 베타가 아니면 아무것도 하지 않는다 = 항목이 존재하지 않는다. */
+window.applyBetaVisibility=function(){
+  const sec=document.getElementById('betaKickSection');
+  if(!sec) return;
+  const on=!!(window.akmIsBeta && window.akmIsBeta());
+  sec.style.display=on?'block':'none';
+  if(!on && betaKickSet){               // 혹시라도 켜져 있었다면 정상 세트로 되돌린다
+    betaKickSet=false;
+    applyKickButtonSet();
+    setMode(NORMAL_KICK_MODES[0]);
+  }
+};
+
+window.toggleBetaKickSet=function(){
+  if(!(window.akmIsBeta && window.akmIsBeta())) return;   // 이중 방어
+  if(running) stopGame();
+  betaKickSet=!betaKickSet;
+  /* 자동모드는 앞·돌 네 가지를 순서대로 도는 기능이라 측정 세트와 맞지 않는다.
+     켜는 순간 수동으로 돌려놓는다. */
+  if(betaKickSet && drillRunMode==='auto') setDrillRunMode('manual');
+  applyKickButtonSet();
+  setMode(activeKickModes()[0]);
+  const btn=document.getElementById('betaKickToggleBtn');
+  if(btn) btn.textContent=betaKickSet?'옆·뒤차기 측정 끄기':'옆·뒤차기 측정 켜기';
+  statusEl.style.opacity='1';
+  statusEl.textContent=betaKickSet
+    ? '측정 모드입니다. 점수는 임시이고 기록만 쌓입니다.'
+    : '평소 발차기로 돌아왔습니다.';
 };
 
 window.toggleFullscreen=()=>{
@@ -6273,7 +6478,15 @@ function _akmShowAuthedUI(dojang_name, version){
   if(lbVer)  lbVer.textContent='v'+(version||_AKM_VERSION);
   document.getElementById('loginScreen').classList.add('hidden');
   if(window.__startApp) window.__startApp();
+  /* 2026-07-29: 베타 라이선스일 때만 설정 화면에 측정 항목을 드러낸다.
+     일반 구매자는 이 함수가 아무것도 하지 않으므로 항목 자체가 없다. */
+  if(window.applyBetaVisibility) window.applyBetaVisibility();
 }
+
+/* 2026-07-29: 현재 라이선스가 베타인지 알려준다. 캐시에 값이 없으면 false. */
+window.akmIsBeta=function(){
+  try{ const c=_akmGetCache(); return !!(c && c.is_beta); }catch(e){ return false; }
+};
 
 async function _akmVerifyWithServer(license_key){
   const device_id=_akmGetOrCreateDeviceId();
@@ -6337,6 +6550,9 @@ async function doLicenseActivate(){
       max_devices:result.max_devices||2,
       is_trial: !!result.is_trial,
       expires_at: result.expires_at || null,
+      // 2026-07-29: 베타 기능(옆차기·뒤차기 측정) 노출 여부.
+      // 서버가 안 내려주면 false — 즉 기본은 항상 숨김이다.
+      is_beta: !!result.is_beta,
       cached_at:Date.now()
     };
     _akmSetCache(cacheData);
