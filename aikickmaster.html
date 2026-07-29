@@ -4617,8 +4617,13 @@ function scoreKick(f,want){ // want는 재할당될 수 있다(겨루기 실전)
   if(!want) want=got;
   if(got!==want){
     return (want==='apcha')
-      ? {ok:false,score:null,reason:'wrong_kind_round',msg:'돌려차기예요! 앞차기로 곧게 차주세요'}
-      : {ok:false,score:null,reason:'wrong_kind_front',msg:'앞차기예요! 발을 옆으로 돌려 차보세요'};
+      /* 2026-07-29 문구 수정: 앞부분의 단정("돌려차기예요!"/"앞차기예요!")을 뺐다.
+         앞차기로 곧게 차지 않았지만 돌려차기도 아닌 경우, 반대로 옆으로 돌려
+         차지 않았지만 앞차기도 아닌 경우가 실제로 꽤 있다(관장님 현장 관찰).
+         종류를 단정하면 아이가 안 한 동작을 했다고 듣게 되므로,
+         "무엇을 하라"만 남긴다. reason 코드는 로그 분석을 위해 그대로 둔다. */
+      ? {ok:false,score:null,reason:'wrong_kind_round',msg:'앞차기로 곧게 차주세요'}
+      : {ok:false,score:null,reason:'wrong_kind_front',msg:'발을 옆으로 돌려 차보세요'};
   }
 
   // ── 3단계: 얼마나 잘 찼나 (난이도 반영) ──
@@ -4669,15 +4674,34 @@ function scoreKick(f,want){ // want는 재할당될 수 있다(겨루기 실전)
    점수는 주되, 이 값으로 실력을 판단해서는 안 된다.
 
    기준값이 실측으로 확정되면 이 함수는 지우고 scoreKick() 에 합친다. */
-function scoreMeasureOnly(f){
+function scoreMeasureOnly(f,want){
   const P=V3();
+  /* 2026-07-29: 발차기 종류별 높이 구간. 표에 없는 종류가 들어오면
+     종전처럼 난이도 기본값을 쓰므로 동작이 깨지지 않는다. */
+  const B=MEASURE_H[want] || {H_LO:P.H_LO, H_HI:P.H_HI};
   const c01=(v)=>Math.max(0,Math.min(1,v));
   if(!(f.riseTFront>P.RISE_MIN))
     return {ok:false,score:null,reason:'track_bad',msg:'잘 안 보였어요. 다시 한 번!'};
-  const hScore=c01((f.riseTFront-P.H_LO)/(P.H_HI-P.H_LO));
+  const hScore=c01((f.riseTFront-B.H_LO)/(B.H_HI-B.H_LO));
   const score=Math.max(P.BASE,Math.min(100,Math.round(P.BASE+P.SPAN*hScore)));
   return {ok:true,score,reason:'measure_only',msg:'기록했어요!',hScore:+hScore.toFixed(3)};
 }
+
+/* ── 측정 전용 발차기별 높이 구간 (2026-07-29, 실측 36건으로 결정) ─────
+   옆차기 riseTFront 중앙값 3.61 / 뒤차기 2.44 — 1.17이나 차이가 난다.
+   같은 잣대를 대니 뒤차기 점수만 중앙값 72점으로 주저앉았다(옆차기 93점).
+
+   관장님 판단: 뒤차기는 원래 몸통을 차는 발차기다. 얼굴까지 올리는 아이는
+   정말 잘하는 소수다. 그러니 몸통 높이를 "못 찬 것"으로 매기면 안 된다.
+
+   그래서 뒤차기만 구간을 통째로 내렸다.
+     몸통 높이(riseTFront 약 2.4) → 80점대
+     얼굴 높이(약 3.0 이상)      → 100점
+   옆차기는 지금 점수 분포가 알맞아서 종전 값을 그대로 둔다. */
+const MEASURE_H={
+  yeop:{H_LO:1.6, H_HI:4.0},   // 종전과 동일
+  dwi :{H_LO:1.7, H_HI:3.0}    // 뒤차기 전용 — 낮춘 구간
+};
 
 /* 현재 적용 중인 기준값. 난이도 버튼을 누르면 통째로 교체된다. */
 let JUDGE=JUDGE_HARD;
@@ -4782,6 +4806,28 @@ function analyzeTraj(peakPctValue=null){
 
   let peakIndex=0;
   for(let i=1;i<trajY.length;i++) if(trajY[i]<trajY[peakIndex]) peakIndex=i;
+
+  /* ── 2026-07-29 · 진짜 최고점 보존 ──────────────────────────────────
+     바로 아래 줄은 peakIndex 를 최소 3으로 밀어올린다. 통로·곧기 계산이
+     점 4개 이상을 필요로 해서 넣은 하한이다. 궤적이 길면 최고점은 어차피
+     한참 뒤에 있으므로 이 하한은 아무 일도 하지 않는다.
+
+     그런데 궤적이 4~7프레임밖에 안 잡히면(발이 기준선 위에 잠깐만 머무는
+     아이·짧은 발차기) 최고점이 0~2번째에 오고, 이 하한이 그 최고점을
+     통째로 버린 뒤 "이미 내려오는 중인 지점"을 최고점으로 삼아버린다.
+
+     7월 29일 실측: 어려움 앞차기 8회 전부 peakIndex=3 · riseT=0 으로
+     찍혔다. riseT=0 은 "첫 프레임이 4번째보다 높았다" = 최고점을 버렸다는
+     직접 증거다. peakPct 는 100(목표 높이 도달)인데 높이가 0으로 나오는
+     모순이 여기서 생겼고, 결과는 8회 연속 '잘 안 보였어요' 거부였다.
+
+     그래서 높이 측정에 쓸 최고점만 따로 보관한다.
+     ⚠ truePeakY 는 peakY 보다 항상 같거나 높다. 즉 이 수정으로 높이가
+       낮아지는 경우는 없고, 궤적이 긴 기존 발차기는 값이 바뀌지 않는다.
+     ⚠ riseT · peakIndex 자체는 손대지 않는다. 돌려차기 판정과 통로 계산은
+       종전과 완전히 동일하게 둔다. */
+  const truePeakY=Number.isFinite(trajY[peakIndex])?trajY[peakIndex]:null;
+
   peakIndex=Math.max(peakIndex,Math.min(trajY.length-1,3));
 
   const xs=relX.slice(0,peakIndex+1);
@@ -4879,7 +4925,9 @@ function analyzeTraj(peakPctValue=null){
     }
     if(yBuf.length>=2){
       const lowest=Math.max(...yBuf); // 화면 좌표는 아래로 갈수록 값이 크다
-      riseTFront=Math.max(0,lowest-peakY)/T;
+      // 2026-07-29: peakY(하한에 밀린 값) 대신 진짜 최고점으로 잰다. 위 주석 참고.
+      const topY=(truePeakY!==null)?Math.min(truePeakY,peakY):peakY;
+      riseTFront=Math.max(0,lowest-topY)/T;
     }
   }
 
@@ -4890,7 +4938,7 @@ function analyzeTraj(peakPctValue=null){
      ───────────────────────────────────────────────────────────────── */
 
   // ① 3D 무릎 각도로 잰 체임버 — 2D와 나란히 비교하기 위한 값
-  let kneeChamber3D=null, kneeMin3D=null, kneeMax3D=null, knee3DFrames=0;
+  let kneeChamber3D=null, kneeMin3D=null, kneeMax3D=null, knee3DFrames=0, knee3DInverted=false;
   {
     const cutoff=(kickStartT||0)-PRE_LOOKBACK_MS;
     const a3=[];
@@ -4911,7 +4959,24 @@ function analyzeTraj(peakPctValue=null){
       const tailFrom=Math.max(1,sm.length-3);
       kneeMax3D=Math.max(...sm.slice(tailFrom));
       kneeMin3D=Math.min(...sm.slice(0,tailFrom));
-      kneeChamber3D=Math.max(0,kneeMax3D-kneeMin3D);
+      /* ── 2026-07-29 · 뒤집힘은 "못 잰 것"으로 처리 ──────────────────
+         이 계산은 "마지막 3프레임 = 최고점 부근 = 다리가 가장 펴진 상태"를
+         전제로 한다. 궤적이 짧으면 그 마지막 3프레임이 실제로는 발이
+         내려오면서 무릎이 다시 접히는 구간이라, 신전값이 체임버값보다
+         작아진다(뒤집힘).
+
+         종전에는 Math.max(0, ...) 로 이걸 0 으로 눌렀다. 그러면 "무릎을
+         전혀 안 접었다"와 구별이 안 되고, 어려움에서 그대로 거부된다.
+         7월 29일 실측 8건 중 2건이 이 경우였다.
+           체임버 97° > 신전 87°  → 0 으로 기록 → '무릎을 접었다 펴며 차보세요!'
+         아이는 무릎을 접었는데 못 잰 것을 안 접었다고 판정한 것이다.
+
+         바로 위 scoreKick 의 원칙과 동일하게 처리한다 —
+         "3D 무릎각을 못 얻으면 체임버로 거부하지 않는다(오거부 방지)".
+         null 이면 거부 대상에서 빠지고 체임버 점수는 중간값(0.5)을 받는다.
+         ⚠ 정상적으로 잰 값은 종전과 완전히 동일하다. */
+      kneeChamber3D=(kneeMax3D>=kneeMin3D)?(kneeMax3D-kneeMin3D):null;
+      knee3DInverted=(kneeMax3D<kneeMin3D);
     }
   }
 
@@ -4953,6 +5018,7 @@ function analyzeTraj(peakPctValue=null){
     kneeMin3D:(kneeMin3D==null)?null:Math.round(kneeMin3D),
     kneeMax3D:(kneeMax3D==null)?null:Math.round(kneeMax3D),
     knee3DFrames,
+    knee3DInverted,   // 2026-07-29: 체임버 측정 구간이 뒤집혔는지 (true면 못 잰 것)
     latT:+latT.toFixed(3),
     netT:+netT.toFixed(3),
     signedNetT:+signedNetT.toFixed(3),
@@ -4992,7 +5058,7 @@ function analyzeTraj(peakPctValue=null){
   /* 2026-07-29: 측정 전용 모드(옆차기·뒤차기)만 다른 길로 보낸다.
      isMeasureOnlyMode() 는 기존 모드 전부에서 false 이므로
      앞차기·돌려차기·격파·겨루기의 판정 경로는 종전과 완전히 동일하다. */
-  const r=isMeasureOnlyMode() ? scoreMeasureOnly(feat) : scoreKick(feat,want);
+  const r=isMeasureOnlyMode() ? scoreMeasureOnly(feat,want) : scoreKick(feat,want);
   DIAG.kind=classifyKick(feat);             // 실제로 무슨 발차기로 분류됐는지 로그에 남긴다
   DIAG.want=want||'';                       // 무엇을 차라고 시켰는지 (측정 자료 짝맞춤용)
   if(r.hScore!==undefined){ DIAG.hScore=r.hScore; DIAG.cScore=r.cScore; DIAG.factor=r.factor; }
