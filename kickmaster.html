@@ -1903,6 +1903,52 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
 }
 </style>
 
+
+<style id="header-primary-button-refinement-20260729">
+/* 프로그램 실행 버튼 — 채움형, 약한 음각, 소폭 라운드 */
+.header-link-primary{
+  min-height:42px!important;
+  padding:0 19px!important;
+  border:1px solid #B91426!important;
+  border-radius:8px!important;
+  background:linear-gradient(180deg,#F13A4D 0%,#E3172E 48%,#C9142A 100%)!important;
+  color:#fff!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    inset 0 -2px 0 rgba(120,0,15,.16),
+    0 4px 10px rgba(227,23,46,.16)!important;
+  transition:
+    transform .18s ease,
+    background .18s ease,
+    box-shadow .18s ease!important;
+}
+.header-link-primary::after{
+  display:none!important;
+}
+.header-link-primary:hover{
+  background:linear-gradient(180deg,#F44759 0%,#DE152C 50%,#BD1025 100%)!important;
+  color:#fff!important;
+  transform:translateY(-1px)!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.24),
+    inset 0 -2px 0 rgba(120,0,15,.17),
+    0 7px 15px rgba(227,23,46,.22)!important;
+}
+.header-link-primary:active{
+  transform:translateY(0)!important;
+  box-shadow:
+    inset 0 2px 4px rgba(110,0,12,.20),
+    0 2px 5px rgba(227,23,46,.13)!important;
+}
+@media(max-width:700px){
+  .header-link-primary{
+    min-height:38px!important;
+    padding:0 11px!important;
+    border-radius:7px!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <header>
