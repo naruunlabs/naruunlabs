@@ -1545,6 +1545,12 @@ async function doLicenseActivate(){
   try{
     const result=await _jmpVerifyWithServer(key);
     if(!result.valid){
+      /* 2026-07-31: 서버가 호출 제한을 걸었을 때는 안내만 하고 실패 횟수는 올리지 않는다. */
+      if(result.reason==='rate_limited'){
+        const min=Math.ceil((result.retry_after||600)/60);
+        errorEl.textContent=`인증 시도가 너무 많습니다. ${min}분 후 다시 시도해주세요.`;
+        btn.textContent='인증하기'; btn.disabled=false; return;
+      }
       _jmpFailCount++;
       if(_jmpFailCount>=5){ _jmpFailLockUntil=Date.now()+30000; _jmpFailCount=0; errorEl.textContent='입력 오류가 많습니다. 30초 후 다시 시도해주세요.'; }
       else{ errorEl.textContent=result.error||'유효하지 않은 라이선스 키입니다.'; }

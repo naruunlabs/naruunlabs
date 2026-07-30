@@ -6883,6 +6883,14 @@ async function doLicenseActivate(){
     if(!result.valid){
       btn.textContent='인증하기'; btn.disabled=false;
 
+      /* 2026-07-31: 서버가 호출 제한을 걸었을 때.
+         입력 실수로 몰린 경우가 대부분이므로 안내만 하고 실패 횟수는 올리지 않는다. */
+      if(result.reason==='rate_limited'){
+        const min=Math.ceil((result.retry_after||600)/60);
+        errorEl.textContent=`인증 시도가 너무 많습니다. ${min}분 후 다시 시도해주세요.`;
+        return;
+      }
+
       // 체험 기간이 끝난 경우 → 구매 안내 화면
       if(result.reason==='trial_expired'){
         _akmClearCache();
