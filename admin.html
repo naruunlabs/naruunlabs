@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 2026-07-31: 관리자 페이지는 검색에 절대 노출되면 안 된다.
+     robots.txt 에 적으면 오히려 위치를 알려주는 셈이라 여기서 직접 막는다. -->
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
 <title>NARUUN LABS · 관리자</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">

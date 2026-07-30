@@ -3177,6 +3177,36 @@ body.hud-v21.auto-drill-selected .mode-row.hud-kick-row .drill-btn.active{
 #licenseBadge { display: none; }
 #licenseBadge.show { display: block; }
 
+/* ══════════════════════════════════════════════════════════
+   도장명 워터마크 (2026-07-31)
+   화면 우측 아래에 인증된 도장명을 항상 띄운다.
+   목적: 프로그램 파일이 유출됐을 때 어느 도장에서 나갔는지 드러나게 해서
+         애초에 공유할 마음이 안 들게 만드는 것.
+   수업을 방해하면 안 되므로 아주 옅게, 클릭도 통과하도록 처리했다.
+   ══════════════════════════════════════════════════════════ */
+#akmDojangMark{
+  display:none;
+  position:absolute;
+  right:14px;
+  bottom:12px;
+  z-index:6;
+  pointer-events:none;
+  user-select:none;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.02em;
+  color:rgba(255,255,255,.34);
+  text-shadow:0 1px 3px rgba(0,0,0,.55);
+  white-space:nowrap;
+  max-width:44%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#akmDojangMark.show{ display:block; }
+@media (max-width:820px){
+  #akmDojangMark{ font-size:10.5px; right:10px; bottom:9px; }
+}
+
 /* =========================================================
    CSS SECTION 22: final-sparring-hud-height-sync
    - 겨루기모드 우측 HUD 높이를 발차기/격파모드와 완전히 동일하게 고정
@@ -3317,6 +3347,9 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
       <div id="readySub"></div>
     </div>
     <div id="popOverlay"><div id="popScore"></div></div>
+
+    <!-- 도장명 워터마크 (2026-07-31) · 인증 성공 시 _akmShowAuthedUI 에서 채운다 -->
+    <div id="akmDojangMark" aria-hidden="true"></div>
   </div>
 
   <div class="panel">
@@ -6803,6 +6836,14 @@ function _akmShowAuthedUI(dojang_name, version){
   const lbVer =document.getElementById('lbVersion');
   if(lbName) lbName.textContent=dojang_name||'';
   if(lbVer)  lbVer.textContent='v'+(version||_AKM_VERSION);
+  /* 2026-07-31: 카메라 화면 위에 도장명을 상시 표시한다.
+     프로그램이 밖으로 새 나갔을 때 출처가 드러나게 하는 장치다. */
+  const mark=document.getElementById('akmDojangMark');
+  if(mark){
+    const nm=(dojang_name||'').trim();
+    if(nm){ mark.textContent='© '+nm; mark.classList.add('show'); }
+    else  { mark.textContent=''; mark.classList.remove('show'); }
+  }
   document.getElementById('loginScreen').classList.add('hidden');
   if(window.__startApp) window.__startApp();
   /* 2026-07-29: 베타 라이선스일 때만 설정 화면에 측정 항목을 드러낸다.
@@ -6941,6 +6982,7 @@ window.addEventListener('load', function(){
 window.logoutLicense=()=>{
   _akmClearCache();
   const badge=document.getElementById('trialBadge'); if(badge) badge.classList.remove('show');
+  const mark=document.getElementById('akmDojangMark'); if(mark){ mark.textContent=''; mark.classList.remove('show'); }
   document.getElementById('loginScreen').classList.remove('hidden');
   showKeyInput();
 };

@@ -36,3 +36,6 @@
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# ── 저장소에 잘못 올라갔던 잔여 이미지 (2026-07-31 정리) ──
+/ChatGPT Image*.png

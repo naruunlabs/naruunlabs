@@ -1564,6 +1564,8 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
 .price-label{font-size:12px;font-weight:900;letter-spacing:.16em;color:var(--kick-primary)}
 .price-title{font-size:clamp(30px,4vw,52px);color:var(--ui-deep);margin-top:10px}
 .price-values{text-align:right}.price-regular{font-size:18px;color:var(--ui-muted);text-decoration:line-through}.price-sale{font-size:clamp(38px,5vw,64px);font-weight:900;color:var(--kick-primary);line-height:1.1}.price-note{margin-top:8px;color:var(--ui-muted);font-weight:700}
+/* 2026-07-31: 부가세 포함 안내 (전자상거래법 표시의무) */
+.price-tax{margin-top:6px;color:var(--ui-muted);font-size:13px;font-weight:600;opacity:.9}
 [hidden]{display:none!important}@media(max-width:700px){.price-box{grid-template-columns:1fr;padding:28px}.price-values{text-align:left}}
 </style>
 
@@ -1614,7 +1616,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
   line-height:1.2!important;
   letter-spacing:-.045em!important;
 }
-.price-values{display:flex!important;align-items:center!important;gap:16px!important;text-align:right!important;white-space:nowrap!important;}
+.price-values{display:flex!important;align-items:center!important;flex-wrap:wrap!important;justify-content:flex-end!important;gap:16px!important;text-align:right!important;white-space:nowrap!important;}
 .price-regular{font-size:15px!important;font-weight:700!important;}
 .price-sale{font-size:clamp(30px,3.4vw,44px)!important;line-height:1!important;}
 .price-note{
@@ -1624,6 +1626,16 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
   color:var(--kick-primary)!important;
   font-size:11px!important;
   font-weight:850!important;
+}
+/* 2026-07-31: 부가세 안내는 가격 아래 한 줄을 통째로 차지하게 한다 */
+.price-tax{
+  flex-basis:100%!important;
+  margin-top:2px!important;
+  text-align:right!important;
+  font-size:12px!important;
+  font-weight:600!important;
+  color:var(--ui-muted)!important;
+  white-space:normal!important;
 }
 @media(max-width:900px){
   .hero::before{top:40px!important;right:-18px!important;font-size:clamp(72px,15vw,128px)!important;}
@@ -2130,7 +2142,11 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
   </div>
 </section>
 
-<section class="price-section" id="price"><div class="wrap"><div class="price-box"><div><div class="price-label">LIFETIME LICENSE</div><h2 class="price-title">월 구독료 없는 영구 라이선스</h2></div><div class="price-values"><div class="price-regular" id="regularPrice">399,000원</div><div class="price-sale" id="salePrice">339,000원</div><div class="price-note" id="priceNote">출시 기념 할인가</div></div></div></div></section>
+<!-- 2026-07-31 가격 표시 정리
+     · 판매 이력이 없는 정가(399,000원)에 줄을 긋는 것은 거짓 할인 표시가 될 수 있어 삭제
+     · 전자상거래법상 부가세 포함 여부를 반드시 표기해야 하므로 안내 문구 추가
+     · 부가세 문구(priceTax)는 서버 값으로 덮어쓰지 않는 고정 문구다 -->
+<section class="price-section" id="price"><div class="wrap"><div class="price-box"><div><div class="price-label">LIFETIME LICENSE</div><h2 class="price-title">월 구독료 없는 영구 라이선스</h2></div><div class="price-values"><div class="price-sale" id="salePrice">339,000원</div><div class="price-note" id="priceNote">출시 기념가</div><div class="price-tax" id="priceTax">부가세 포함 · 추가 결제 없는 1회 구매</div></div></div></div></section>
 
   <section class="purchase-section" id="purchase">
     <div class="wrap">
@@ -2267,7 +2283,9 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
     setHtml('kickTitle', d.title);
     setText('kickLead', d.lead);
     setText('kickCtaDesc', d.cta_desc);
-    setText('regularPrice', d.regular_price); setText('salePrice', d.sale_price); setText('priceNote', d.price_note);
+    /* 2026-07-31: 정가(regular_price) 표시를 없앴으므로 서버 값도 반영하지 않는다.
+       부가세 문구(priceTax)는 법정 표기라 관리자에서 바꾸지 못하도록 일부러 제외했다. */
+    setText('salePrice', d.sale_price); setText('priceNote', d.price_note);
     for(let i=1;i<=4;i++){setText('feature'+i+'Title',d['feature'+i+'_title']);setText('feature'+i+'Desc',d['feature'+i+'_desc']);setText('benefit'+i+'Title',d['benefit'+i+'_title']);setText('benefit'+i+'Desc',d['benefit'+i+'_desc']);setText('step'+i+'Title',d['step'+i+'_title']);setText('step'+i+'Desc',d['step'+i+'_desc']);}
     for(let i=1;i<=5;i++){setText('recommend'+i+'Title',d['recommend'+i+'_title']);setText('recommend'+i+'Desc',d['recommend'+i+'_desc']);}
     for(let i=1;i<=11;i++){setText('faq'+i+'Q',d['faq'+i+'_q']);setText('faq'+i+'A',d['faq'+i+'_a']);}
