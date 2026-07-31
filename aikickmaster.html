@@ -3142,6 +3142,9 @@ body.hud-v21.auto-drill-selected .mode-row.hud-kick-row .drill-btn.active{
 #trialExpiredBox { display: none; }
 #trialExpiredBox.show { display: block; }
 .te-icon { font-size: 34px; margin-bottom: 10px; }
+/* 2026-07-31: 아이콘을 비웠을 때 빈 공간이 남지 않게 한다 */
+.te-icon:empty { display: none; }
+#drillResultIcon:empty { display: none; }
 .te-title {
   color: #fff; font-size: 19px; font-weight: 900; letter-spacing: -0.4px;
 }
@@ -3252,7 +3255,7 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
     <div class="login-brand-meta">
       <div class="akm-powered">Powered by Google MediaPipe</div>
     </div>
-    <label class="login-key-label">🔑 라이선스 키</label>
+    <label class="login-key-label">라이선스 키</label>
     <div class="login-key-help">구매 후 전달받은 라이선스 키를 입력하세요.<br>최초 1회 입력 후 자동으로 인증됩니다.</div>
     <input id="licenseKeyInput" class="login-field" type="text" placeholder="AKM-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" />
     <button class="login-btn" onclick="doLicenseActivate()">인증하기</button>
@@ -3261,7 +3264,7 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
     <!-- 체험 기간 종료 안내 -->
     <div id="trialExpiredBox">
       <!-- 아이콘·제목도 상황에 따라 바뀐다 (_akmShowTrialExpired 참고) -->
-      <div class="te-icon" id="teIcon">🎁</div>
+      <div class="te-icon" id="teIcon"></div>
       <div class="te-title" id="teTitle">체험 기간이 끝났습니다</div>
       <div class="te-desc" id="teDesc">
         AI KICK MASTER를 사용해 주셔서 감사합니다.<br>
@@ -3269,8 +3272,8 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
         월 구독료 없는 <b>영구 라이선스</b>로 제공됩니다.
       </div>
       <div class="te-actions">
-        <a class="te-btn te-btn-primary" id="teKakaoBtn" href="https://naruunlabs.kr/kickmaster" target="_blank" rel="noopener">💬 카카오톡으로 구매 문의</a>
-        <a class="te-btn te-btn-ghost" id="teTelBtn" href="tel:01076573579">📞 전화 문의 010-7657-3579</a>
+        <a class="te-btn te-btn-primary" id="teKakaoBtn" href="https://naruunlabs.kr/kickmaster" target="_blank" rel="noopener">카카오톡으로 구매 문의</a>
+        <a class="te-btn te-btn-ghost" id="teTelBtn" href="tel:01076573579">전화 문의 010-7657-3579</a>
       </div>
       <button class="te-again" onclick="showKeyInput()">다른 라이선스 키 입력하기</button>
     </div>
@@ -3293,7 +3296,7 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
 
 
 <div class="rotate-msg">
-  <div class="icon">🔄</div>
+  
   <p>태블릿을 가로로 돌려주세요</p>
   <small>이 앱은 가로 모드 전용입니다</small>
 </div>
@@ -3331,7 +3334,7 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
 
     <!-- 발차기 연습 완료 오버레이 -->
     <div id="drillResult">
-      <div id="drillResultIcon">🏆</div>
+      <div id="drillResultIcon"></div>
       <div id="drillResultText">훈련 완료</div>
       <div id="drillResultSub"></div>
       <button id="drillRestartBtn" type="button" onclick="restartDrillFromResult()">다시 시작</button>
@@ -3353,7 +3356,7 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
         <div class="akm-hud-meta">
           <span class="akm-powered">Powered by Google MediaPipe</span>
         </div>
-        <button id="hudSettingsBtn" class="hud-settings-btn" type="button" onclick="toggleHudSettings()">⚙ 설정</button>
+        <button id="hudSettingsBtn" class="hud-settings-btn" type="button" onclick="toggleHudSettings()">설정</button>
       </div>
     </div>
 
@@ -3457,7 +3460,7 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
     </div>
 
     <div class="btns fullscreen-only">
-      <button class="btn-flip" id="fsBtn" onclick="toggleFullscreen()">⛶ 전체화면</button>
+      <button class="btn-flip" id="fsBtn" onclick="toggleFullscreen()">전체화면</button>
     </div>
   </div>
 </div>
@@ -3465,7 +3468,7 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
 <!-- ===== 설정 모달 ===== -->
 <div id="settingsModal">
   <div class="settings-modal-box">
-    <h3>⚙ <span>설정</span> <button class="settings-close-btn" onclick="toggleHudSettings()">닫기</button></h3>
+    <h3><span>설정</span> <button class="settings-close-btn" onclick="toggleHudSettings()">닫기</button></h3>
 
     <div class="settings-section">
       <div class="settings-label">발 높이 (실시간)</div>
@@ -3484,17 +3487,17 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
          label이 flex-space-between이라 오른쪽 값 자리를 그대로 쓴다.
          그 값을 누르면 음소거 토글 — 새 버튼을 추가하지 않아 레이아웃 영향이 없다. -->
     <div class="settings-section">
-      <div class="settings-label">소리 <span id="volVal">🔊 70%</span></div>
+      <div class="settings-label">소리 <span id="volVal">70%</span></div>
       <input type="range" id="sndRange" min="0" max="100" value="70" style="width:100%;accent-color:var(--gold);">
     </div>
 
     <hr class="settings-divider">
 
-    <button class="settings-pw-btn" onclick="logoutLicense()" style="margin-top:8px;background:rgba(227,23,46,0.15);color:#ff8795;border-color:rgba(227,23,46,0.3);">🚪 라이선스 로그아웃</button>
+    <button class="settings-pw-btn" onclick="logoutLicense()" style="margin-top:8px;background:rgba(227,23,46,0.15);color:#ff8795;border-color:rgba(227,23,46,0.3);">라이선스 로그아웃</button>
     <hr class="settings-divider">
-    <button class="settings-home-btn" type="button" id="shortcutBtn">📲 바탕화면에 바로가기 추가</button>
+    <button class="settings-home-btn" type="button" id="shortcutBtn">바탕화면에 바로가기 추가</button>
     <hr class="settings-divider">
-    <button class="settings-home-btn" type="button" onclick="location.href='/kickmaster'">🏠 홈페이지로 돌아가기</button>
+    <button class="settings-home-btn" type="button" onclick="location.href='/kickmaster'">홈페이지로 돌아가기</button>
 
     <!-- 2026-07-29: 진단 로그와 베타 측정은 '발차기 연구소'로 옮겼다.
          설정에 흩어져 있던 것을 한곳에 모으고, 도장명 5번 탭 대신
@@ -3528,8 +3531,8 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
     <div class="settings-section">
       <div class="settings-label">쌓인 자료 <span id="diagCount">0건</span></div>
       <div id="diagRange" style="font-size:12px;opacity:.65;margin:-4px 0 8px;"></div>
-      <button class="settings-home-btn" type="button" onclick="downloadDiagLog()" style="margin-top:0;">⬇ JSON으로 다운로드</button>
-      <button class="settings-home-btn" type="button" onclick="clearDiagLog()">🗑 기록 비우기</button>
+      <button class="settings-home-btn" type="button" onclick="downloadDiagLog()" style="margin-top:0;">JSON으로 다운로드</button>
+      <button class="settings-home-btn" type="button" onclick="clearDiagLog()">기록 비우기</button>
     </div>
 
     <hr class="settings-divider">
@@ -4238,7 +4241,7 @@ function sndCombo(n=0){
 function applySndVolume(){
   if(sndMaster) sndMaster.gain.value=sndMuted?0:sndVolume;
   const v=document.getElementById('volVal');
-  if(v) v.textContent=sndMuted?'🔇 꺼짐':('🔊 '+Math.round(sndVolume*100)+'%');
+  if(v) v.textContent=sndMuted?'꺼짐':(Math.round(sndVolume*100)+'%');
   const r=document.getElementById('sndRange');
   if(r) r.value=Math.round(sndVolume*100);
   try{
@@ -6224,11 +6227,11 @@ window.toggleFullscreen=()=>{
   if(!document.fullscreenElement&&!document.webkitFullscreenElement){
     if(el.requestFullscreen) el.requestFullscreen();
     else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-    document.getElementById('fsBtn').textContent='✕ 전체화면 끄기';
+    document.getElementById('fsBtn').textContent='전체화면 끄기';
   } else {
     if(document.exitFullscreen) document.exitFullscreen();
     else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
-    document.getElementById('fsBtn').textContent='⛶ 전체화면';
+    document.getElementById('fsBtn').textContent='전체화면';
   }
 };
 
@@ -6461,12 +6464,12 @@ function loop(){
         }
       } else {
         barFill.style.width='0%';
-        if(!running){ statusEl.style.opacity='1'; statusEl.textContent='🔍 전신이 보이게 뒤로 물러서세요'; };
+        if(!running){ statusEl.style.opacity='1'; statusEl.textContent='전신이 보이게 뒤로 물러서세요'; };
         kicking=false; aboveFrames=0; belowFrames=0;
       }
     } else {
       barFill.style.width='0%';
-      if(!running){ statusEl.style.opacity='1'; statusEl.textContent='🔍 사람을 찾는 중…'; }
+      if(!running){ statusEl.style.opacity='1'; statusEl.textContent='사람을 찾는 중…'; }
       kicking=false; aboveFrames=0; belowFrames=0; smHipY=null; smTorso=null; smHipX=null; smHipW=null; shoulderSamples=[];
     }
   }
@@ -6761,7 +6764,7 @@ function _akmShowTrialBadge(cache){
   if(isNaN(leftMs) || leftMs <= 0){ el.classList.remove('show'); return; }
   const d = Math.floor(leftMs / 86400000);
   const h = Math.floor((leftMs % 86400000) / 3600000);
-  el.textContent = d > 0 ? `🎁 체험판 · 남은 기간 ${d}일 ${h}시간` : `🎁 체험판 · 남은 기간 ${h}시간`;
+  el.textContent = d > 0 ? `체험판 · 남은 기간 ${d}일 ${h}시간` : `체험판 · 남은 기간 ${h}시간`;
   el.classList.add('show');
 }
 
@@ -6798,7 +6801,7 @@ function _akmShowTrialExpired(message, title, icon){
   const tEl = document.getElementById('teTitle');
   if(tEl) tEl.textContent = title || '체험 기간이 끝났습니다';
   const iEl = document.getElementById('teIcon');
-  if(iEl) iEl.textContent = icon || '🎁';
+  if(iEl) iEl.textContent = icon || '';
   _akmLoadContactLinks();
 }
 
@@ -6820,7 +6823,7 @@ function _akmLoadContactLinks(){
     const tBtn = document.getElementById('teTelBtn');
     if(kBtn && kakao && kakao !== '#'){ kBtn.href = kakao; }
     if(tBtn && tel){ tBtn.href = tel; }
-    if(tBtn && phone){ tBtn.textContent = '📞 전화 문의 ' + phone; }
+    if(tBtn && phone){ tBtn.textContent = '전화 문의 ' + phone; }
   }).catch(()=>{ /* 실패 시 기본 링크 그대로 사용 */ });
 }
 
@@ -6892,7 +6895,7 @@ async function doLicenseActivate(){
           `<b>${result.trial_days||3}일 체험 기간</b>이 모두 사용되었습니다.<br>` +
           `계속 사용하시려면 <b>정식 라이선스</b>가 필요합니다.<br>` +
           `월 구독료 없는 <b>영구 라이선스</b>로 제공됩니다.`,
-          '체험 기간이 끝났습니다', '🎁'
+          '체험 기간이 끝났습니다', ''
         );
         return;
       }
@@ -6962,7 +6965,7 @@ window.addEventListener('load', function(){
         ? `<b>체험 기간</b>이 모두 사용되었습니다.<br>계속 사용하시려면 <b>정식 라이선스</b>가 필요합니다.<br>월 구독료 없는 <b>영구 라이선스</b>로 제공됩니다.`
         : `라이선스 <b>사용 기간이 종료</b>되었습니다.<br>연장 또는 재발급은 아래로 문의해 주세요.`,
       cache.is_trial ? '체험 기간이 끝났습니다' : '라이선스 기간이 끝났습니다',
-      cache.is_trial ? '🎁' : '⏳');
+      '', '');
     return;
   }
   // 오프라인 허용 기간이 지났으면 다시 인증받도록 한다
@@ -7037,15 +7040,15 @@ function _akmShouldBlock(result){
 function _akmBlockMessage(result){
   const r = result && result.reason;
   if(r === 'trial_expired')
-    return { title:'체험 기간이 끝났습니다', icon:'🎁',
+    return { title:'체험 기간이 끝났습니다', icon:'',
       msg:`<b>체험 기간</b>이 모두 사용되었습니다.<br>계속 사용하시려면 <b>정식 라이선스</b>가 필요합니다.<br>월 구독료 없는 <b>영구 라이선스</b>로 제공됩니다.` };
   if(r === 'expired')
-    return { title:'라이선스 기간이 끝났습니다', icon:'⏳',
+    return { title:'라이선스 기간이 끝났습니다', icon:'',
       msg:`라이선스 <b>사용 기간이 종료</b>되었습니다.<br>연장 또는 재발급은 아래로 문의해 주세요.` };
   if(r === 'inactive')
-    return { title:'라이선스가 중지되었습니다', icon:'🔒',
+    return { title:'라이선스가 중지되었습니다', icon:'',
       msg:`이 라이선스는 현재 <b>사용이 중지</b>되어 있습니다.<br>아래로 문의해 주시면 바로 확인해 드리겠습니다.` };
-  return { title:'라이선스를 확인할 수 없습니다', icon:'🔑',
+  return { title:'라이선스를 확인할 수 없습니다', icon:'',
     msg:`등록된 라이선스 정보를 찾을 수 없습니다.<br>아래로 문의해 주시면 바로 도와드리겠습니다.` };
 }
 
@@ -7155,7 +7158,7 @@ window.addEventListener('load', function(){
   });
   window.addEventListener('appinstalled', function(){
     deferredPrompt = null;
-    btn.textContent = '✅ 바로가기 설치 완료';
+    btn.textContent = '바로가기 설치 완료';
   });
 
   function step(n, html){ return '<li><b class="stepnum">'+n+'</b><span>'+html+'</span></li>'; }

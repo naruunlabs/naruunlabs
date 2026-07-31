@@ -300,6 +300,8 @@ button{font-family:inherit;cursor:pointer;}
   justify-content:center;gap:6px;background:rgba(5,12,22,.66);backdrop-filter:blur(6px);text-align:center;z-index:20;}
 #resultOverlay.show{display:flex;}
 #resultIcon{font-size:56px;}
+/* 2026-07-31: 아이콘을 비웠을 때 빈 공간이 남지 않게 한다 */
+#resultIcon:empty{display:none;}
 #resultBig{font-size:44px;font-weight:900;color:var(--lime-bright);
   text-shadow:0 0 30px rgba(163,230,53,.4);}
 #resultSub{font-size:15px;color:var(--ink);font-weight:700;}
@@ -823,7 +825,7 @@ button{transition:transform .14s ease, filter .14s ease, background .14s ease}bu
   <div class="login-box">
     <div class="login-logo"><img class="app-login-product-logo" src="jump1.svg" alt="AI JUMP MASTER"></div>
     <div class="login-sub">태권도 AI 줄넘기 훈련 시스템</div>
-    <label class="login-key-label">🔑 라이선스 키</label>
+    <label class="login-key-label">라이선스 키</label>
     <div class="login-key-help">구매 후 전달받은 라이선스 키를 입력하세요.<br>최초 1회 입력 후 자동으로 인증됩니다.</div>
     <input id="licenseKeyInput" class="login-field" type="text" placeholder="JMP-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" />
     <button class="login-btn" onclick="doLicenseActivate()">인증하기</button>
@@ -857,7 +859,7 @@ button{transition:transform .14s ease, filter .14s ease, background .14s ease}bu
         <div class="jump-title-auth">● 정품 인증됨</div>
         <div class="jump-title-version">v0.2.0</div>
         <div class="jump-hud-meta"><span class="jump-powered">Powered by Google MediaPipe</span></div>
-        <button id="jumpHudSettingsBtn" class="jump-hud-settings-btn" type="button" onclick="toggleJumpSettings()">⚙ 설정</button>
+        <button id="jumpHudSettingsBtn" class="jump-hud-settings-btn" type="button" onclick="toggleJumpSettings()">설정</button>
       </div>
     </div>
 
@@ -867,7 +869,7 @@ button{transition:transform .14s ease, filter .14s ease, background .14s ease}bu
 
     <!-- 중앙 상단 히어로: 모드명 타이틀 + 안내 캡슐 -->
     <div id="modeBadge"><span class="mb-title">자유 모드</span><span class="mb-sub">멈출 때까지 계속 카운트</span></div>
-    <div id="guideMsg" class="show">🔍 전신이 보이게 뒤로 물러서세요</div>
+    <div id="guideMsg" class="show">전신이 보이게 뒤로 물러서세요</div>
 
     <!-- 우측 세로 스탯열: 게이지 / 횟수 / 오늘 최고 -->
     <div class="stat-rail">
@@ -900,7 +902,7 @@ button{transition:transform .14s ease, filter .14s ease, background .14s ease}bu
     <div id="readyOverlay"><div id="readyNum">3</div><div id="readySub"></div></div>
 
     <div id="resultOverlay">
-      <div id="resultIcon">🎉</div>
+      <div id="resultIcon"></div>
       <div id="resultBig">0</div>
       <div id="resultSub">줄넘기 완료!</div>
       <div id="resultNote"></div>
@@ -922,10 +924,10 @@ button{transition:transform .14s ease, filter .14s ease, background .14s ease}bu
 
     <!-- 우하단: 카메라 전환 / 전체화면 / 기준선 -->
     <div class="bottom-right">
-      <button class="mini-btn" id="flipBtn">📷 카메라 전환</button>
-      <button class="mini-btn" id="fsBtn">⛶ 전체화면</button>
-      <button class="mini-btn" id="calBtn">👁 기준선 켜짐</button>
-      <button class="mini-btn" id="recalBtn">🔄 기준 재설정</button>
+      <button class="mini-btn" id="flipBtn">카메라 전환</button>
+      <button class="mini-btn" id="fsBtn">전체화면</button>
+      <button class="mini-btn" id="calBtn">기준선 켜짐</button>
+      <button class="mini-btn" id="recalBtn">기준 재설정</button>
     </div>
   </div>
 </div>
@@ -934,7 +936,7 @@ button{transition:transform .14s ease, filter .14s ease, background .14s ease}bu
 <div id="jumpSettingsModal">
   <div class="jump-settings-box">
     <div class="jump-settings-head">
-      <div>⚙ <span>설정</span></div>
+      <div><span>설정</span></div>
       <button class="jump-settings-close" type="button" onclick="toggleJumpSettings()">닫기</button>
     </div>
 
@@ -952,11 +954,11 @@ button{transition:transform .14s ease, filter .14s ease, background .14s ease}bu
 
     <hr class="jump-settings-divider">
 
-    <button class="jump-settings-action logout" type="button" onclick="logoutLicense()">🚪 라이선스 로그아웃</button>
+    <button class="jump-settings-action logout" type="button" onclick="logoutLicense()">라이선스 로그아웃</button>
 
     <hr class="jump-settings-divider">
 
-    <button class="jump-settings-action home" type="button" onclick="location.href='/jumpmaster'">🏠 홈페이지로 돌아가기</button>
+    <button class="jump-settings-action home" type="button" onclick="location.href='/jumpmaster'">홈페이지로 돌아가기</button>
   </div>
 </div>
 
@@ -1145,7 +1147,7 @@ function detectJump(hipY, torso){
     calibratingBaseline=true;
     jumpBaselineSamples.push(jumpHipY);
     if(jumpBaselineSamples.length>BASELINE_CALIB_FRAMES) jumpBaselineSamples.shift();
-    if(!running) setGuide('⚖️ 기준 잡는 중… 가만히 서주세요');
+    if(!running) setGuide('기준 잡는 중… 가만히 서주세요');
     if(jumpBaselineSamples.length>=BASELINE_CALIB_FRAMES){
       const mn=Math.min(...jumpBaselineSamples), mx=Math.max(...jumpBaselineSamples);
       if((mx-mn) < BASELINE_STABLE_RANGE){ // 가만히 서 있을 때만 기준선 확정
@@ -1301,10 +1303,10 @@ function finishStreak(){
 
 function showResult(cnt,sub,note){
   const isBest=saveBest(currentMode,cnt);
-  document.getElementById('resultIcon').textContent = isBest?'🏆':(cnt>0?'🎉':'💪');
+  document.getElementById('resultIcon').textContent = '';
   document.getElementById('resultBig').textContent=cnt+'개';
   document.getElementById('resultSub').textContent=sub;
-  document.getElementById('resultNote').textContent=(isBest?'🎊 오늘 최고 기록 갱신! · ':'')+note;
+  document.getElementById('resultNote').textContent=(isBest?'오늘 최고 기록 갱신! · ':'')+note;
   resultOverlay.classList.add('show');
   setStartCta(false,'▶ 다시!'); updateStats();
   if(cnt>0) sndFinish();
@@ -1338,7 +1340,7 @@ async function startCamera(){
     stream=await navigator.mediaDevices.getUserMedia({
       video:{facingMode,width:{ideal:1280},height:{ideal:720},frameRate:{ideal:60}},audio:false});
     video.srcObject=stream; await video.play();
-    setGuide('🔍 전신이 보이게 뒤로 물러서세요');
+    setGuide('전신이 보이게 뒤로 물러서세요');
   }catch(e){ setGuide('카메라 실패: '+e.message); }
 }
 
@@ -1395,7 +1397,7 @@ function processFrame(){
       const hipVis=Math.max(lm[23]?.visibility??0, lm[24]?.visibility??0);
       const shVis =Math.max(lm[11]?.visibility??0, lm[12]?.visibility??0);
       if(hipVis>0.3 && shVis>0.3){
-        personVisible=true; lostSince=null; setGuide(calibratingBaseline&&!running?'⚖️ 기준 잡는 중… 가만히 서주세요':'');
+        personVisible=true; lostSince=null; setGuide(calibratingBaseline&&!running?'기준 잡는 중… 가만히 서주세요':'');
         // 스켈레톤 (팀 컬러)
         drawingUtils.drawConnectors(lm,PoseLandmarker.POSE_CONNECTIONS,{color:'rgba(20,184,166,.55)',lineWidth:2});
         drawingUtils.drawLandmarks(lm,{color:'#A3E635',lineWidth:1,radius:3});
@@ -1429,7 +1431,7 @@ function processFrame(){
 }
 function handlePersonLost(){
   personVisible=false;
-  if(!running) setGuide('🔍 전신이 보이게 뒤로 물러서세요');
+  if(!running) setGuide('전신이 보이게 뒤로 물러서세요');
   gaugeFill.style.height='0%';
   // ★ v0.2: 잠깐 끊긴 것으로는 기준선을 지우지 않음 (grace 시간)
   const now=performance.now();
@@ -1476,17 +1478,17 @@ document.getElementById('fsBtn').onclick=()=>{
   const el=document.documentElement;
   if(!document.fullscreenElement && !document.webkitFullscreenElement){
     (el.requestFullscreen||el.webkitRequestFullscreen)?.call(el);
-    document.getElementById('fsBtn').textContent='✕ 전체화면 끄기';
+    document.getElementById('fsBtn').textContent='전체화면 끄기';
   } else { (document.exitFullscreen||document.webkitExitFullscreen)?.call(document);
-    document.getElementById('fsBtn').textContent='⛶ 전체화면'; }
+    document.getElementById('fsBtn').textContent='전체화면'; }
 };
 document.getElementById('calBtn').onclick=(e)=>{
-  showCalib=!showCalib; e.target.textContent=showCalib?'👁 기준선 켜짐':'👁 기준선 꺼짐';
+  showCalib=!showCalib; e.target.textContent=showCalib?'기준선 켜짐':'기준선 꺼짐';
 };
 document.getElementById('recalBtn').onclick=()=>{
   // 다음 아이/자세가 바뀌었을 때: 기준선 + 자동 감도 기억까지 전부 새로
   fullRecalibrate();
-  setGuide('⚖️ 기준 다시 잡는 중… 가만히 서주세요');
+  setGuide('기준 다시 잡는 중… 가만히 서주세요');
 };
 sensSlider.oninput=()=>{
   JUMP_UP_RATIO=sliderToRatio(parseInt(sensSlider.value));
