@@ -332,8 +332,8 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
       <div class="akm-powered">Powered by Google MediaPipe</div>
     </div>
     <div class="top-actions">
-      <button class="btn-sm-act btn-ghost" onclick="openPwModal()">🔑 비밀번호 변경</button>
-      <button class="btn-sm-act btn-ghost" onclick="window.open('/','_blank')">👁 NARUUN LABS 미리보기</button>
+      <button class="btn-sm-act btn-ghost" onclick="openPwModal()">비밀번호 변경</button>
+      <button class="btn-sm-act btn-ghost" onclick="window.open('/','_blank')">NARUUN LABS 미리보기</button>
       <button class="btn-sm-act btn-danger-soft" onclick="logoutAdmin()">로그아웃</button>
     </div>
   </div>
@@ -341,16 +341,16 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
   <!-- 탭 -->
   <div class="tab-bar">
     <div class="sidebar-brand"><img class="sidebar-company-logo" src="naruunlabs_logo.svg" alt="NARUUN LABS"><span>Powered by Google MediaPipe</span></div>
-    <button class="tab-btn active" onclick="switchTab('license')">📋 라이선스 관리</button>
+    <button class="tab-btn active" onclick="switchTab('license')">라이선스 관리</button>
     <button class="tab-btn" onclick="switchTab('home')">홈페이지 관리</button>
-    <button class="tab-btn" onclick="switchTab('lab')">🧪 발차기 연구실</button>
+    <button class="tab-btn" onclick="switchTab('lab')">발차기 연구실</button>
   </div>
 
   <!-- ===== 라이선스 탭 ===== -->
   <div class="tab-content active" id="tab-license">
     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
-      <button class="home-subtab-btn active" id="license-subtab-kick-btn" onclick="switchLicenseSubtab('kick')">🥋 킥마스터 라이선스</button>
-      <button class="home-subtab-btn" id="license-subtab-jump-btn" onclick="switchLicenseSubtab('jump')">🪢 점프마스터 라이선스</button>
+      <button class="home-subtab-btn active" id="license-subtab-kick-btn" onclick="switchLicenseSubtab('kick')">킥마스터 라이선스</button>
+      <button class="home-subtab-btn" id="license-subtab-jump-btn" onclick="switchLicenseSubtab('jump')">점프마스터 라이선스</button>
       <div style="flex:1"></div>
       <button class="btn-add btn-ghost" onclick="loadLicenses()">↻ 새로고침</button>
       <button class="btn-add" id="licenseAddBtn" onclick="openAddModal()">+ 라이선스 발급</button>
@@ -487,7 +487,7 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
 <!-- 비밀번호 변경 모달 -->
 <div class="modal-bg" id="pwModalBg">
   <div class="modal">
-    <h3>🔑 관리자 비밀번호 <span>변경</span></h3>
+    <h3>관리자 비밀번호 <span>변경</span></h3>
     <label>현재 비밀번호</label><input id="pwCurrent" class="f-input" type="password" placeholder="현재 비밀번호" />
     <label>새 비밀번호</label><input id="pwNew" class="f-input" type="password" placeholder="새 비밀번호 6자 이상" />
     <label>새 비밀번호 확인</label><input id="pwConfirm" class="f-input" type="password" placeholder="새 비밀번호 재입력" />
@@ -508,26 +508,26 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
     <input id="mDojang" class="f-input" type="text" placeholder="예) 구미태권도장" />
     <label>라이선스 종류 *</label>
     <select id="mLicenseType" class="f-input" onchange="onTypeChange(true)">
-      <option value="lifetime">♾️ 영구 (Lifetime)</option>
-      <option value="package">📦 태블릿 패키지</option>
-      <option value="trial">🎁 체험판 (Trial)</option>
+      <option value="lifetime">영구 (Lifetime)</option>
+      <option value="package">태블릿 패키지</option>
+      <option value="trial">체험판 (Trial)</option>
     </select>
     <label>버전</label>
     <input id="mVersion" class="f-input" type="text" placeholder="예) 1.0.0" value="1.0.0" />
     <label>라이선스 키 <span style="color:var(--muted);font-weight:400">(직접 수정 가능)</span></label>
     <div style="display:flex;gap:8px">
       <input id="mKey" class="f-input" type="text" style="letter-spacing:1px;flex:1" />
-      <button type="button" class="btn-sm btn-toggle" onclick="regenerateKey()">🔁 재생성</button>
+      <button type="button" class="btn-sm btn-toggle" onclick="regenerateKey()">재생성</button>
     </div>
     <input id="mMaxDevices" type="hidden" value="2" />
     <div class="modal-section" id="deviceSlotSection" style="display:none;">
-      <div class="modal-section-title">🖥 기기 슬롯</div>
+      <div class="modal-section-title">기기 슬롯</div>
       <div id="deviceSlotsBox" class="admin-slot-grid"></div>
       <button type="button" class="btn-sm btn-toggle" style="margin-top:10px;" onclick="resetDeviceSlots()">전체 기기 초기화 (재발급 시 사용)</button>
     </div>
 <div id="expireSection">
       <div class="modal-section">
-        <div class="modal-section-title">📅 만료일 설정</div>
+        <div class="modal-section-title">만료일 설정</div>
         <label>만료일</label>
         <input id="mExpireDate" class="f-input" type="date" />
         <div class="modal-help">비워두면 만료일 없음(영구)으로 처리됩니다.</div>
@@ -535,7 +535,7 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
     </div>
     <div id="trialSection" style="display:none;">
       <div class="modal-section">
-        <div class="modal-section-title">🎁 체험 기간 설정</div>
+        <div class="modal-section-title">체험 기간 설정</div>
         <label>체험 일수</label>
         <input id="mTrialDays" class="f-input" type="number" min="1" max="30" value="3" />
         <div class="modal-help">
@@ -547,7 +547,7 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
       </div>
     </div>
     <div class="modal-section">
-      <div class="modal-section-title">💳 결제 정보</div>
+      <div class="modal-section-title">결제 정보</div>
       <div class="input-row" style="margin-bottom:14px">
         <div>
           <label>결제 금액 (원)</label>
@@ -562,7 +562,7 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
       <input id="mPayMemo" class="f-input" type="text" placeholder="예) 카드결제, 계좌이체 등" />
     </div>
     <div class="modal-section">
-      <div class="modal-section-title">📞 고객 연락처</div>
+      <div class="modal-section-title">고객 연락처</div>
       <label>연락처</label>
       <input id="mPhone" class="f-input" type="tel" placeholder="예) 010-1234-5678" />
       <label>메모</label>
@@ -577,7 +577,7 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
 </div>
 
 <!-- 토스트 -->
-<div class="toast" id="toast">✅ 저장되었습니다!</div>
+<div class="toast" id="toast">저장되었습니다!</div>
 
 <script>
 /* ==============================
@@ -611,7 +611,7 @@ function daysUntil(dateStr) {
 function formatMoney(v) { return v ? Number(v).toLocaleString('ko-KR') + '원' : '-'; }
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg || '✅ 저장되었습니다!';
+  t.textContent = msg || '저장되었습니다!';
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
@@ -692,7 +692,7 @@ async function changePassword() {
     if (!verifyRes.ok) { errEl.textContent = '현재 비밀번호가 올바르지 않습니다.'; return; }
     await edgeCall('UPDATE_ADMIN_PW', { value: newPw });
     closePwModal();
-    showToast('✅ 비밀번호가 변경되었습니다!');
+    showToast('비밀번호가 변경되었습니다!');
   } catch(e) { errEl.textContent = '저장 실패: ' + e.message; }
 }
 
@@ -796,8 +796,8 @@ function renderTable() {
     else if (d.is_active && isExpiring) { statusCls = 'soon'; statusText = `D-${days}`; }
     const rowCls = isExpired ? 'row-expired' : (isExpiring ? 'row-expiring' : '');
     const isTrial = d.license_type === 'trial';
-    const typeLabel = isTrial ? `🎁 체험 ${Number(d.trial_days)||3}일`
-                    : (d.license_type === 'package' ? '📦 패키지' : '♾️ 영구');
+    const typeLabel = isTrial ? `체험 ${Number(d.trial_days)||3}일`
+                    : (d.license_type === 'package' ? '패키지' : '영구');
     const lastVerified = d.last_verified_at ? d.last_verified_at.slice(0,10) : '미사용';
     let expireDisplay = d.expire_date ? `${d.expire_date}<br><span style="font-size:11px;color:${isExpired?'#ff687a':isExpiring?'#ffd76b':'#71859d'}">${isExpired?'만료됨':`D-${days}`}</span>` : '<span style="color:#4f637c">-</span>';
     if (isTrial && !d.trial_started_at) {
@@ -806,7 +806,7 @@ function renderTable() {
     const payDisplay = d.pay_amount ? `${formatMoney(d.pay_amount)}<span class="sub-text">${d.pay_date||''}</span>` : '-';
     const encoded = encodeURIComponent(JSON.stringify(d));
     return `<tr class="${rowCls}">
-      <td><strong>${escapeHtml(d.dojang_name)}</strong><span class="sub-text">등록 ${(d.created_at||'').slice(0,10)||'-'}</span>${d.phone?`<span class="sub-text">📞 ${escapeHtml(d.phone)}</span>`:''}${d.memo?`<span class="sub-text" title="${escapeHtml(d.memo)}">📝 ${escapeHtml(d.memo.length>20?d.memo.slice(0,20)+'…':d.memo)}</span>`:''}<span class="sub-text">🖥 기기 ${(d.device_slots||[]).length}/${d.max_devices||2}</span></td>
+      <td><strong>${escapeHtml(d.dojang_name)}</strong><span class="sub-text">등록 ${(d.created_at||'').slice(0,10)||'-'}</span>${d.phone?`<span class="sub-text">${escapeHtml(d.phone)}</span>`:''}${d.memo?`<span class="sub-text" title="${escapeHtml(d.memo)}">${escapeHtml(d.memo.length>20?d.memo.slice(0,20)+'…':d.memo)}</span>`:''}<span class="sub-text">기기 ${(d.device_slots||[]).length}/${d.max_devices||2}</span></td>
       <td><code style="font-size:12px">${escapeHtml(d.license_key)}</code></td>
       <td>${typeLabel}</td>
       <td style="font-size:13px">${payDisplay}</td>
@@ -917,13 +917,13 @@ function renderDeviceSlotsUI() {
     if (slot) {
       const dateStr = slot.registered_at ? slot.registered_at.slice(0,10) : '-';
       html += `<div class="admin-slot-card is-used">
-        <div class="admin-slot-status">✅ 사용 중</div>
+        <div class="admin-slot-status">사용 중</div>
         <div class="admin-slot-sub">등록일 ${dateStr}</div>
         <button type="button" class="btn-sm btn-del" onclick="removeDeviceSlot(${i})">기기 해제</button>
       </div>`;
     } else {
       html += `<div class="admin-slot-card is-empty">
-        <div class="admin-slot-status">⬜ 사용 가능</div>
+        <div class="admin-slot-status">사용 가능</div>
         <div class="admin-slot-sub">기본 포함 슬롯</div>
       </div>`;
     }
@@ -934,18 +934,18 @@ function renderDeviceSlotsUI() {
     if (slot3) {
       const dateStr = slot3.registered_at ? slot3.registered_at.slice(0,10) : '-';
       html += `<div class="admin-slot-card is-used is-toggle" onclick="toggleSlot3()">
-        <div class="admin-slot-status">✅ 사용 중</div>
+        <div class="admin-slot-status">사용 중</div>
         <div class="admin-slot-sub">등록일 ${dateStr}<br>클릭하면 슬롯을 닫습니다</div>
       </div>`;
     } else {
       html += `<div class="admin-slot-card is-open is-toggle" onclick="toggleSlot3()">
-        <div class="admin-slot-status">🔓 확장 슬롯 열림</div>
+        <div class="admin-slot-status">확장 슬롯 열림</div>
         <div class="admin-slot-sub">사용 가능 · 클릭하면 닫습니다</div>
       </div>`;
     }
   } else {
     html += `<div class="admin-slot-card is-locked is-toggle" onclick="toggleSlot3()">
-      <div class="admin-slot-status">🔒 확장 슬롯 잠김</div>
+      <div class="admin-slot-status">확장 슬롯 잠김</div>
       <div class="admin-slot-sub">클릭하면 3번째 기기를<br>등록할 수 있게 엽니다</div>
     </div>`;
   }
@@ -1059,12 +1059,12 @@ async function copyLicenseMsg(encoded) {
   const trialDays = Number(d.trial_days) || 3;
   const typeLabel = isTrial ? `${trialDays}일 체험판`
                   : (d.license_type === 'package' ? '태블릿 패키지' : '영구 라이선스');
-  const expireLine = (!isTrial && d.expire_date) ? `📅 만료일: ${d.expire_date}\n` : '';
+  const expireLine = (!isTrial && d.expire_date) ? `만료일: ${d.expire_date}\n` : '';
 
   const msg = isTrial
-    ? `[${productName} ${trialDays}일 체험판 안내]\n\n안녕하세요, ${d.dojang_name} 관장님!\n${productName}를 직접 써보실 수 있는 체험판 키를 보내드립니다.\n\n🔑 체험판 라이선스 키\n${d.license_key}\n\n⏱ 체험 기간: 처음 인증하신 시점부터 ${trialDays}일\n   (키를 받은 날이 아니라, 처음 여신 날부터 계산됩니다)\n🖥 사용 기기: 1대\n\n🔗 접속 링크: ${loginUrl}\n\n✅ 사용 방법\n1. 위 홈페이지로 접속하세요\n2. [${actionLabel}] 버튼을 누르세요\n3. 체험판 키를 입력하세요\n4. 최초 1회 입력 후 자동으로 실행됩니다\n\n💡 편하실 때 여셔도 ${trialDays}일이 그대로 보장되니 부담 없이 사용해보세요.\n체험 후 궁금한 점은 카카오톡으로 편하게 문의 주세요!`
-    : `[${productName} 라이선스 안내]\n\n안녕하세요, ${d.dojang_name} 관장님!\n${productName} 라이선스를 보내드립니다.\n\n🔑 라이선스 키\n${d.license_key}\n\n📋 라이선스 종류: ${typeLabel}\n${expireLine}🔗 접속 링크: ${loginUrl}\n\n✅ 사용 방법\n1. 위 홈페이지로 접속하세요\n2. [${actionLabel}] 버튼을 누르세요\n3. 라이선스 키를 입력하세요\n4. 최초 1회 입력 후 자동으로 실행됩니다\n\n⚠️ 라이선스 키는 소중히 보관해주세요.\n문의사항은 카카오톡으로 연락 주세요.`;
-  try { await navigator.clipboard.writeText(msg); showToast('✅ 카톡 안내문을 복사했습니다!'); }
+    ? `[${productName} ${trialDays}일 체험판 안내]\n\n안녕하세요, ${d.dojang_name} 관장님!\n${productName}를 직접 써보실 수 있는 체험판 키를 보내드립니다.\n\n체험판 라이선스 키\n${d.license_key}\n\n체험 기간: 처음 인증하신 시점부터 ${trialDays}일\n   (키를 받은 날이 아니라, 처음 여신 날부터 계산됩니다)\n사용 기기: 1대\n\n접속 링크: ${loginUrl}\n\n사용 방법\n1. 위 홈페이지로 접속하세요\n2. [${actionLabel}] 버튼을 누르세요\n3. 체험판 키를 입력하세요\n4. 최초 1회 입력 후 자동으로 실행됩니다\n\n편하실 때 여셔도 ${trialDays}일이 그대로 보장되니 부담 없이 사용해보세요.\n체험 후 궁금한 점은 카카오톡으로 편하게 문의 주세요!`
+    : `[${productName} 라이선스 안내]\n\n안녕하세요, ${d.dojang_name} 관장님!\n${productName} 라이선스를 보내드립니다.\n\n라이선스 키\n${d.license_key}\n\n라이선스 종류: ${typeLabel}\n${expireLine}접속 링크: ${loginUrl}\n\n사용 방법\n1. 위 홈페이지로 접속하세요\n2. [${actionLabel}] 버튼을 누르세요\n3. 라이선스 키를 입력하세요\n4. 최초 1회 입력 후 자동으로 실행됩니다\n\n라이선스 키는 소중히 보관해주세요.\n문의사항은 카카오톡으로 연락 주세요.`;
+  try { await navigator.clipboard.writeText(msg); showToast('카톡 안내문을 복사했습니다!'); }
   catch { prompt('복사 실패. 아래 내용을 직접 복사하세요.', msg); }
 }
 
@@ -1203,7 +1203,7 @@ async function loadLabData(){
   const tbody=document.getElementById('labSamplesTable');if(tbody)tbody.innerHTML='<tr><td colspan="6" class="loading">불러오는 중...</td></tr>';
   try{const [cfg,samples]=await Promise.all([edgeCall('ADMIN_GET_KICK_LAB_CONFIG',{}),edgeCall('GET_KICK_LAB_SAMPLES',{limit:500})]);LAB_CONFIG=cfg||LAB_CONFIG;LAB_SAMPLES=Array.isArray(samples)?samples:[];renderLabConfig();renderLabSamples();}catch(e){if(tbody)tbody.innerHTML=`<tr><td colspan="6" class="empty-msg">불러오기 실패: ${escapeHtml(e.message)}</td></tr>`;}
 }
-async function saveLabConfig(){LAB_CONFIG.kicks=Array.from(document.querySelectorAll('#tab-lab .lab-check input:checked')).map(c=>c.value);try{await edgeCall('UPDATE_KICK_LAB_CONFIG',LAB_CONFIG);showToast('✅ 연구실 설정이 저장되었습니다!');}catch(e){alert('저장 실패: '+e.message)}}
+async function saveLabConfig(){LAB_CONFIG.kicks=Array.from(document.querySelectorAll('#tab-lab .lab-check input:checked')).map(c=>c.value);try{await edgeCall('UPDATE_KICK_LAB_CONFIG',LAB_CONFIG);showToast('연구실 설정이 저장되었습니다!');}catch(e){alert('저장 실패: '+e.message)}}
 function renderLabSamples(){
   const count=k=>LAB_SAMPLES.filter(x=>x.kick_type===k).length;
   document.getElementById('labTotal').textContent=LAB_SAMPLES.length;document.getElementById('labFront').textContent=count('front_kick');document.getElementById('labRound').textContent=count('roundhouse_kick');document.getElementById('labNew').textContent=count('side_kick')+count('back_kick');
