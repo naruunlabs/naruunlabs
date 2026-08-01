@@ -300,8 +300,25 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
   .login-box{padding:32px 24px}.top-actions{width:100%;justify-content:flex-start}.btn-sm-act{flex:1}.stats-row{grid-template-columns:repeat(2,minmax(0,1fr))}.top-bar{top:60px}.tab-content{width:calc(100% - 20px)}
 }
 
-/* ===== 발차기 연구실 관리자 ===== */
-.lab-config-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0 18px}.lab-check{display:flex;align-items:center;gap:9px;padding:14px;border:1px solid var(--line);border-radius:13px;background:var(--panel-soft);font-size:13px;font-weight:800}.lab-check input{width:17px;height:17px;accent-color:#FF8A3D}.lab-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:16px}.lab-switch{width:52px;height:29px;border-radius:999px;background:#cbd5e1;position:relative}.lab-switch.on{background:#12a15c}.lab-switch:after{content:"";position:absolute;width:23px;height:23px;left:3px;top:3px;border-radius:50%;background:#fff;transition:.18s}.lab-switch.on:after{left:26px}.lab-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}.lab-summary .stat-card{padding:18px}.lab-summary .num{font-size:27px}.lab-table-actions{display:flex;gap:8px;margin-bottom:14px;justify-content:flex-end}@media(max-width:800px){.lab-config-grid,.lab-summary{grid-template-columns:repeat(2,1fr)}}
+/* 체크박스 상자 — 홈페이지 관리 탭의 배너 노출 스위치가 쓴다 */
+.lab-check{display:flex;align-items:center;gap:9px;padding:14px;border:1px solid var(--line);border-radius:13px;background:var(--panel-soft);font-size:13px;font-weight:800}
+.lab-check input{width:17px;height:17px;accent-color:#FF8A3D}
+
+/* ===== 실험실 ===== */
+.exp-intro{margin-bottom:16px}
+.exp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.exp-card{border:1px solid var(--line);border-radius:16px;background:var(--panel-soft);padding:18px;display:flex;flex-direction:column;gap:10px}
+.exp-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.exp-name{font-size:15px;font-weight:900;letter-spacing:-.3px}
+.exp-tag{font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:999px;white-space:nowrap}
+.exp-tag.run{background:rgba(18,161,92,.13);color:var(--green)}
+.exp-tag.wait{background:rgba(88,92,102,.13);color:var(--muted2)}
+.exp-desc{font-size:12.5px;line-height:1.65;color:var(--muted2);font-weight:600;flex:1}
+.exp-meta{font-size:11px;color:var(--muted2);font-weight:700;word-break:break-all}
+.exp-act{display:flex;gap:8px;margin-top:2px}
+.exp-act a.btn-add{text-decoration:none}
+.exp-empty{grid-column:1/-1;padding:34px;text-align:center;font-size:13px;font-weight:700;color:var(--muted2);border:1px dashed var(--line);border-radius:16px}
+@media(max-width:800px){.exp-grid{grid-template-columns:1fr}}
 
 </style>
 
@@ -343,7 +360,7 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
     <div class="sidebar-brand"><img class="sidebar-company-logo" src="naruunlabs_logo.svg" alt="NARUUN LABS"><span>Powered by Google MediaPipe</span></div>
     <button class="tab-btn active" onclick="switchTab('license')">라이선스 관리</button>
     <button class="tab-btn" onclick="switchTab('home')">홈페이지 관리</button>
-    <button class="tab-btn" onclick="switchTab('lab')">발차기 연구실</button>
+    <button class="tab-btn" onclick="switchTab('lab')">실험실</button>
   </div>
 
   <!-- ===== 라이선스 탭 ===== -->
@@ -392,26 +409,13 @@ table{border-collapse:separate;border-spacing:0}thead th{background:#F7FAFE;colo
   </div>
 
 
-  <!-- ===== 발차기 연구실 탭 ===== -->
+  <!-- ===== 실험실 탭 ===== -->
   <div class="tab-content" id="tab-lab">
-    <div class="edit-section">
-      <div class="lab-toggle-row"><div><h3 style="margin-bottom:6px">발차기 연구실 운영</h3><div class="field-hint">프로그램의 연구실 메뉴를 전체 ON/OFF합니다.</div></div><button id="labEnabledSwitch" class="lab-switch" type="button" onclick="toggleLabEnabled()" aria-label="연구실 사용 여부"></button></div>
-      <div class="lab-config-grid">
-        <label class="lab-check"><input type="checkbox" value="front_kick">앞차기</label>
-        <label class="lab-check"><input type="checkbox" value="roundhouse_kick">돌려차기</label>
-        <label class="lab-check"><input type="checkbox" value="side_kick">옆차기</label>
-        <label class="lab-check"><input type="checkbox" value="back_kick">뒤차기</label>
-      </div>
-      <button class="btn-add" onclick="saveLabConfig()">설정 저장</button>
+    <div class="edit-section exp-intro">
+      <h3 style="margin-bottom:6px">실험실</h3>
+      <div class="field-hint">정식 기능이 되기 전의 시험용 페이지들입니다. 홈페이지 어디에도 링크가 없고 검색에도 잡히지 않습니다. 여기서만 들어갈 수 있습니다.</div>
     </div>
-    <div class="lab-summary">
-      <div class="stat-card"><div class="num" id="labTotal">-</div><div class="label">전체 샘플</div></div>
-      <div class="stat-card"><div class="num" id="labFront">-</div><div class="label">앞차기</div></div>
-      <div class="stat-card"><div class="num" id="labRound">-</div><div class="label">돌려차기</div></div>
-      <div class="stat-card"><div class="num" id="labNew">-</div><div class="label">옆차기·뒤차기</div></div>
-    </div>
-    <div class="lab-table-actions"><button class="btn-add btn-ghost" onclick="loadLabData()">↻ 새로고침</button><button class="btn-add btn-gold" onclick="downloadLabJson()">JSON 다운로드</button></div>
-    <div class="table-wrap"><table><thead><tr><th>수집일시</th><th>발차기</th><th>발</th><th>도장</th><th>프레임</th><th>길이</th></tr></thead><tbody id="labSamplesTable"><tr><td colspan="6" class="loading">불러오는 중...</td></tr></tbody></table></div>
+    <div class="exp-grid" id="expGrid"></div>
   </div>
 
   <!-- ===== 홈페이지 관리 탭 ===== -->
@@ -624,7 +628,7 @@ function switchTab(tab) {
   document.getElementById('tab-'+tab).classList.add('active');
   if (tab === 'license') loadLicenses();
   if (tab === 'home') loadHomeFields();
-  if (tab === 'lab') loadLabData();
+  if (tab === 'lab') renderExperiments();
 }
 
 /* ==============================
@@ -1189,28 +1193,59 @@ async function saveHomeData(){
 
 
 /* ==============================
-   발차기 연구실 관리
+   실험실
+
+   시험용 페이지 목록이다. 새 실험을 만들면 아래 EXPERIMENTS 에
+   한 칸만 더 적으면 화면에 카드가 생긴다. 다른 곳은 손대지 않아도 된다.
+
+     name   화면에 보일 이름
+     url    파일 이름 (사이트 최상위에 두면 된다)
+     date   만든 날
+     status 'run' 진행 중 · 'wait' 아직 안 씀
+     desc   무엇을 재는 실험인지 한두 줄
+
+   이 페이지들은 sitemap 에 넣지 않고 noindex 를 달아 두므로
+   검색에도 안 잡히고 홈페이지 어디에도 링크가 생기지 않는다.
    ============================== */
-let LAB_CONFIG={enabled:true,kicks:['front_kick','roundhouse_kick','side_kick','back_kick']};
-let LAB_SAMPLES=[];
-const LAB_LABELS={front_kick:'앞차기',roundhouse_kick:'돌려차기',side_kick:'옆차기',back_kick:'뒤차기'};
-function renderLabConfig(){
-  const sw=document.getElementById('labEnabledSwitch');if(sw)sw.classList.toggle('on',!!LAB_CONFIG.enabled);
-  document.querySelectorAll('#tab-lab .lab-check input').forEach(c=>c.checked=(LAB_CONFIG.kicks||[]).includes(c.value));
+const EXPERIMENTS=[
+  {
+    name:'2인 인식 측정실',
+    url:'lab-2p.html',
+    date:'2026-08-01',
+    status:'run',
+    desc:'두 사람을 동시에 인식할 때 몇 fps 가 나오고 관절이 얼마나 흔들리는지 재는 곳. 인원 1·2·3명, 모델 full·lite, GPU·CPU 를 버튼으로 바꿔가며 비교한다. 청·홍 좌우 배정과 발 속도 계산 방식도 함께 확인한다. 라이선스 없이 열린다.'
+  }
+];
+
+function renderExperiments(){
+  const g=document.getElementById('expGrid'); if(!g) return;
+  if(!EXPERIMENTS.length){
+    g.innerHTML='<div class="exp-empty">아직 등록된 실험이 없습니다.</div>';
+    return;
+  }
+  g.innerHTML=EXPERIMENTS.map(x=>{
+    const run = x.status==='run';
+    return `<div class="exp-card">
+      <div class="exp-top">
+        <div class="exp-name">${escapeHtml(x.name)}</div>
+        <span class="exp-tag ${run?'run':'wait'}">${run?'진행 중':'대기'}</span>
+      </div>
+      <div class="exp-desc">${escapeHtml(x.desc)}</div>
+      <div class="exp-meta">${escapeHtml(x.date)} · ${escapeHtml(x.url)}</div>
+      <div class="exp-act">
+        <a class="btn-add" href="${escapeHtml(x.url)}" target="_blank" rel="noopener">열기</a>
+        <button class="btn-add btn-ghost" onclick="copyExpLink('${escapeHtml(x.url)}')">주소 복사</button>
+      </div>
+    </div>`;
+  }).join('');
 }
-function toggleLabEnabled(){LAB_CONFIG.enabled=!LAB_CONFIG.enabled;renderLabConfig();}
-async function loadLabData(){
-  const tbody=document.getElementById('labSamplesTable');if(tbody)tbody.innerHTML='<tr><td colspan="6" class="loading">불러오는 중...</td></tr>';
-  try{const [cfg,samples]=await Promise.all([edgeCall('ADMIN_GET_KICK_LAB_CONFIG',{}),edgeCall('GET_KICK_LAB_SAMPLES',{limit:500})]);LAB_CONFIG=cfg||LAB_CONFIG;LAB_SAMPLES=Array.isArray(samples)?samples:[];renderLabConfig();renderLabSamples();}catch(e){if(tbody)tbody.innerHTML=`<tr><td colspan="6" class="empty-msg">불러오기 실패: ${escapeHtml(e.message)}</td></tr>`;}
+
+/* 도장 태블릿에서 열려면 주소가 필요하다. 카톡으로 보내기 편하게 복사해 준다. */
+async function copyExpLink(u){
+  const full=location.origin+'/'+u;
+  try{ await navigator.clipboard.writeText(full); showToast('주소를 복사했습니다'); }
+  catch(e){ prompt('아래 주소를 복사하세요', full); }
 }
-async function saveLabConfig(){LAB_CONFIG.kicks=Array.from(document.querySelectorAll('#tab-lab .lab-check input:checked')).map(c=>c.value);try{await edgeCall('UPDATE_KICK_LAB_CONFIG',LAB_CONFIG);showToast('연구실 설정이 저장되었습니다!');}catch(e){alert('저장 실패: '+e.message)}}
-function renderLabSamples(){
-  const count=k=>LAB_SAMPLES.filter(x=>x.kick_type===k).length;
-  document.getElementById('labTotal').textContent=LAB_SAMPLES.length;document.getElementById('labFront').textContent=count('front_kick');document.getElementById('labRound').textContent=count('roundhouse_kick');document.getElementById('labNew').textContent=count('side_kick')+count('back_kick');
-  const tbody=document.getElementById('labSamplesTable');if(!LAB_SAMPLES.length){tbody.innerHTML='<tr><td colspan="6" class="empty-msg">아직 수집된 데이터가 없습니다.</td></tr>';return;}
-  tbody.innerHTML=LAB_SAMPLES.map(x=>`<tr><td>${escapeHtml(new Date(x.created_at).toLocaleString('ko-KR'))}</td><td><b>${escapeHtml(LAB_LABELS[x.kick_type]||x.kick_type)}</b></td><td>${x.foot==='right'?'오른발':'왼발'}</td><td>${escapeHtml(x.dojang_name||'-')}</td><td>${Number(x.frame_count||0).toLocaleString()}개</td><td>${((x.duration_ms||0)/1000).toFixed(1)}초</td></tr>`).join('');
-}
-function downloadLabJson(){if(!LAB_SAMPLES.length){alert('다운로드할 데이터가 없습니다.');return;}const blob=new Blob([JSON.stringify(LAB_SAMPLES,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`kick-lab-${todayStr()}.json`;a.click();URL.revokeObjectURL(a.href);}
 
 /* ── 이벤트 ── */
 document.getElementById('pwModalBg').addEventListener('click', e => { if(e.target===e.currentTarget) closePwModal(); });
