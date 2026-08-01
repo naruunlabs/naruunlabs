@@ -125,6 +125,11 @@
         <tr><td>측정 시간</td><td id="elapsed">0 초</td></tr>
         <tr><td><b>성능 유지</b></td><td id="thermal">--</td></tr>
       </table>
+      <canvas id="fpsChart" height="90" style="width:100%;height:90px;margin-top:10px;display:block"></canvas>
+      <div class="note" style="margin-top:4px">
+        시간에 따른 fps입니다. 처음엔 높다가 <b>몇 분 뒤 계단처럼 내려가면 발열</b>로 기기가
+        스스로 속도를 낮춘 것입니다. 태블릿에서 특히 잘 나타납니다.
+      </div>
       <div class="note" id="verdict">10초 이상 움직이면서 재야 값이 정확합니다.</div>
       <div class="note">
         <b>인원 끊김</b>은 잡히는 사람 수가 바뀐 횟수입니다(2명→1명→2명).
@@ -578,6 +583,44 @@ function badgeMsg(m){
   badge.style.display='block'; badge.textContent=m;
 }
 
+/* fps 흐름 그래프 — 언제 떨어졌는지가 왜 떨어졌는지를 알려준다.
+   서서히 내려가면 발열, 갑자기 뚝 떨어지면 다른 앱이나 화면녹화 같은 것. */
+function drawChart(){
+  const cv=$('fpsChart'); if(!cv) return;
+  const dpr=window.devicePixelRatio||1;
+  const W=cv.clientWidth||600, H=90;
+  if(cv.width!==Math.round(W*dpr)){ cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); }
+  const g=cv.getContext('2d');
+  g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,W,H);
+
+  const MAXY=60, pad=4;
+  const gy=v=>H-pad-(v/MAXY)*(H-pad*2);
+
+  /* 눈금 30fps, 15fps */
+  g.strokeStyle='rgba(255,255,255,.12)'; g.lineWidth=1;
+  g.fillStyle='rgba(255,255,255,.30)'; g.font='9px sans-serif';
+  [30,15].forEach(v=>{
+    const y=gy(v);
+    g.beginPath(); g.moveTo(22,y); g.lineTo(W,y); g.stroke();
+    g.fillText(v+'', 2, y+3);
+  });
+
+  if(fpsSamples.length<2) return;
+  const t0=fpsSamples[0].t, t1=Math.max(fpsSamples[fpsSamples.length-1].t, t0+10);
+  const gx=t=>22+((t-t0)/(t1-t0))*(W-26);
+
+  g.beginPath();
+  fpsSamples.forEach((s,i)=>{ const x=gx(s.t), y=gy(Math.min(s.fps,MAXY));
+    i?g.lineTo(x,y):g.moveTo(x,y); });
+  g.strokeStyle='#3ddc84'; g.lineWidth=1.6; g.stroke();
+
+  /* 1분 눈금 */
+  g.fillStyle='rgba(255,255,255,.30)';
+  for(let m=60;m<=t1;m+=60){ const x=gx(m);
+    g.fillRect(x,H-pad-2,1,4); g.fillText((m/60)+'분', x-8, H-pad-5); }
+}
+
 /* 처음 1분 평균과 최근 1분 평균을 비교해 성능이 떨어졌는지 본다.
    2분은 지나야 의미가 있다. 태블릿 발열 확인용. */
 function thermalCheck(el){
@@ -608,7 +651,7 @@ function updatePerf(now){
   if(el>3 && fps>0){
     fpsSum+=fps; fpsCnt++;
     if(fpsMinVal===null||fps<fpsMinVal) fpsMinVal=fps;
-    if(now-lastSampleT>=1000){ lastSampleT=now; fpsSamples.push({t:el, fps}); }
+    if(now-lastSampleT>=1000){ lastSampleT=now; fpsSamples.push({t:el, fps}); drawChart(); }
   }
 
   /* 발열로 느려지는지 — 처음 1분과 최근 1분을 견준다 */
