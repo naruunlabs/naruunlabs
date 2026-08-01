@@ -73,7 +73,8 @@
   <h1>2인 인식 측정 · 실험실</h1>
   <div class="sub">
     킥마스터 원본은 건드리지 않는 측정 전용 페이지입니다. 라이선스 확인도 없습니다.<br>
-    <b>측정 순서</b> · ① 혼자 서서 1명 기준값 재기 → ② 두 명 서서 2명으로 재기 → ③ 아래 요약 복사해서 보내주기
+    <b>측정 순서</b> · ① 혼자 서서 1명 재기 → ② 두 명 서서 2명으로 재기 → ③ <b>파일로 내려받기</b> 눌러 보내주기<br>
+    설정을 바꾸면 직전 측정이 자동으로 기록에 쌓입니다. 파일 하나에 전부 들어갑니다.
   </div>
 
   <div class="panel">
@@ -90,14 +91,22 @@
       <button class="sel on" data-k="dl" data-v="GPU">GPU</button>
       <button class="sel" data-k="dl" data-v="CPU">CPU</button>
     </div>
+    <div class="grp"><span>해상도</span>
+      <button class="sel on" data-k="rs" data-v="720">720p</button>
+      <button class="sel" data-k="rs" data-v="540">540p</button>
+      <button class="sel" data-k="rs" data-v="480">480p</button>
+    </div>
     <div class="grp"><span>좌우반전</span>
       <button class="sel on" data-k="mr" data-v="1">켬</button>
       <button class="sel" data-k="mr" data-v="0">끔</button>
     </div>
+    <div class="grp"><span>모델비교</span>
+      <button class="sel" id="btnCmp">full ↔ lite 동시</button>
+    </div>
     <div class="grp" style="margin-left:auto">
-      <button class="act" id="btnSave">지금 기록 저장</button>
+      <button class="act" id="btnSave">기록 저장</button>
+      <button class="act" id="btnFile">파일로 내려받기</button>
       <button class="act" id="btnReset">다시 재기</button>
-      <button class="act" id="btnCopy">전체 복사</button>
     </div>
   </div>
 
@@ -136,6 +145,27 @@
         <b>인식 튐</b>은 발이 한 프레임에 화면 40% 넘게 순간이동한 횟수로,
         사람은 못 하는 움직임이니 인식이 엉뚱한 곳을 짚은 것입니다.
         <b>둘 다 0에 가까워야 2인 모드에서 점수가 뒤바뀌지 않습니다.</b>
+      </div>
+    </div>
+
+    <div class="card" id="cmpCard" style="display:none;grid-column:1/-1">
+      <h2>full ↔ lite 같은 순간 비교</h2>
+      <table>
+        <tr><td>무릎 각도 · full</td><td id="cmpKF">--</td></tr>
+        <tr><td>무릎 각도 · lite</td><td id="cmpKL">--</td></tr>
+        <tr><td><b>무릎 각도 평균 차이</b></td><td id="cmpKD">--</td></tr>
+        <tr><td style="padding-top:9px">발 높이 · full</td><td id="cmpPF" style="padding-top:9px">--</td></tr>
+        <tr><td>발 높이 · lite</td><td id="cmpPL">--</td></tr>
+        <tr><td><b>발 높이 평균 차이</b></td><td id="cmpPD">--</td></tr>
+        <tr><td style="padding-top:9px">추론 · full / lite</td><td id="cmpInf" style="padding-top:9px">--</td></tr>
+        <tr><td>비교한 프레임</td><td id="cmpN">0</td></tr>
+      </table>
+      <div class="note">
+        같은 카메라 화면을 두 모델에 동시에 넣어 결과를 견줍니다. 사람도 순간도 같으니 공정한 비교입니다.<br>
+        <b>무릎 각도 평균 차이</b>가 관건입니다. 3도 이하면 사용자가 못 느끼고,
+        10도를 넘으면 앞차기·돌려차기 분류가 흔들립니다.
+        <b>발 높이</b>는 점수에 바로 반영되는 값이라 3%를 넘으면 점수가 눈에 띄게 달라집니다.<br>
+        ※ 두 모델을 같이 돌리므로 <b>이 모드에서는 fps가 절반</b>입니다. 성능 측정용이 아니라 정확도 비교용입니다.
       </div>
     </div>
 
@@ -216,7 +246,9 @@
   </div>
 
   <div class="card" style="margin-top:10px">
-    <h2>요약 — 이 내용을 복사해서 보내주세요</h2>
+    <h2>요약 (글로 보내고 싶을 때)
+      <button class="act" id="btnCopy" style="margin-left:auto;font-size:11px;padding:4px 9px">복사</button>
+    </h2>
     <textarea id="summary" readonly></textarea>
     <div class="note">
       <b>각도 흔들림</b>은 가만히 서 있을 때의 무릎 각도 떨림입니다.
@@ -239,9 +271,14 @@ const $ = id => document.getElementById(id);
 const video=$('video'), canvas=$('overlay'), ctx=canvas.getContext('2d');
 const camWrap=$('camWrap'), badge=$('badge');
 
-let cfg = { np:1, md:'full', dl:'GPU', mr:1 };
+let cfg = { np:1, md:'full', dl:'GPU', mr:1, rs:720 };
 let vision=null, landmarker=null, draw=null;
 let lastVideoTime=-1, building=false;
+
+/* full ↔ lite 동시 비교용 두 번째 모델. 켤 때만 만든다. */
+let liteLm=null, cmpOn=false, cmpInfMs=[];
+let cmpKneeDiffs=[], cmpPctDiffs=[];
+let cmpLastF=null, cmpLastL=null;
 
 /* ── 측정 상태 ── */
 let frameTimes=[], infTimes=[], fpsMinVal=null, fpsSum=0, fpsCnt=0;
@@ -277,7 +314,7 @@ try{ history=JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); }catch(e){ histor
 function snapshot(){
   const el=(performance.now()-startedAt)/1000;
   return {
-    설정:`${cfg.np}명 · ${cfg.md} · ${cfg.dl}`,
+    설정:`${cfg.np}명 · ${cfg.md} · ${cfg.dl} · ${cfg.rs}p${cmpOn?' · 비교중':''}`,
     해상도:$('res').textContent,
     시간:+el.toFixed(0),
     평균fps: fpsCnt? +(fpsSum/fpsCnt).toFixed(1) : null,
@@ -318,7 +355,28 @@ document.querySelectorAll('button.sel').forEach(b=>{
     cfg[k] = (k==='np'||k==='mr') ? parseInt(v,10) : v;
     if(k==='mr') camWrap.classList.toggle('mir', cfg.mr===1);
     if(k==='np'||k==='md'||k==='dl'){ resetStats(); buildModel(); }
+    if(k==='rs'){ resetStats(); startCam(); }
   });
+});
+
+/* ── full ↔ lite 동시 비교 ── */
+$('btnCmp').addEventListener('click', async ()=>{
+  cmpOn=!cmpOn;
+  $('btnCmp').classList.toggle('on', cmpOn);
+  $('cmpCard').style.display = cmpOn ? '' : 'none';
+  cmpKneeDiffs=[]; cmpPctDiffs=[]; cmpInfMs=[];
+  if(cmpOn){
+    badge.style.display='block'; badge.textContent='lite 모델 준비 중…';
+    try{
+      liteLm=await PoseLandmarker.createFromOptions(vision,{
+        baseOptions:{ modelAssetPath:MODEL.lite, delegate:cfg.dl },
+        runningMode:"VIDEO", numPoses:cfg.np
+      });
+      badge.style.display='none';
+    }catch(e){ badge.textContent='lite 모델 실패: '+(e.message||e); cmpOn=false; $('btnCmp').classList.remove('on'); }
+  }else{
+    if(liteLm){ liteLm.close(); liteLm=null; }
+  }
 });
 $('btnSave').addEventListener('click',()=>{
   const el=(performance.now()-startedAt)/1000;
@@ -330,6 +388,44 @@ $('btnSave').addEventListener('click',()=>{
   $('btnSave').textContent='저장됨';
   setTimeout(()=>$('btnSave').textContent='지금 기록 저장',1500);
 });
+/* ── 파일로 내려받기 ──
+   태블릿에서도 브라우저의 내려받기 폴더에 바로 저장된다.
+   (아이패드 사파리는 '파일' 앱의 다운로드 폴더로 들어간다) */
+$('btnFile').addEventListener('click',()=>{
+  const el=(performance.now()-startedAt)/1000;
+  const th=thermalCheck(el);
+  const data={
+    측정일시: new Date().toLocaleString('ko-KR'),
+    기기: DEVICE,
+    전체기기정보: navigator.userAgent,
+    저장된기록: history,
+    지금재던것: (fpsCnt? {...snapshot(), 반전:cfg.mr?'켬':'끔', 해상도설정:cfg.rs+'p'} : null),
+    성능유지: { 처음1분:th.first, 최근1분:th.last, 하락률퍼센트:th.drop },
+    fps흐름: fpsSamples,
+    모델비교: cmpKneeDiffs.length ? {
+      무릎각도_평균차이: +mean(cmpKneeDiffs).toFixed(2),
+      발높이_평균차이: +mean(cmpPctDiffs).toFixed(2),
+      비교프레임수: cmpKneeDiffs.length,
+      추론_full_ms: +(mean(infTimes)||0).toFixed(1),
+      추론_lite_ms: +(mean(cmpInfMs)||0).toFixed(1)
+    } : null,
+    청홍: {
+      청:{ 무릎R:$('c_kr').textContent, 흔들림:$('c_jit').textContent, 골반:$('c_vis').textContent },
+      홍:{ 무릎R:$('h_kr').textContent, 흔들림:$('h_jit').textContent, 골반:$('h_vis').textContent }
+    }
+  };
+  const d=new Date(), p=n=>String(n).padStart(2,'0');
+  const stamp=`${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`lab2p_${stamp}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  $('btnFile').textContent='내려받음';
+  setTimeout(()=>$('btnFile').textContent='파일로 내려받기',1800);
+});
+
 $('btnClearHist').addEventListener('click',()=>{
   if(!confirm('저장된 기록을 모두 지울까요?')) return;
   history=[]; try{ localStorage.removeItem(HIST_KEY); }catch(e){}
@@ -413,11 +509,15 @@ async function buildModel(){
 }
 
 /* ── 카메라 ── */
+const RES={720:[1280,720], 540:[960,540], 480:[854,480]};
 async function startCam(){
   try{
+    if(video.srcObject) video.srcObject.getTracks().forEach(t=>t.stop());
+    const [w,h]=RES[cfg.rs]||RES[720];
     const s=await navigator.mediaDevices.getUserMedia({
-      video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:720} }, audio:false });
+      video:{ facingMode:'user', width:{ideal:w}, height:{ideal:h} }, audio:false });
     video.srcObject=s; await video.play();
+    lastVideoTime=-1;
   }catch(e){
     badge.textContent='카메라를 열지 못했습니다.\n'+(e.message||e)+
       '\n※ 이 페이지는 https 주소에서만 카메라가 켜집니다.';
@@ -444,6 +544,28 @@ function std(arr){
   return Math.sqrt(arr.reduce((a,b)=>a+(b-m)*(b-m),0)/arr.length);
 }
 function fmt(v,d=1,suffix=''){ return (v==null||!isFinite(v))?'--':v.toFixed(d)+suffix; }
+
+/* 랜드마크 한 벌에서 비교에 쓸 값만 뽑는다 (모델끼리 견주기 위한 것) */
+function metricsOf(lm){
+  if(!lm||!lm[11]||!lm[24]) return null;
+  const shoulderY=(lm[11].y+lm[12].y)/2, hipY=(lm[23].y+lm[24].y)/2;
+  const torso=hipY-shoulderY;
+  if(torso<=0.02) return null;
+  const kR=angleDeg(lm[24],lm[26],lm[28]);
+  const fR=footPoint(lm,'right'), fL=footPoint(lm,'left');
+  const hi=(fR&&fL)?(fR.y<fL.y?fR:fL):(fR||fL);
+  let pct=null;
+  if(hi){ const lift=(hipY-hi.y)/torso; pct=Math.max(0,Math.min(100,((lift+0.8)/1.6)*100)); }
+  return { kR, pct, hipX:(lm[23].x+lm[24].x)/2 };
+}
+/* 두 모델이 찾은 사람들을 화면 위치 기준으로 같은 순서로 세운다 */
+function sortedPeople(res){
+  const out=[];
+  (res.landmarks||[]).forEach(lm=>{ const m=metricsOf(lm); if(m) out.push(m); });
+  out.sort((a,b)=> cfg.mr===1 ? b.hipX-a.hipX : a.hipX-b.hipX);
+  return out;
+}
+const mean=a=>a.length? a.reduce((x,y)=>x+y,0)/a.length : null;
 
 /* ── 메인 루프 ── */
 function loop(){
@@ -562,6 +684,40 @@ function loop(){
     $('spS').innerHTML=`<span class="${peakSpS>0.036?'good':'dim'}">${peakSpS.toFixed(3)}</span>`;
     $('spFmax').innerHTML=`<span class="${maxSpF>0.0012?'good':'dim'}">${maxSpF.toFixed(4)}</span>`;
     $('spSmax').innerHTML=`<span class="${maxSpS>0.036?'good':'dim'}">${maxSpS.toFixed(3)}</span>`;
+
+    /* ── full ↔ lite 같은 프레임 비교 ──
+       같은 영상, 같은 순간을 두 모델에 넣어 결과 차이만 본다. */
+    if(cmpOn && liteLm){
+      const l0=performance.now();
+      const lres=liteLm.detectForVideo(video, now);
+      cmpInfMs.push(performance.now()-l0); if(cmpInfMs.length>30) cmpInfMs.shift();
+
+      const F=sortedPeople(res), L=sortedPeople(lres);
+      const n=Math.min(F.length, L.length);
+      for(let i=0;i<n;i++){
+        if(F[i].kR!=null && L[i].kR!=null){
+          cmpKneeDiffs.push(Math.abs(F[i].kR-L[i].kR));
+          if(cmpKneeDiffs.length>3000) cmpKneeDiffs.shift();
+        }
+        if(F[i].pct!=null && L[i].pct!=null){
+          cmpPctDiffs.push(Math.abs(F[i].pct-L[i].pct));
+          if(cmpPctDiffs.length>3000) cmpPctDiffs.shift();
+        }
+      }
+      cmpLastF=F[0]||null; cmpLastL=L[0]||null;
+
+      const kd=mean(cmpKneeDiffs), pd=mean(cmpPctDiffs);
+      $('cmpKF').textContent=fmt(cmpLastF?.kR,1,'°');
+      $('cmpKL').textContent=fmt(cmpLastL?.kR,1,'°');
+      $('cmpKD').innerHTML = kd==null?'--'
+        : `<span class="${kd<3?'good':(kd<10?'mid':'bad')}">${kd.toFixed(1)}°</span>`;
+      $('cmpPF').textContent=fmt(cmpLastF?.pct,1,'%');
+      $('cmpPL').textContent=fmt(cmpLastL?.pct,1,'%');
+      $('cmpPD').innerHTML = pd==null?'--'
+        : `<span class="${pd<1.5?'good':(pd<3?'mid':'bad')}">${pd.toFixed(1)}%</span>`;
+      $('cmpInf').textContent=`${mean(infTimes)?.toFixed(1) ?? '--'} / ${mean(cmpInfMs)?.toFixed(1) ?? '--'} ms`;
+      $('cmpN').textContent=cmpKneeDiffs.length+' 개';
+    }
 
     if(people.length===0) badgeMsg('사람을 찾는 중…');
     else if(people.length<cfg.np) badgeMsg(`${cfg.np}명 설정인데 ${people.length}명만 잡힙니다`);
