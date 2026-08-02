@@ -2566,6 +2566,20 @@ body.hud-v21.akm-ui #drillResultText{font-size:64px !important; font-weight:1000
 
 
 
+/* 2026-08-03: 공통 효과 — 발차기 성공·격파·겨루기 타격 순간 화면 가장자리가
+   그 사람 색으로 짧게 번쩍인다. 1인은 골드, 2인은 청/홍 색. 모든 모드 공통. */
+#edgeFlash{
+  position:fixed; inset:0; z-index:20; pointer-events:none; opacity:0;
+  background:radial-gradient(ellipse at center, transparent 52%, var(--ef-color, rgba(255,209,90,.55)) 100%);
+  mix-blend-mode:screen;
+}
+#edgeFlash.show{ animation:edgeFlashPulse .5s ease-out; }
+@keyframes edgeFlashPulse{
+  0%{opacity:0;}
+  16%{opacity:1;}
+  100%{opacity:0;}
+}
+
 /* v31: 겨루기 타격감 강화 + 판정 안정화 */
 #impactFlash{
   position:absolute; inset:0; z-index:8; pointer-events:none; opacity:0;
@@ -5704,6 +5718,7 @@ function onDrillKick(peak, traj){
   lastColor='#4caf50';
 
   sndSuccess();
+  flashEdge(twoPlayerMode ? (active2pSlot===slot2p.c?'c':'h') : null);
   if(!twoPlayerMode){ popup(result.score+'점','#4caf50'); renderStats(); }
 
   trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajKneeAngle3D=[]; trajShoulderW=[]; trajActive=false; drillSide=0; resetPreRoll();
@@ -5832,6 +5847,7 @@ function handleSparringPracticeKick(peak){
   renderStats();
   popup(String(score), lastColor);
   sndScore(score);
+  flashEdge(null);
   nextSparringMission();
   trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajKneeAngle3D=[]; trajShoulderW=[]; trajActive=false; drillSide=0; resetPreRoll();
 }
@@ -5852,6 +5868,17 @@ function showDamage(text,kind='body'){
   damagePopup.textContent=text;
   damagePopup.className='show '+kind;
   setTimeout(()=>{ damagePopup.className=''; },1250);
+}
+/* 공통 효과 — 화면 가장자리 색 번쩍임. 발차기 성공·격파·겨루기 타격 모두 이걸 부른다.
+   who: 1인이면 생략(골드), 2인이면 'c'(청/파랑) 또는 'h'(홍/빨강). */
+function flashEdge(who){
+  let el=document.getElementById('edgeFlash');
+  if(!el){ el=document.createElement('div'); el.id='edgeFlash'; camWrap.appendChild(el); }
+  const color = who==='c' ? 'rgba(49,183,255,.55)' : who==='h' ? 'rgba(255,48,79,.55)' : 'rgba(255,209,90,.55)';
+  el.style.setProperty('--ef-color', color);
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
 }
 function showImpactFlash(kind='body'){
   let flash=document.getElementById('impactFlash');
@@ -5925,6 +5952,7 @@ function handleSparringKick(peak){
   const tech=(motion.type==='round'?' · 회전보너스 +'+motion.bonus:(motion.type==='front'?' · 앞차기':' · 판정애매'));
   showDamage('-'+dmg, zone);
   enemyHitMotion(zone);
+  flashEdge(null);
   // 2026-07-27: 콤보가 쌓일수록 음이 반음씩 올라간다(격투게임식).
   // 첫 타는 부위별 타격음, 2타부터 콤보음.
   if(sparringCombo>=2) sndCombo(sparringCombo-1); else sndImpact(zone);
@@ -6021,6 +6049,7 @@ function spawnBalloon(){
 function popBalloon(b,i){
   removeBalloonAt(i,{burst:true,burstText:'💥'});
   sndPop(); balloonCount++; renderStats(); spawnBalloon();
+  flashEdge(null);
 }
 function checkBalloons(fx,fy){
   const W=camWrap.clientWidth, H=camWrap.clientHeight;
@@ -6928,6 +6957,7 @@ function popBalloon2p(key,b,i){
   sndPop(); balloonCount2p[key]++;
   render2pScoreBalloon(key);
   spawnBalloon2p(key);
+  flashEdge(key);
 }
 function checkBalloons2p(key,fx,fy){
   const W=camWrap.clientWidth, H=camWrap.clientHeight;
@@ -6993,6 +7023,7 @@ function handleSparringPracticeKick2p(peak){
   drillScores.push(score);
   popup(String(score), lastColor);
   sndScore(score);
+  flashEdge(active2pSlot===slot2p.c?'c':'h');
   nextSparringMission();
   trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajKneeAngle3D=[]; trajShoulderW=[]; trajActive=false; drillSide=0; resetPreRoll();
 }
@@ -7018,6 +7049,7 @@ function handleSparringKick2p(peak){
   st.damage+=dmg;
   render2pScoreSparring('c'); render2pScoreSparring('h');
   if(st.combo>=2) sndCombo(st.combo-1); else sndImpact(zone);
+  flashEdge(key);
   const enemyEl=document.getElementById(key==='c'?'p2EnemyC':'p2EnemyH');
   if(enemyEl){ enemyEl.classList.remove('hit'); void enemyEl.offsetWidth; enemyEl.classList.add('hit'); setTimeout(()=>enemyEl.classList.remove('hit'),320); }
   if(oppSt.hp<=0) setTimeout(finishSparring2p,500);
