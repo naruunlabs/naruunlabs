@@ -402,38 +402,45 @@ body.two-player-mode .stats-row{
   cursor:pointer; display:flex; align-items:center;
 }
 #p2PlayerToggle button.active{
-  color:#fff; border-left-color:var(--arcade-red);
-  text-shadow:0 2px 12px rgba(0,0,0,.95),0 0 14px rgba(255,48,79,.78);
+  color:#fff; border-left-color:var(--arcade-blue);
+  text-shadow:0 2px 12px rgba(0,0,0,.95),0 0 14px rgba(49,183,255,.78);
 }
 
+/* 청/홍 HUD — 세로로 쌓지 않고 가로 두 줄로 압축해서 아이 얼굴을 덜 가린다. */
 #p2Hud{ display:none; }
 body.two-player-mode #p2Hud{
-  display:flex !important; position:fixed !important; top:132px !important; left:50% !important;
-  transform:translateX(-50%) !important; width:min(560px,74vw) !important; gap:36px !important;
+  display:flex !important; position:fixed !important; top:126px !important; left:50% !important;
+  transform:translateX(-50%) !important; width:min(760px,86vw) !important; gap:40px !important;
   z-index:15 !important; align-items:flex-start !important; pointer-events:none !important;
 }
 .p2-player{
   flex:1; min-width:0; background:transparent; border:0; padding:0; text-align:center;
 }
+.p2-row-main{
+  display:flex; align-items:baseline; justify-content:center; gap:10px; white-space:nowrap;
+}
 .p2-name{
-  font-size:14px; font-weight:1000; letter-spacing:.5px; margin-bottom:2px;
+  font-size:18px; font-weight:1000; letter-spacing:.5px;
   text-shadow:0 2px 8px rgba(0,0,0,.95);
 }
 .p2-player.p2-cheong .p2-name{ color:var(--arcade-blue); }
 .p2-player.p2-hong .p2-name{ color:var(--arcade-red); }
 .p2-count{
-  font-size:44px; font-weight:1000; line-height:1; color:#fff; font-variant-numeric:tabular-nums;
+  font-size:40px; font-weight:1000; line-height:1; color:#fff; font-variant-numeric:tabular-nums;
   text-shadow:0 4px 18px rgba(0,0,0,.96),0 0 22px rgba(49,183,255,.55);
 }
 .p2-player.p2-hong .p2-count{ text-shadow:0 4px 18px rgba(0,0,0,.96),0 0 22px rgba(255,48,79,.55); }
-.p2-count small{ font-size:16px; color:rgba(255,255,255,.5); font-weight:800; text-shadow:none; }
+.p2-count small{ font-size:18px; color:rgba(255,255,255,.5); font-weight:800; text-shadow:none; }
+.p2-row-sub{
+  margin-top:4px; display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap;
+}
 .p2-line{
-  margin-top:6px; font-size:12px; font-weight:1000; letter-spacing:.3px;
+  font-size:14px; font-weight:1000; letter-spacing:.2px; white-space:nowrap;
   color:rgba(255,255,255,.62); text-shadow:0 2px 8px rgba(0,0,0,.95);
 }
 .p2-line b{ color:#fff; font-weight:1000; margin-left:4px; }
 .p2-presence{
-  margin-top:6px; font-size:11px; font-weight:1000; letter-spacing:.3px;
+  font-size:13px; font-weight:1000; letter-spacing:.2px; white-space:nowrap;
   color:rgba(255,255,255,.5); text-shadow:0 2px 8px rgba(0,0,0,.9);
 }
 .p2-presence.on{ color:var(--arcade-green); text-shadow:0 2px 10px rgba(0,0,0,.95),0 0 12px rgba(81,255,157,.6); }
@@ -3528,18 +3535,26 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
     <div id="p2Status">경기 준비</div>
     <div id="p2Hud">
       <div class="p2-player p2-cheong">
-        <div class="p2-name">청</div>
-        <div class="p2-count"><span id="p2cCount">0</span><small>/<span id="p2cTarget">10</span></small></div>
-        <div class="p2-line">이번 점수 <b id="p2cScore">—</b></div>
-        <div class="p2-line">평균 <b id="p2cAvg">—</b></div>
-        <div class="p2-presence" id="p2cPresence">인식 대기</div>
+        <div class="p2-row-main">
+          <span class="p2-name">청</span>
+          <span class="p2-count"><span id="p2cCount">0</span><small>/<span id="p2cTarget">10</span></small></span>
+        </div>
+        <div class="p2-row-sub">
+          <span class="p2-line">이번 점수 <b id="p2cScore">—</b></span>
+          <span class="p2-line">평균 <b id="p2cAvg">—</b></span>
+          <span class="p2-presence" id="p2cPresence">인식 대기</span>
+        </div>
       </div>
       <div class="p2-player p2-hong">
-        <div class="p2-name">홍</div>
-        <div class="p2-count"><span id="p2hCount">0</span><small>/<span id="p2hTarget">10</span></small></div>
-        <div class="p2-line">이번 점수 <b id="p2hScore">—</b></div>
-        <div class="p2-line">평균 <b id="p2hAvg">—</b></div>
-        <div class="p2-presence" id="p2hPresence">인식 대기</div>
+        <div class="p2-row-main">
+          <span class="p2-name">홍</span>
+          <span class="p2-count"><span id="p2hCount">0</span><small>/<span id="p2hTarget">10</span></small></span>
+        </div>
+        <div class="p2-row-sub">
+          <span class="p2-line">이번 점수 <b id="p2hScore">—</b></span>
+          <span class="p2-line">평균 <b id="p2hAvg">—</b></span>
+          <span class="p2-presence" id="p2hPresence">인식 대기</span>
+        </div>
       </div>
     </div>
 
