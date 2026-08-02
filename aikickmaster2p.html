@@ -6178,6 +6178,7 @@ function stopGame(){
   if(gameTimer){ clearInterval(gameTimer); gameTimer=null; }
   timerBadge.classList.remove('show'); readyOverlay.classList.remove('show');
   clearBalloons();
+  if(typeof clearBalloons2p==='function') clearBalloons2p(); // 2인 격파 중 모드를 바꿔도 풍선이 화면에 남지 않도록
   drillResult.classList.remove('show','auto-summary','final-result'); sparringHud?.classList.remove('show');
   if(drillResultTimer){ clearTimeout(drillResultTimer); drillResultTimer=null; }
   renderStats();
