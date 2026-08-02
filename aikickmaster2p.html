@@ -378,15 +378,11 @@ html body:not(.beta-on) #kickLabModal{
    ⚠ 화면 하단 좌(목표횟수·시작버튼) · 하단 중앙(앞R/앞L/돌R/돌L) · 하단 우(전체화면)는
    전부 이미 쓰고 있어서 피했다. 왼쪽 메뉴 목록(발차기연구소까지) 바로 아래 자리를 썼다.
    1인 모드(twoPlayerMode=false)일 때는 전부 display:none. */
-/* ⚠ 기존 akm-ui 규칙(body.hud-v21.akm-ui .hud-balloon-row 등)이 클래스 3개짜리라
-   더 구체적이어서, 처음엔 body.two-player-mode 만으로 숨기려다 밀렸다.
-   body 에 실제로 붙는 클래스를 다 나열해 우선순위를 확실히 이겨야 한다. */
-body.hud-v21.akm-ui.two-player-mode .hud-balloon-row,
-body.hud-v21.akm-ui.two-player-mode .hud-sparring-row,
+/* 2026-08-02 정정: 격파·겨루기 메뉴는 2인에서도 필요하다 (숨기지 않는다).
+   숨기는 건 1인 전용 오른쪽 점수판(stats-row)과 상태문구(#status)뿐 —
+   기존 akm-ui 규칙이 더 구체적이라 밀리는 문제 때문에 body 클래스를 다 나열한다. */
 body.hud-v21.akm-ui.two-player-mode .stats-row,
 body.hud-v21.akm-ui.two-player-mode #status,
-body.two-player-mode .hud-balloon-row,
-body.two-player-mode .hud-sparring-row,
 body.two-player-mode .stats-row,
 body.two-player-mode #status{
   display:none !important;
@@ -463,6 +459,29 @@ body.two-player-mode #p2Status{
   pointer-events:none; box-shadow:0 8px 22px rgba(0,0,0,.4);
 }
 #p2Notice.show{ display:block; }
+
+/* 겨루기 전용 상대 그래픽 — 청 화면(왼쪽 절반)엔 홍 색, 홍 화면(오른쪽 절반)엔 청 색 오라.
+   실제 사람 모습을 가리지 않도록 은은하게, 화면 아래쪽에 둔다. */
+.p2-enemy{
+  display:none; position:fixed; bottom:110px; width:150px; height:150px; z-index:12;
+  pointer-events:none; border-radius:50%; text-align:center;
+}
+body.two-player-mode.sparring-mode .p2-enemy{ display:block; }
+#p2EnemyC{ left:8%; }
+#p2EnemyH{ right:8%; }
+.p2-enemy::before{
+  content:""; position:absolute; inset:0; border-radius:50%;
+  filter:blur(2px); opacity:.55; transition:transform .18s ease, opacity .18s ease;
+}
+.p2-enemy-hong::before{ background:radial-gradient(circle,rgba(255,48,79,.55),rgba(255,48,79,0) 68%); border:2px solid rgba(255,48,79,.5); }
+.p2-enemy-cheong::before{ background:radial-gradient(circle,rgba(49,183,255,.55),rgba(49,183,255,0) 68%); border:2px solid rgba(49,183,255,.5); }
+.p2-enemy.hit::before{ transform:scale(1.18); opacity:.9; }
+.p2-enemy-label{
+  position:absolute; left:50%; bottom:-26px; transform:translateX(-50%); white-space:nowrap;
+  font-size:12px; font-weight:1000; text-shadow:0 2px 8px rgba(0,0,0,.95);
+}
+#p2EnemyC .p2-enemy-label{ color:var(--arcade-red); }
+#p2EnemyH .p2-enemy-label{ color:var(--arcade-blue); }
 
 /* 2인 경기 종료 — 화면 가운데 크게 */
 #p2Result{
@@ -3580,19 +3599,24 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
     <div id="p2Hud">
       <div class="p2-player p2-cheong">
         <span class="p2-name">청</span>
-        <span class="p2-count"><span id="p2cCount">0</span><small>/<span id="p2cTarget">10</span></small></span>
-        <span class="p2-line">이번 <b id="p2cScore">—</b></span>
-        <span class="p2-line">평균 <b id="p2cAvg">—</b></span>
+        <span class="p2-count"><span id="p2cCount">0</span><small id="p2cSuffix">/10</small></span>
+        <span class="p2-line"><span id="p2cLabel1">이번</span> <b id="p2cVal1">—</b></span>
+        <span class="p2-line"><span id="p2cLabel2">평균</span> <b id="p2cVal2">—</b></span>
         <span class="p2-presence" id="p2cPresence">인식 대기</span>
       </div>
       <div class="p2-player p2-hong">
         <span class="p2-name">홍</span>
-        <span class="p2-count"><span id="p2hCount">0</span><small>/<span id="p2hTarget">10</span></small></span>
-        <span class="p2-line">이번 <b id="p2hScore">—</b></span>
-        <span class="p2-line">평균 <b id="p2hAvg">—</b></span>
+        <span class="p2-count"><span id="p2hCount">0</span><small id="p2hSuffix">/10</small></span>
+        <span class="p2-line"><span id="p2hLabel1">이번</span> <b id="p2hVal1">—</b></span>
+        <span class="p2-line"><span id="p2hLabel2">평균</span> <b id="p2hVal2">—</b></span>
         <span class="p2-presence" id="p2hPresence">인식 대기</span>
       </div>
     </div>
+
+    <!-- 2026-08-02 · 겨루기 전용: 청 화면엔 홍을 상징하는 적 그래픽(빨강),
+         홍 화면엔 청을 상징하는 적 그래픽(파랑)을 교차로 보여준다. -->
+    <div id="p2EnemyC" class="p2-enemy p2-enemy-hong"><span class="p2-enemy-label">상대 · 홍</span></div>
+    <div id="p2EnemyH" class="p2-enemy p2-enemy-cheong"><span class="p2-enemy-label">상대 · 청</span></div>
 
     <!-- 2인 안내 토스트 — 잠깐 떴다 사라짐 (예: 격파·겨루기는 2인 미지원 안내) -->
     <div id="p2Notice"></div>
@@ -5793,6 +5817,7 @@ function sparringHitZone(){
 }
 function handleSparringKick(peak){
   if(!running || currentMode!=='sparring') return;
+  if(twoPlayerMode){ handleSparringKick2p(peak); return; }
   if(sparringMode==='practice'){ handleSparringPracticeKick(peak); return; }
   const zone=sparringHitZone();
   const motion=classifyKickMotion();
@@ -6024,15 +6049,22 @@ window.startGame=()=>{
   runReadyCountdown(subTexts[startMode]||'',()=>{
     if(currentMode!==startMode) return;
     running=true; setPlayingUi(true); statusEl.textContent=''; statusEl.style.opacity='0';
-    if(currentMode==='balloon'){ const sec=parseInt(balloonTimeSel?.value||'30'); startBalloon(); startTimed(sec,finishBalloon); }
-    else if(currentMode==='sparring'){ startSparring(); }
+    if(currentMode==='balloon'){
+      const sec=parseInt(balloonTimeSel?.value||'30');
+      if(twoPlayerMode){ startBalloon2p(); render2pStatus('경기 진행 중'); startTimed(sec,finishBalloon2p); }
+      else{ startBalloon(); startTimed(sec,finishBalloon); }
+    }
+    else if(currentMode==='sparring'){
+      if(twoPlayerMode){ startSparring2p(); render2pStatus('경기 진행 중'); const sec=parseInt(sparringTimeSel?.value||'30'); startTimed(sec,finishSparring2p); }
+      else startSparring();
+    }
     else if(isDrillMode()){
       drillTarget=parseInt(drillCountSel.value);
       drillDone=0; drillScores=[];
       if(twoPlayerMode){
         resetSlot2p(slot2p.c); resetSlot2p(slot2p.h);
-        document.getElementById('p2cTarget').textContent=drillTarget;
-        document.getElementById('p2hTarget').textContent=drillTarget;
+        document.getElementById('p2cSuffix').textContent='/'+drillTarget;
+        document.getElementById('p2hSuffix').textContent='/'+drillTarget;
         render2pScore('c'); render2pScore('h');
         render2pStatus('경기 진행 중');
       }else if(drillRunMode==='auto'){
@@ -6661,17 +6693,16 @@ window.setPlayerCount=async function(n){
   document.getElementById('m_p1')?.classList.toggle('active',!twoPlayerMode);
   document.getElementById('m_p2')?.classList.toggle('active',twoPlayerMode);
   if(twoPlayerMode){
-    // 2인은 발차기 모드(앞R/앞L/돌R/돌L)만 지원한다. 격파·겨루기·베타 킥이 선택된
-    // 상태로 넘어오면 자동으로 첫 발차기 모드로 바꿔준다.
-    if(!NORMAL_KICK_MODES.includes(currentMode)){
+    // 2인은 발차기·격파·겨루기를 지원한다. 옆차기·뒤차기(베타 측정용)만
+    // 아직 2인 판정이 없어서, 그 상태로 넘어오면 첫 발차기 모드로 바꿔준다.
+    if(betaKickSet || !MODE_CFG[currentMode]){
       betaKickSet=false;
       setMode(NORMAL_KICK_MODES[0]);
     }
     resetSlot2p(slot2p.c); resetSlot2p(slot2p.h);
-    document.getElementById('p2cTarget').textContent=drillTarget;
-    document.getElementById('p2hTarget').textContent=drillTarget;
+    render2pScore('c'); render2pScore('h');
     render2pStatus('경기 준비');
-    showP2Notice('2인 모드는 발차기만 가능합니다 · 격파·겨루기는 준비 중');
+    showP2Notice('2인 모드 · 옆차기·뒤차기 측정용 발차기만 아직 준비 중입니다');
   }
   try{
     await initModel(twoPlayerMode?2:1, currentModelKind);
@@ -6684,11 +6715,29 @@ function render2pPresence(key,present){
   el.textContent=present?'인식 완료':'찾는 중';
   el.classList.toggle('on',!!present);
 }
+/* 얇은 HUD 한 줄에 넣을 값들. 발차기/격파/겨루기마다 보여줄 항목이 달라서
+   공통 세터 하나로 모아두고, 모드별 render 함수가 이 값만 채운다. */
+function setP2Fields(key,f){
+  const g=id=>document.getElementById('p2'+key+id);
+  if(g('Count')) g('Count').textContent=f.count;
+  if(g('Suffix')) g('Suffix').textContent=f.suffix;
+  if(g('Label1')) g('Label1').textContent=f.label1;
+  if(g('Val1')) g('Val1').textContent=f.val1;
+  if(g('Label2')) g('Label2').textContent=f.label2;
+  if(g('Val2')) g('Val2').textContent=f.val2;
+}
 function render2pScore(key){
+  if(currentMode==='balloon') return render2pScoreBalloon(key);
+  if(currentMode==='sparring') return render2pScoreSparring(key);
+  return render2pScoreKick(key);
+}
+function render2pScoreKick(key){
   const slot=slot2p[key];
-  const cEl=document.getElementById('p2'+key+'Count'); if(cEl) cEl.textContent=slot.drillDone;
-  const sEl=document.getElementById('p2'+key+'Score'); if(sEl) sEl.textContent=(slot.lastScore==null?'—':slot.lastScore);
-  const aEl=document.getElementById('p2'+key+'Avg'); if(aEl) aEl.textContent=(avgOf(slot.drillScores)??'—');
+  setP2Fields(key,{
+    count:slot.drillDone, suffix:'/'+drillTarget,
+    label1:'이번', val1:(slot.lastScore==null?'—':slot.lastScore),
+    label2:'평균', val2:(avgOf(slot.drillScores)??'—')
+  });
 }
 function render2pStatus(text){
   const el=document.getElementById('p2Status');
@@ -6710,28 +6759,180 @@ window.setTwoPlayerShowResult=function(on){
 window.closeP2Result=function(){
   document.getElementById('p2Result')?.classList.remove('show');
 };
-
+/* 결과 화면 공통 표시 — 승패표시 켬/끔에 따라 제목만 다르게. */
+function showP2Result(cLabel,cVal,hLabel,hVal,winnerKey){
+  running=false; setPlayingUi(false);
+  let title;
+  if(twoPlayerShowResult){
+    title = winnerKey==null ? '무승부' : (winnerKey==='c' ? '청 승리!' : '홍 승리!');
+  } else {
+    title = '경기 종료';
+  }
+  render2pStatus(title);
+  const titleEl=document.getElementById('p2ResultTitle');
+  const scoresEl=document.getElementById('p2ResultScores');
+  if(titleEl) titleEl.textContent=title;
+  if(scoresEl) scoresEl.innerHTML='청 <b class="p2rc">'+cLabel+' '+cVal+'</b> · 홍 <b class="p2rh">'+hLabel+' '+hVal+'</b>';
+  document.getElementById('p2Result')?.classList.add('show');
+  setStartBtn(false,'다시 시작');
+}
 function check2pFinish(){
+  if(!isDrillMode()) return; // 격파·겨루기는 각자 finishBalloon2p/finishSparring2p 가 처리
   const c=slot2p.c, h=slot2p.h;
   if(c.drillDone>=drillTarget) c.finished=true;
   if(h.drillDone>=drillTarget) h.finished=true;
   if(c.finished && h.finished){
-    running=false; setPlayingUi(false);
     const cAvg=avgOf(c.drillScores)||0, hAvg=avgOf(h.drillScores)||0;
-    let title;
-    if(twoPlayerShowResult){
-      title = cAvg===hAvg ? '무승부' : (cAvg>hAvg ? '청 승리!' : '홍 승리!');
-    } else {
-      title = '경기 종료';
-    }
-    render2pStatus(title);
-    const titleEl=document.getElementById('p2ResultTitle');
-    const scoresEl=document.getElementById('p2ResultScores');
-    if(titleEl) titleEl.textContent=title;
-    if(scoresEl) scoresEl.innerHTML='청 <b class="p2rc">'+cAvg+'점</b> · 홍 <b class="p2rh">'+hAvg+'점</b>';
-    document.getElementById('p2Result')?.classList.add('show');
-    setStartBtn(false,'다시 시작');
+    const winner = cAvg===hAvg ? null : (cAvg>hAvg?'c':'h');
+    showP2Result('평균',cAvg+'점','평균',hAvg+'점',winner);
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   2인 격파 모드 (2026-08-02)
+   화면을 좌/우로 나눠 청/홍이 각자 자기 쪽 타겟만 깨는 방식.
+   기존 1인 격파 로직(spawnBalloon 등)과 같은 CSS·이모지를 그대로 쓰되,
+   타겟이 뜨는 가로 범위와 카운트만 선수별로 나눈다. ══════════════════════ */
+let balloons2p={c:[],h:[]}, balloonCount2p={c:0,h:0};
+function balloonZone2p(key){
+  return key==='c' ? {min:8,max:42} : {min:58,max:92};
+}
+function spawnBalloon2p(key){
+  const zone=balloonZone2p(key);
+  const b=document.createElement('div'); b.className='balloon emoji-target';
+  const cfg=diffCfg();
+  if(difficulty==='hard') b.classList.add('target-hard');
+  const left=zone.min+Math.random()*(zone.max-zone.min), top=42+Math.random()*40;
+  b.style.left=left+'%'; b.style.top=top+'%';
+  b.dataset.left=left; b.dataset.top=top;
+  b.style.setProperty('--target-scale', cfg.balloonSize);
+  b.textContent=balloonTargetEmoji();
+  b.setAttribute('aria-label',cfg.label+' 격파 타겟 · '+(key==='c'?'청':'홍'));
+  camWrap.appendChild(b);
+  balloons2p[key].push(b);
+  const lifeMs=cfg.targetLifeMs||0;
+  if(lifeMs>0){
+    b._lifeTimer=setTimeout(()=>{
+      const idx=balloons2p[key].indexOf(b);
+      if(idx<0 || !running || currentMode!=='balloon') return;
+      removeBalloonAt2p(key,idx,{miss:true,burst:true,burstText:'💥'});
+      if(running && currentMode==='balloon') spawnBalloon2p(key);
+    }, lifeMs);
+  }
+}
+function removeBalloonAt2p(key,index,opts={}){
+  const arr=balloons2p[key];
+  const b=arr[index];
+  if(!b) return;
+  arr.splice(index,1);
+  if(b._lifeTimer){ clearTimeout(b._lifeTimer); b._lifeTimer=null; }
+  if(opts.miss) b.classList.add('miss'); else b.classList.add('pop');
+  setTimeout(()=>b.remove(), opts.miss?220:250);
+  if(opts.burst){
+    const burst=document.createElement('div'); burst.className='burst emoji-burst'; burst.textContent=opts.burstText||'💥';
+    burst.style.left=b.dataset.left+'%'; burst.style.top=b.dataset.top+'%';
+    camWrap.appendChild(burst); setTimeout(()=>burst.remove(),460);
+  }
+}
+function popBalloon2p(key,b,i){
+  removeBalloonAt2p(key,i,{burst:true,burstText:'💥'});
+  sndPop(); balloonCount2p[key]++;
+  render2pScoreBalloon(key);
+  spawnBalloon2p(key);
+}
+function checkBalloons2p(key,fx,fy){
+  const W=camWrap.clientWidth, H=camWrap.clientHeight;
+  const fpx=fx/100*W, fpy=fy/100*H, R=0.10*W*diffCfg().balloonRadius;
+  const arr=balloons2p[key];
+  for(let i=arr.length-1;i>=0;i--){
+    const b=arr[i];
+    const bx=parseFloat(b.dataset.left)/100*W, by=parseFloat(b.dataset.top)/100*H;
+    if(Math.hypot(fpx-bx,fpy-by)<R) popBalloon2p(key,b,i);
+  }
+}
+function clearBalloons2p(){
+  ['c','h'].forEach(key=>{
+    balloons2p[key].forEach(b=>{ if(b._lifeTimer) clearTimeout(b._lifeTimer); b.remove(); });
+    balloons2p[key]=[];
+  });
+}
+function startBalloon2p(){
+  balloonCount2p={c:0,h:0}; clearBalloons2p();
+  spawnBalloon2p('c'); spawnBalloon2p('c');
+  spawnBalloon2p('h'); spawnBalloon2p('h');
+  render2pScoreBalloon('c'); render2pScoreBalloon('h');
+}
+function render2pScoreBalloon(key){
+  const remain=running?Math.max(0,gameRemain)+'초':'—';
+  setP2Fields(key,{ count:balloonCount2p[key], suffix:'개', label1:'남은시간', val1:remain, label2:'', val2:'' });
+}
+function finishBalloon2p(){
+  running=false; setPlayingUi(false); timerBadge.classList.remove('show'); clearBalloons2p();
+  const cCnt=balloonCount2p.c, hCnt=balloonCount2p.h;
+  const winner = cCnt===hCnt ? null : (cCnt>hCnt?'c':'h');
+  if(cCnt>=10 || hCnt>=10) confetti(Math.max(cCnt,hCnt)>=20);
+  showP2Result('격파',cCnt+'개','격파',hCnt+'개',winner);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   2인 겨루기 모드 (2026-08-02) — 서로 HP를 깎는 방식.
+   실제로 마주보진 않고(카메라 인식상 한계) 지금처럼 나란히 카메라를 보고
+   차되, 발차기가 유효하면 상대 HP가 깎인다. 머리/몸통 정밀 타격존은
+   1인처럼 고정된 상대 캐릭터가 없어 생략하고, 높이 기반 간이 판정을 쓴다.
+   ══════════════════════════════════════════════════════════════════════ */
+function makeSparringSlot(){ return {hp:250,damage:0,combo:0,maxCombo:0,lastHitT:0}; }
+let sparringState2p={c:makeSparringSlot(), h:makeSparringSlot()};
+function sparringHitZone2p(){
+  if(trajY.length && Math.min(...trajY)<0.27) return 'head';
+  if(peakPct>=90) return 'head';
+  return 'body';
+}
+function handleSparringKick2p(peak){
+  const key = active2pSlot===slot2p.c ? 'c' : 'h';
+  const oppKey = key==='c' ? 'h' : 'c';
+  const st=sparringState2p[key], oppSt=sparringState2p[oppKey];
+  if(oppSt.hp<=0) return; // 이미 끝난 경기
+  const zone=sparringHitZone2p();
+  const motion=classifyKickMotion();
+  const base=Math.max(6,Math.round(peak/10));
+  const zoneMul=zone==='head'?1.55:1.0;
+  const now=performance.now();
+  st.combo=(now-st.lastHitT<=SPARRING_COMBO_WINDOW)?st.combo+1:1;
+  st.lastHitT=now;
+  st.maxCombo=Math.max(st.maxCombo,st.combo);
+  const comboMul=st.combo>=5?1.45:st.combo>=3?1.25:st.combo>=2?1.12:1.0;
+  let dmg=Math.round((base*zoneMul*comboMul*motion.quality + motion.bonus));
+  if(peak>=95 && motion.confidence>=0.35) dmg+=2;
+  if(motion.type==='unknown') dmg=Math.max(4,Math.round(dmg*0.8));
+  oppSt.hp=Math.max(0,oppSt.hp-dmg);
+  st.damage+=dmg;
+  render2pScoreSparring('c'); render2pScoreSparring('h');
+  if(st.combo>=2) sndCombo(st.combo-1); else sndImpact(zone);
+  const enemyEl=document.getElementById(key==='c'?'p2EnemyC':'p2EnemyH');
+  if(enemyEl){ enemyEl.classList.remove('hit'); void enemyEl.offsetWidth; enemyEl.classList.add('hit'); setTimeout(()=>enemyEl.classList.remove('hit'),320); }
+  if(oppSt.hp<=0) setTimeout(finishSparring2p,500);
+}
+function startSparring2p(){
+  sparringState2p={c:makeSparringSlot(), h:makeSparringSlot()};
+  render2pScoreSparring('c'); render2pScoreSparring('h');
+}
+function render2pScoreSparring(key){
+  const st=sparringState2p[key];
+  setP2Fields(key,{
+    count:(st.hp<=0?'K.O.':Math.round(st.hp)), suffix:(st.hp<=0?'':'hp'),
+    label1:'데미지', val1:st.damage,
+    label2:'콤보', val2:'x'+st.maxCombo
+  });
+}
+function finishSparring2p(){
+  if(currentMode!=='sparring' || twoPlayerMode!==true) return;
+  const c=sparringState2p.c, h=sparringState2p.h;
+  let winner;
+  if(c.hp<=0 && h.hp<=0) winner=null;
+  else if(c.hp<=0) winner='h';
+  else if(h.hp<=0) winner='c';
+  else winner = c.hp===h.hp ? null : (c.hp>h.hp?'c':'h');
+  showP2Result('HP',(c.hp<=0?'K.O.':Math.round(c.hp)),'HP',(h.hp<=0?'K.O.':Math.round(h.hp)),winner);
 }
 
 /* 한 사람(랜드마크 1세트)에 대한 매 프레임 처리.
@@ -6789,6 +6990,7 @@ function processPersonFrame(lm, wlm){
       if(!twoPlayerMode && currentMode==='sparring' && sparringMode==='live') updateAdaptiveSparringTarget();
 
       if(!twoPlayerMode && currentMode==='balloon'&&running) checkBalloons(fx,fy);
+      if(twoPlayerMode && currentMode==='balloon'&&running && !active2pSlot.finished) checkBalloons2p(active2pSlot===slot2p.c?'c':'h', fx, fy);
     }
   } else {
     if(!twoPlayerMode) barFill.style.width='0%';
