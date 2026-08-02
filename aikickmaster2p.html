@@ -410,6 +410,14 @@ body.two-player-mode #status{
   text-shadow:0 2px 12px rgba(0,0,0,.95),0 0 14px rgba(49,183,255,.78);
 }
 
+/* 2인모드 좌우 구분선 — 아주 연하게, 어디가 자기 자리인지만 알 수 있을 정도로. */
+#p2CenterLine{ display:none; }
+body.two-player-mode #p2CenterLine{
+  display:block; position:fixed; left:50%; top:0; bottom:0; width:0;
+  border-left:2px dashed rgba(255,255,255,.14); pointer-events:none; z-index:4;
+  transform:translateX(-50%);
+}
+
 /* 청/홍 HUD — 한 줄로 압축해서 아이 얼굴을 최대한 덜 가린다. */
 #p2Hud{ display:none; }
 body.two-player-mode #p2Hud{
@@ -468,7 +476,7 @@ body.two-player-mode #p2Status{
   display:none; position:fixed; top:46%; width:112px; height:200px; z-index:12;
   pointer-events:none; text-align:center;
 }
-body.two-player-mode.sparring-mode.playing-ui .p2-enemy{ display:block; }
+body.two-player-mode.sparring-live.playing-ui .p2-enemy{ display:block; }
 #p2EnemyC{ left:30%; transform:translate(-50%,-50%); }
 #p2EnemyH{ left:70%; transform:translate(-50%,-50%); }
 .p2-enemy-svg{
@@ -496,7 +504,7 @@ body.two-player-mode.sparring-mode.playing-ui .p2-enemy{ display:block; }
 /* 2인 겨루기 HP 게이지 — 1인 모드의 enemyHpTrack/Fill과 같은 스타일.
    평소 점수줄(.p2-line) 아래 얇게 깔린다. */
 .p2-hpbar{ display:none; }
-body.sparring-mode .p2-hpbar{
+body.sparring-live .p2-hpbar{
   display:block; flex:0 0 100%; width:100%; margin-top:5px; height:10px;
   border-radius:999px; overflow:hidden; background:rgba(0,0,0,.45);
   border:1px solid rgba(255,255,255,.20); pointer-events:none;
@@ -3653,6 +3661,8 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
 
     <!-- 2026-08-02 · 2인 점수판. 1인 stats-row 와 자리를 바꿔가며 보인다.
          평소엔 한 줄짜리 얇은 HUD만, 경기가 끝나면 #p2Result 가 화면 가운데 크게 뜬다. -->
+    <!-- 2026-08-03 · 2인모드 좌우 구분선. 연하게, 청/홍이 화면 어느 쪽이 자기 자리인지 알 수 있게. -->
+    <div id="p2CenterLine"></div>
     <div id="p2Status">경기 준비</div>
     <div id="p2Hud">
       <div class="p2-player p2-cheong">
@@ -6805,7 +6815,7 @@ function setP2Fields(key,f){
 }
 function render2pScore(key){
   if(currentMode==='balloon') return render2pScoreBalloon(key);
-  if(currentMode==='sparring') return render2pScoreSparring(key);
+  if(currentMode==='sparring') return sparringMode==='practice' ? render2pScoreSparringPractice(key) : render2pScoreSparring(key);
   return render2pScoreKick(key);
 }
 function render2pScoreKick(key){
@@ -6856,8 +6866,10 @@ function showP2Result(cLabel,cVal,hLabel,hVal,winnerKey){
 function check2pFinish(){
   if(!isDrillMode()) return; // 격파·겨루기는 각자 finishBalloon2p/finishSparring2p 가 처리
   const c=slot2p.c, h=slot2p.h;
-  if(c.drillDone>=drillTarget) c.finished=true;
-  if(h.drillDone>=drillTarget) h.finished=true;
+  // 2026-08-03: 한 명이 먼저 끝나도 상태줄은 그대로 "경기 진행 중"을 유지하고,
+  // 방금 끝난 사람만 짧게 토스트로 알려준다 ("청 완료!"). 상대는 하던 대로 계속한다.
+  if(c.drillDone>=drillTarget && !c.finished){ c.finished=true; showP2Notice('청 완료!'); }
+  if(h.drillDone>=drillTarget && !h.finished){ h.finished=true; showP2Notice('홍 완료!'); }
   if(c.finished && h.finished){
     const cAvg=avgOf(c.drillScores)||0, hAvg=avgOf(h.drillScores)||0;
     const winner = cAvg===hAvg ? null : (cAvg>hAvg?'c':'h');
@@ -6964,7 +6976,28 @@ function sparringHitZone2p(){
   if(peakPct>=90) return 'head';
   return 'body';
 }
+/* 2인 겨루기 · 연습모드 — 1인 겨루기 연습모드(랜덤 화살표 미션)를 그대로 재사용.
+   미션 하나를 청/홍이 동시에 보고 각자 시도, 각자 점수·평균이 쌓인다.
+   drillDone/drillScores/lastScore 등은 이미 슬롯에 저장되는 전역변수라 그대로 쓰면
+   run2pFrame의 save/loadFromSlot이 알아서 청/홍 것을 따로 보관해준다. */
+function handleSparringPracticeKick2p(peak){
+  const result=analyzeTraj(peak);
+  let score=result.score || Math.max(40, Math.min(100, Math.round(peak)));
+  const mission=sparringMission || nextSparringMission();
+  const bonus=Math.max(0, Math.round((mission.targetPct-70)/8));
+  score=Math.max(40, Math.min(100, score+bonus));
+  lastScore=score;
+  lastColor=score>=90?'#4ca3ff':(score>=75?'#FF6A1A':'#E3172E');
+  lastGrade=score>=95?'PERFECT':score>=88?'GREAT':score>=75?'GOOD':'TRY';
+  drillDone++;
+  drillScores.push(score);
+  popup(String(score), lastColor);
+  sndScore(score);
+  nextSparringMission();
+  trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajKneeAngle3D=[]; trajShoulderW=[]; trajActive=false; drillSide=0; resetPreRoll();
+}
 function handleSparringKick2p(peak){
+  if(sparringMode==='practice'){ handleSparringPracticeKick2p(peak); return; }
   const key = active2pSlot===slot2p.c ? 'c' : 'h';
   const oppKey = key==='c' ? 'h' : 'c';
   const st=sparringState2p[key], oppSt=sparringState2p[oppKey];
@@ -6990,8 +7023,22 @@ function handleSparringKick2p(peak){
   if(oppSt.hp<=0) setTimeout(finishSparring2p,500);
 }
 function startSparring2p(){
+  if(sparringMode==='practice'){
+    resetSlot2p(slot2p.c); resetSlot2p(slot2p.h);
+    sparringMission=null; nextSparringMission();
+    render2pScoreSparringPractice('c'); render2pScoreSparringPractice('h');
+    return;
+  }
   sparringState2p={c:makeSparringSlot(), h:makeSparringSlot()};
   render2pScoreSparring('c'); render2pScoreSparring('h');
+}
+function render2pScoreSparringPractice(key){
+  const slot=slot2p[key];
+  setP2Fields(key,{
+    count:slot.drillDone, suffix:'회',
+    label1:'이번', val1:(slot.lastScore==null?'—':slot.lastScore),
+    label2:'평균', val2:(avgOf(slot.drillScores)??'—')
+  });
 }
 function render2pScoreSparring(key){
   const st=sparringState2p[key];
@@ -7012,6 +7059,13 @@ function finishSparring2p(){
   if(currentMode!=='sparring' || twoPlayerMode!==true || !running) return;
   running=false; setPlayingUi(false); timerBadge.classList.remove('show');
   if(gameTimer){ clearInterval(gameTimer); gameTimer=null; }
+  if(sparringMode==='practice'){
+    const c=slot2p.c, h=slot2p.h;
+    const cAvg=avgOf(c.drillScores)||0, hAvg=avgOf(h.drillScores)||0;
+    const winner = cAvg===hAvg ? null : (cAvg>hAvg?'c':'h');
+    showP2Result('평균',cAvg+'점','평균',hAvg+'점',winner);
+    return;
+  }
   const c=sparringState2p.c, h=sparringState2p.h;
   let winner;
   if(c.hp<=0 && h.hp<=0) winner=null;
