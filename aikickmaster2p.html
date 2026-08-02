@@ -378,6 +378,13 @@ html body:not(.beta-on) #kickLabModal{
    ⚠ 화면 하단 좌(목표횟수·시작버튼) · 하단 중앙(앞R/앞L/돌R/돌L) · 하단 우(전체화면)는
    전부 이미 쓰고 있어서 피했다. 왼쪽 메뉴 목록(발차기연구소까지) 바로 아래 자리를 썼다.
    1인 모드(twoPlayerMode=false)일 때는 전부 display:none. */
+/* ⚠ 기존 akm-ui 규칙(body.hud-v21.akm-ui .hud-balloon-row 등)이 클래스 3개짜리라
+   더 구체적이어서, 처음엔 body.two-player-mode 만으로 숨기려다 밀렸다.
+   body 에 실제로 붙는 클래스를 다 나열해 우선순위를 확실히 이겨야 한다. */
+body.hud-v21.akm-ui.two-player-mode .hud-balloon-row,
+body.hud-v21.akm-ui.two-player-mode .hud-sparring-row,
+body.hud-v21.akm-ui.two-player-mode .stats-row,
+body.hud-v21.akm-ui.two-player-mode #status,
 body.two-player-mode .hud-balloon-row,
 body.two-player-mode .hud-sparring-row,
 body.two-player-mode .stats-row,
@@ -407,51 +414,86 @@ body.two-player-mode #status{
   text-shadow:0 2px 12px rgba(0,0,0,.95),0 0 14px rgba(49,183,255,.78);
 }
 
-/* 청/홍 HUD — 세로로 쌓지 않고 가로 두 줄로 압축해서 아이 얼굴을 덜 가린다. */
+/* 청/홍 HUD — 한 줄로 압축해서 아이 얼굴을 최대한 덜 가린다. */
 #p2Hud{ display:none; }
 body.two-player-mode #p2Hud{
-  display:flex !important; position:fixed !important; top:126px !important; left:50% !important;
-  transform:translateX(-50%) !important; width:min(760px,86vw) !important; gap:40px !important;
-  z-index:15 !important; align-items:flex-start !important; pointer-events:none !important;
+  display:flex !important; position:fixed !important; top:118px !important; left:50% !important;
+  transform:translateX(-50%) !important; width:min(860px,90vw) !important; gap:44px !important;
+  z-index:15 !important; align-items:baseline !important; pointer-events:none !important;
 }
 .p2-player{
   flex:1; min-width:0; background:transparent; border:0; padding:0; text-align:center;
-}
-.p2-row-main{
-  display:flex; align-items:baseline; justify-content:center; gap:10px; white-space:nowrap;
+  display:flex; align-items:baseline; justify-content:center; gap:10px; flex-wrap:wrap; white-space:nowrap;
 }
 .p2-name{
-  font-size:18px; font-weight:1000; letter-spacing:.5px;
+  font-size:17px; font-weight:1000; letter-spacing:.5px;
   text-shadow:0 2px 8px rgba(0,0,0,.95);
 }
 .p2-player.p2-cheong .p2-name{ color:var(--arcade-blue); }
 .p2-player.p2-hong .p2-name{ color:var(--arcade-red); }
 .p2-count{
-  font-size:40px; font-weight:1000; line-height:1; color:#fff; font-variant-numeric:tabular-nums;
+  font-size:30px; font-weight:1000; line-height:1; color:#fff; font-variant-numeric:tabular-nums;
   text-shadow:0 4px 18px rgba(0,0,0,.96),0 0 22px rgba(49,183,255,.55);
 }
 .p2-player.p2-hong .p2-count{ text-shadow:0 4px 18px rgba(0,0,0,.96),0 0 22px rgba(255,48,79,.55); }
-.p2-count small{ font-size:18px; color:rgba(255,255,255,.5); font-weight:800; text-shadow:none; }
-.p2-row-sub{
-  margin-top:4px; display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap;
-}
+.p2-count small{ font-size:15px; color:rgba(255,255,255,.5); font-weight:800; text-shadow:none; }
 .p2-line{
-  font-size:14px; font-weight:1000; letter-spacing:.2px; white-space:nowrap;
+  font-size:14px; font-weight:1000; letter-spacing:.2px;
   color:rgba(255,255,255,.62); text-shadow:0 2px 8px rgba(0,0,0,.95);
 }
-.p2-line b{ color:#fff; font-weight:1000; margin-left:4px; }
+.p2-line b{ color:#fff; font-weight:1000; margin-left:3px; }
 .p2-presence{
-  font-size:13px; font-weight:1000; letter-spacing:.2px; white-space:nowrap;
+  font-size:12px; font-weight:1000; letter-spacing:.2px;
   color:rgba(255,255,255,.5); text-shadow:0 2px 8px rgba(0,0,0,.9);
 }
 .p2-presence.on{ color:var(--arcade-green); text-shadow:0 2px 10px rgba(0,0,0,.95),0 0 12px rgba(81,255,157,.6); }
 #p2Status{ display:none; }
 body.two-player-mode #p2Status{
-  display:block !important; position:fixed !important; top:96px !important; left:50% !important;
+  display:block !important; position:fixed !important; top:92px !important; left:50% !important;
   transform:translateX(-50%) !important; text-align:center; font-size:15px; font-weight:1000;
   letter-spacing:.3px; color:var(--arcade-gold); text-shadow:0 3px 12px rgba(0,0,0,.95),0 0 16px rgba(255,209,90,.7);
   z-index:15 !important;
 }
+
+/* 2인 안내 토스트 — 잠깐 떴다 사라짐 */
+#p2Notice{
+  display:none; position:fixed; top:14px; left:50%; transform:translateX(-50%);
+  background:rgba(5,14,29,.92); border:1px solid rgba(49,183,255,.35); color:#ffd86b;
+  font-size:13px; font-weight:900; padding:9px 20px; border-radius:12px; z-index:99999;
+  pointer-events:none; box-shadow:0 8px 22px rgba(0,0,0,.4);
+}
+#p2Notice.show{ display:block; }
+
+/* 2인 경기 종료 — 화면 가운데 크게 */
+#p2Result{
+  display:none; position:fixed; inset:0; z-index:99995; background:rgba(3,8,16,.82);
+  align-items:center; justify-content:center; flex-direction:column; gap:18px;
+  backdrop-filter:blur(6px);
+}
+#p2Result.show{ display:flex; }
+#p2ResultTitle{
+  font-size:44px; font-weight:1000; color:#fff; letter-spacing:-.5px; text-align:center;
+  text-shadow:0 6px 24px rgba(0,0,0,.9),0 0 30px rgba(255,209,90,.5);
+}
+#p2ResultScores{
+  font-size:22px; font-weight:900; color:rgba(255,255,255,.85); text-align:center;
+  text-shadow:0 3px 14px rgba(0,0,0,.9);
+}
+#p2ResultScores b.p2rc{ color:var(--arcade-blue); }
+#p2ResultScores b.p2rh{ color:var(--arcade-red); }
+#p2ResultCloseBtn{
+  margin-top:10px; padding:12px 32px; border-radius:14px; border:0; cursor:pointer;
+  background:linear-gradient(135deg,#31b7ff,#1f5fd6); color:#fff; font-size:16px; font-weight:900;
+  box-shadow:0 10px 26px rgba(49,183,255,.35);
+}
+
+/* 설정 모달 안 승패표시 켬/끔 버튼 */
+.p2-toggle-row{ display:flex; gap:8px; margin-top:8px; }
+.p2-toggle-btn{
+  flex:1; padding:9px 0; border-radius:10px; border:1.5px solid rgba(76,163,255,.3);
+  background:rgba(13,28,48,.7); color:#9fb6d6; font-size:13px; font-weight:900; cursor:pointer;
+}
+.p2-toggle-btn.active{ background:linear-gradient(135deg,#31b7ff,#1f5fd6); color:#fff; border-color:#5fa2ff; }
 .settings-modal-box{
   background:#0d1c30;
   border:1.5px solid rgba(76,163,255,0.35);
@@ -3532,31 +3574,34 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
       <div id="gameResult2" style="text-align:center;font-size:13px;font-weight:700;color:var(--green);min-height:18px;"></div>
     </div>
 
-    <!-- 2026-08-02 · 2인 점수판. 1인 stats-row 와 자리를 바꿔가며 보인다. -->
+    <!-- 2026-08-02 · 2인 점수판. 1인 stats-row 와 자리를 바꿔가며 보인다.
+         평소엔 한 줄짜리 얇은 HUD만, 경기가 끝나면 #p2Result 가 화면 가운데 크게 뜬다. -->
     <div id="p2Status">경기 준비</div>
     <div id="p2Hud">
       <div class="p2-player p2-cheong">
-        <div class="p2-row-main">
-          <span class="p2-name">청</span>
-          <span class="p2-count"><span id="p2cCount">0</span><small>/<span id="p2cTarget">10</span></small></span>
-        </div>
-        <div class="p2-row-sub">
-          <span class="p2-line">이번 점수 <b id="p2cScore">—</b></span>
-          <span class="p2-line">평균 <b id="p2cAvg">—</b></span>
-          <span class="p2-presence" id="p2cPresence">인식 대기</span>
-        </div>
+        <span class="p2-name">청</span>
+        <span class="p2-count"><span id="p2cCount">0</span><small>/<span id="p2cTarget">10</span></small></span>
+        <span class="p2-line">이번 <b id="p2cScore">—</b></span>
+        <span class="p2-line">평균 <b id="p2cAvg">—</b></span>
+        <span class="p2-presence" id="p2cPresence">인식 대기</span>
       </div>
       <div class="p2-player p2-hong">
-        <div class="p2-row-main">
-          <span class="p2-name">홍</span>
-          <span class="p2-count"><span id="p2hCount">0</span><small>/<span id="p2hTarget">10</span></small></span>
-        </div>
-        <div class="p2-row-sub">
-          <span class="p2-line">이번 점수 <b id="p2hScore">—</b></span>
-          <span class="p2-line">평균 <b id="p2hAvg">—</b></span>
-          <span class="p2-presence" id="p2hPresence">인식 대기</span>
-        </div>
+        <span class="p2-name">홍</span>
+        <span class="p2-count"><span id="p2hCount">0</span><small>/<span id="p2hTarget">10</span></small></span>
+        <span class="p2-line">이번 <b id="p2hScore">—</b></span>
+        <span class="p2-line">평균 <b id="p2hAvg">—</b></span>
+        <span class="p2-presence" id="p2hPresence">인식 대기</span>
       </div>
+    </div>
+
+    <!-- 2인 안내 토스트 — 잠깐 떴다 사라짐 (예: 격파·겨루기는 2인 미지원 안내) -->
+    <div id="p2Notice"></div>
+
+    <!-- 2인 경기 종료 결과. 승패표시 설정(twoPlayerShowResult)에 따라 내용이 달라진다. -->
+    <div id="p2Result">
+      <div id="p2ResultTitle"></div>
+      <div id="p2ResultScores"></div>
+      <button type="button" id="p2ResultCloseBtn" onclick="closeP2Result()">닫기</button>
     </div>
 
     <div class="stats-row">
@@ -3609,6 +3654,19 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
     <div class="settings-section">
       <div class="settings-label">소리 <span id="volVal">70%</span></div>
       <input type="range" id="sndRange" min="0" max="100" value="70" style="width:100%;accent-color:var(--gold);">
+    </div>
+
+    <!-- 2026-08-02: 2인 모드 경기 종료 화면에서 승/패를 밝힐지 설정.
+         도장마다 승부를 강조하고 싶은 곳도, 원하지 않는 곳도 있어서 토글로 둔다. -->
+    <div class="settings-section">
+      <div class="settings-label">2인 모드 승패 표시</div>
+      <div class="p2-toggle-row">
+        <button type="button" class="p2-toggle-btn active" id="p2ResultOnBtn" onclick="setTwoPlayerShowResult(true)">켬</button>
+        <button type="button" class="p2-toggle-btn" id="p2ResultOffBtn" onclick="setTwoPlayerShowResult(false)">끔</button>
+      </div>
+      <div style="font-size:11px;opacity:.6;margin-top:6px;line-height:1.5;">
+        꺼두면 경기가 끝나도 "청 승리" 같은 표시 없이 양쪽 점수만 보여줍니다.
+      </div>
     </div>
 
     <hr class="settings-divider">
@@ -5935,6 +5993,7 @@ function setReadyUi(on){
 function setGrResult(text){ gameResult.textContent=text; gameResult2.textContent=text; }
 
 window.startGame=()=>{
+  if(twoPlayerMode) closeP2Result();
   if(running){
     stopGame();
     setStartBtn(false,'시작!');
@@ -6581,6 +6640,18 @@ function hipXOf(lm){
   if(!lm||!lm[23]||!lm[24]) return null;
   return (lm[23].x+lm[24].x)/2;
 }
+/* 2인 안내 토스트 — 잠깐 떴다 사라진다. 격파·겨루기 버튼을 상시 보여주는 대신
+   여기서 한 번만 알려준다(2026-08-02). */
+let p2NoticeTimer=null;
+function showP2Notice(text){
+  const el=document.getElementById('p2Notice');
+  if(!el) return;
+  el.textContent=text;
+  el.classList.add('show');
+  if(p2NoticeTimer) clearTimeout(p2NoticeTimer);
+  p2NoticeTimer=setTimeout(()=>el.classList.remove('show'),2200);
+}
+
 window.setPlayerCount=async function(n){
   const want=(n===2)?2:1;
   if((want===2)===twoPlayerMode) return;
@@ -6600,6 +6671,7 @@ window.setPlayerCount=async function(n){
     document.getElementById('p2cTarget').textContent=drillTarget;
     document.getElementById('p2hTarget').textContent=drillTarget;
     render2pStatus('경기 준비');
+    showP2Notice('2인 모드는 발차기만 가능합니다 · 격파·겨루기는 준비 중');
   }
   try{
     await initModel(twoPlayerMode?2:1, currentModelKind);
@@ -6622,6 +6694,23 @@ function render2pStatus(text){
   const el=document.getElementById('p2Status');
   if(el && text!=null) el.textContent=text;
 }
+/* 2인 모드 승패표시 설정 (2026-08-02). 도장마다 승부를 강조하고 싶은지가 달라서
+   설정에 켬/끔을 두고 브라우저에 저장한다. 기본값은 켬. */
+let twoPlayerShowResult=true;
+try{
+  const saved=localStorage.getItem('akm_2p_show_result');
+  if(saved!=null) twoPlayerShowResult=(saved==='1');
+}catch(e){}
+window.setTwoPlayerShowResult=function(on){
+  twoPlayerShowResult=!!on;
+  try{ localStorage.setItem('akm_2p_show_result', twoPlayerShowResult?'1':'0'); }catch(e){}
+  document.getElementById('p2ResultOnBtn')?.classList.toggle('active', twoPlayerShowResult);
+  document.getElementById('p2ResultOffBtn')?.classList.toggle('active', !twoPlayerShowResult);
+};
+window.closeP2Result=function(){
+  document.getElementById('p2Result')?.classList.remove('show');
+};
+
 function check2pFinish(){
   const c=slot2p.c, h=slot2p.h;
   if(c.drillDone>=drillTarget) c.finished=true;
@@ -6629,8 +6718,18 @@ function check2pFinish(){
   if(c.finished && h.finished){
     running=false; setPlayingUi(false);
     const cAvg=avgOf(c.drillScores)||0, hAvg=avgOf(h.drillScores)||0;
-    const result=cAvg===hAvg?'무승부':(cAvg>hAvg?'청 승리':'홍 승리');
-    render2pStatus(result+' · 청 평균 '+cAvg+' · 홍 평균 '+hAvg);
+    let title;
+    if(twoPlayerShowResult){
+      title = cAvg===hAvg ? '무승부' : (cAvg>hAvg ? '청 승리!' : '홍 승리!');
+    } else {
+      title = '경기 종료';
+    }
+    render2pStatus(title);
+    const titleEl=document.getElementById('p2ResultTitle');
+    const scoresEl=document.getElementById('p2ResultScores');
+    if(titleEl) titleEl.textContent=title;
+    if(scoresEl) scoresEl.innerHTML='청 <b class="p2rc">'+cAvg+'점</b> · 홍 <b class="p2rh">'+hAvg+'점</b>';
+    document.getElementById('p2Result')?.classList.add('show');
     setStartBtn(false,'다시 시작');
   }
 }
@@ -6790,6 +6889,7 @@ gameArea.style.display='none';
 initDifficulty();
 initKickLevel();
 initSound();
+setTwoPlayerShowResult(twoPlayerShowResult);
 initDrillRunMode();
 initSparringMode();
 document.getElementById('sparringTypePanel')?.style.setProperty('display','none','important');
