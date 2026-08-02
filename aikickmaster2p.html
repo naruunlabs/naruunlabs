@@ -369,40 +369,60 @@ html body:not(.beta-on) #kickLabModal{
 }
 
 /* ── 2인 모드 (2026-08-02, 테스트 중) ────────────────────────────────
-   1인 모드 기존 화면·로직은 전혀 건드리지 않는다. body 에 two-player-mode
-   클래스가 붙었을 때만 격파·겨루기 메뉴와 1인 점수판을 숨기고,
-   대신 청/홍 2인 점수판(p2Hud)을 보여준다.
-   격파·겨루기 모드는 2인에서 아직 준비 중이라 목록에서 숨긴다. */
-.hud-players-row{ margin-bottom:6px; }
+   기존 HUD는 .panel 안에서 요소마다 position:absolute 로 좌표를 직접 박아
+   놓은 구조라(예: .hud-balloon-row top:160px 식), 같은 방식으로 새 요소를
+   끼워 넣으면 어느 버전의 CSS가 최종 적용되는지 추적하기 어렵다.
+   그래서 2인 전용 요소는 전부 position:fixed 로 화면 좌표에 직접 고정해
+   기존 .panel/.title 흐름과 완전히 분리했다 — 다른 요소와 안 겹치는 게
+   최우선이라 자리는 넉넉히 비어 있는 곳으로 잡았다.
+   ⚠ 화면 하단 좌(목표횟수·시작버튼) · 하단 중앙(앞R/앞L/돌R/돌L) · 하단 우(전체화면)는
+   전부 이미 쓰고 있어서 피했다. 왼쪽 메뉴 목록(발차기연구소까지) 바로 아래 자리를 썼다.
+   1인 모드(twoPlayerMode=false)일 때는 전부 display:none. */
 body.two-player-mode .hud-balloon-row,
 body.two-player-mode .hud-sparring-row,
 body.two-player-mode .stats-row{
   display:none !important;
 }
+#p2PlayerToggle{
+  display:none;
+}
+#p2PlayerToggle.show{
+  display:flex !important; position:fixed !important; left:14px !important; top:296px !important;
+  width:130px !important; flex-direction:column !important; gap:6px !important; z-index:20 !important;
+}
+#p2PlayerToggle button{
+  width:100%; min-height:32px; border-radius:8px; border:1.5px solid rgba(76,163,255,.32);
+  background:rgba(13,28,48,.86); color:#cfe2ff; font-size:12px; font-weight:800; cursor:pointer;
+}
+#p2PlayerToggle button.active{ background:linear-gradient(180deg,#3d8bff,#1f5fd6); color:#fff; border-color:#5fa2ff; }
+
 #p2Hud{ display:none; }
 body.two-player-mode #p2Hud{
-  display:flex; gap:10px; margin:10px 0 4px; align-items:stretch;
+  display:flex !important; position:fixed !important; top:140px !important; left:50% !important;
+  transform:translateX(-50%) !important; width:min(640px,80vw) !important; gap:14px !important;
+  z-index:15 !important; align-items:stretch !important;
 }
 .p2-player{
-  flex:1; min-width:0; background:rgba(13,28,48,0.86);
-  border:1.5px solid rgba(76,163,255,0.28); border-radius:14px;
-  padding:10px 12px; text-align:center;
+  flex:1; min-width:0; background:rgba(8,16,28,0.88);
+  border:1.5px solid rgba(76,163,255,0.32); border-radius:16px;
+  padding:12px 14px; text-align:center; box-shadow:0 10px 26px rgba(0,0,0,.35);
 }
-.p2-player.p2-hong{ border-color:rgba(227,23,46,0.32); }
-.p2-name{ font-size:13px; font-weight:900; margin-bottom:4px; }
+.p2-player.p2-hong{ border-color:rgba(227,23,46,0.35); }
+.p2-name{ font-size:13px; font-weight:900; margin-bottom:4px; letter-spacing:.04em; }
 .p2-player.p2-cheong .p2-name{ color:#5fa2ff; }
 .p2-player.p2-hong .p2-name{ color:#ff7583; }
-.p2-count{ font-size:22px; font-weight:900; color:#fff; font-variant-numeric:tabular-nums; }
-.p2-count small{ font-size:12px; color:#8ba3bd; font-weight:700; }
-.p2-line{ margin-top:4px; font-size:11px; color:#9ab0c7; font-weight:700; }
+.p2-count{ font-size:26px; font-weight:900; color:#fff; font-variant-numeric:tabular-nums; }
+.p2-count small{ font-size:13px; color:#8ba3bd; font-weight:700; }
+.p2-line{ margin-top:5px; font-size:11.5px; color:#9ab0c7; font-weight:700; }
 .p2-line b{ color:#fff; font-weight:900; }
-.p2-presence{ margin-top:6px; font-size:10.5px; font-weight:800; color:#8ba3bd; }
+.p2-presence{ margin-top:7px; font-size:11px; font-weight:800; color:#8ba3bd; }
 .p2-presence.on{ color:#43f799; }
-#p2Status{
-  display:none; text-align:center; font-size:12px; font-weight:900; color:var(--gold);
-  margin:2px 0 8px; min-height:16px;
+#p2Status{ display:none; }
+body.two-player-mode #p2Status{
+  display:block !important; position:fixed !important; top:104px !important; left:50% !important;
+  transform:translateX(-50%) !important; text-align:center; font-size:13px; font-weight:900;
+  color:var(--gold); z-index:15 !important;
 }
-body.two-player-mode #p2Status{ display:block; }
 .settings-modal-box{
   background:#0d1c30;
   border:1.5px solid rgba(76,163,255,0.35);
@@ -3418,11 +3438,11 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
     </div>
 
     <!-- 2026-08-02 · 2인 모드 (테스트 중). 발차기 모드(앞R/앞L/돌R/돌L)만
-         2인을 지원한다. 격파·겨루기는 아직 1인 전용. -->
-    <div class="section-label">— 인원 선택</div>
-    <div class="mode-row hud-players-row">
-      <button class="drill-btn active" id="m_p1" onclick="setPlayerCount(1)">1인</button>
-      <button class="drill-btn" id="m_p2" onclick="setPlayerCount(2)">2인 (테스트)</button>
+         2인을 지원한다. 격파·겨루기는 아직 1인 전용.
+         기존 메뉴 흐름에 넣지 않고 화면 좌표에 고정한다(위 CSS 설명 참고). -->
+    <div id="p2PlayerToggle" class="show">
+      <button class="active" id="m_p1" onclick="setPlayerCount(1)">1인</button>
+      <button id="m_p2" onclick="setPlayerCount(2)">2인 (테스트)</button>
     </div>
 
     <div class="section-label">— 연습 모드</div>
@@ -6533,6 +6553,12 @@ window.setPlayerCount=async function(n){
   document.getElementById('m_p1')?.classList.toggle('active',!twoPlayerMode);
   document.getElementById('m_p2')?.classList.toggle('active',twoPlayerMode);
   if(twoPlayerMode){
+    // 2인은 발차기 모드(앞R/앞L/돌R/돌L)만 지원한다. 격파·겨루기·베타 킥이 선택된
+    // 상태로 넘어오면 자동으로 첫 발차기 모드로 바꿔준다.
+    if(!NORMAL_KICK_MODES.includes(currentMode)){
+      betaKickSet=false;
+      setMode(NORMAL_KICK_MODES[0]);
+    }
     resetSlot2p(slot2p.c); resetSlot2p(slot2p.h);
     document.getElementById('p2cTarget').textContent=drillTarget;
     document.getElementById('p2hTarget').textContent=drillTarget;
