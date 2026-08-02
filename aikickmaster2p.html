@@ -460,39 +460,35 @@ body.two-player-mode #p2Status{
 }
 #p2Notice.show{ display:block; }
 
-/* 겨루기 전용 상대 그래픽 — 청 화면(왼쪽 절반)엔 홍 색, 홍 화면(오른쪽 절반)엔 청 색 사람 실루엣.
+/* 겨루기 전용 상대 그래픽 — 청 화면(왼쪽 절반)엔 홍 색, 홍 화면(오른쪽 절반)엔 청 색.
    화면을 5등분했을 때 2번째 칸/4번째 칸 가운데(아이가 보는 위치와 겹치도록), 세로 중앙에 배치.
-   1인모드의 은은한 실루엣 그림자와 같은 계열이지만, 2인은 상대가 없으니 색이 있는 반투명
-   사람 모양(머리+몸통)으로 "여기가 상대다"를 바로 알아보게 한다. */
+   2026-08-02: 사람 실루엣(눈사람형)이 밋밋하다는 피드백으로, 실제 태권도 헤드기어+호구
+   모양의 SVG로 교체. 도장에서 보던 장비와 바로 연결되도록. */
 .p2-enemy{
-  display:none; position:fixed; top:46%; width:118px; height:186px; z-index:12;
+  display:none; position:fixed; top:46%; width:112px; height:200px; z-index:12;
   pointer-events:none; text-align:center;
 }
 body.two-player-mode.sparring-mode .p2-enemy{ display:block; }
 #p2EnemyC{ left:30%; transform:translate(-50%,-50%); }
 #p2EnemyH{ left:70%; transform:translate(-50%,-50%); }
-.p2-enemy-head{
-  position:absolute; left:50%; top:0; transform:translateX(-50%);
-  width:56px; height:56px; border-radius:50%;
-  background:radial-gradient(circle,var(--p2e-fill) 0 60%,rgba(0,0,0,0) 100%);
-  border:2px solid var(--p2e-line);
-  box-shadow:0 0 18px var(--p2e-glow), inset 0 0 16px var(--p2e-glow);
-  transition:transform .16s ease, box-shadow .16s ease;
+.p2-enemy-svg{
+  width:100%; height:100%; overflow:visible;
+  filter:drop-shadow(0 0 14px var(--p2e-glow));
 }
-.p2-enemy-torso{
-  position:absolute; left:50%; top:52px; transform:translateX(-50%);
-  width:96px; height:128px; border-radius:44px 44px 22px 22px;
-  background:linear-gradient(180deg,var(--p2e-fill),rgba(0,0,0,0) 88%);
-  border:2px solid var(--p2e-line);
-  box-shadow:0 0 20px var(--p2e-glow), inset 0 0 18px var(--p2e-glow);
-  transition:transform .16s ease, box-shadow .16s ease;
+.p2e-head, .p2e-ear, .p2e-vest{
+  fill:var(--p2e-fill); stroke:var(--p2e-line); stroke-width:3;
+  transform-box:fill-box; transform-origin:center;
+  transition:transform .16s ease;
 }
-.p2-enemy-hong{ --p2e-line:rgba(255,48,79,.75); --p2e-glow:rgba(255,48,79,.35); --p2e-fill:rgba(255,48,79,.22); }
-.p2-enemy-cheong{ --p2e-line:rgba(49,183,255,.75); --p2e-glow:rgba(49,183,255,.35); --p2e-fill:rgba(49,183,255,.22); }
-.p2-enemy.hit .p2-enemy-head{ transform:translateX(-50%) scale(1.14); box-shadow:0 0 28px var(--p2e-glow), inset 0 0 24px var(--p2e-glow); }
-.p2-enemy.hit .p2-enemy-torso{ transform:translateX(-50%) scale(1.08); box-shadow:0 0 30px var(--p2e-glow), inset 0 0 26px var(--p2e-glow); }
+.p2e-seam, .p2e-belt{ stroke:var(--p2e-line); stroke-width:2; opacity:.6; }
+.p2-enemy-hong{ --p2e-line:rgba(255,48,79,.88); --p2e-glow:rgba(255,48,79,.48); --p2e-fill:rgba(255,48,79,.26); }
+.p2-enemy-cheong{ --p2e-line:rgba(49,183,255,.88); --p2e-glow:rgba(49,183,255,.48); --p2e-fill:rgba(49,183,255,.26); }
+.p2-enemy.hit .p2-enemy-svg{ filter:drop-shadow(0 0 24px var(--p2e-glow)); }
+.p2-enemy.hit .p2e-head,
+.p2-enemy.hit .p2e-ear{ transform:scale(1.14); }
+.p2-enemy.hit .p2e-vest{ transform:scale(1.06); }
 .p2-enemy-label{
-  position:absolute; left:50%; bottom:-20px; transform:translateX(-50%); white-space:nowrap;
+  position:absolute; left:50%; bottom:-14px; transform:translateX(-50%); white-space:nowrap;
   font-size:12px; font-weight:1000; text-shadow:0 2px 8px rgba(0,0,0,.95);
 }
 #p2EnemyC .p2-enemy-label{ color:var(--arcade-red); }
@@ -3681,13 +3677,25 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
     <!-- 2026-08-02 · 겨루기 전용: 청 화면엔 홍을 상징하는 적 그래픽(빨강),
          홍 화면엔 청을 상징하는 적 그래픽(파랑)을 교차로 보여준다. -->
     <div id="p2EnemyC" class="p2-enemy p2-enemy-hong">
-      <div class="p2-enemy-head"></div>
-      <div class="p2-enemy-torso"></div>
+      <svg class="p2-enemy-svg" viewBox="0 0 100 180" preserveAspectRatio="xMidYMid meet">
+        <ellipse class="p2e-head" cx="50" cy="24" rx="22" ry="20"></ellipse>
+        <circle class="p2e-ear" cx="15" cy="30" r="9"></circle>
+        <circle class="p2e-ear" cx="85" cy="30" r="9"></circle>
+        <path class="p2e-vest" d="M30,52 Q40,44 50,56 Q60,44 70,52 Q92,62 94,80 L88,142 Q86,162 68,170 Q50,174 32,170 Q14,162 12,142 L6,80 Q8,62 30,52 Z"></path>
+        <line class="p2e-seam" x1="50" y1="66" x2="50" y2="146"></line>
+        <line class="p2e-belt" x1="18" y1="124" x2="82" y2="124"></line>
+      </svg>
       <span class="p2-enemy-label">상대 · 홍</span>
     </div>
     <div id="p2EnemyH" class="p2-enemy p2-enemy-cheong">
-      <div class="p2-enemy-head"></div>
-      <div class="p2-enemy-torso"></div>
+      <svg class="p2-enemy-svg" viewBox="0 0 100 180" preserveAspectRatio="xMidYMid meet">
+        <ellipse class="p2e-head" cx="50" cy="24" rx="22" ry="20"></ellipse>
+        <circle class="p2e-ear" cx="15" cy="30" r="9"></circle>
+        <circle class="p2e-ear" cx="85" cy="30" r="9"></circle>
+        <path class="p2e-vest" d="M30,52 Q40,44 50,56 Q60,44 70,52 Q92,62 94,80 L88,142 Q86,162 68,170 Q50,174 32,170 Q14,162 12,142 L6,80 Q8,62 30,52 Z"></path>
+        <line class="p2e-seam" x1="50" y1="66" x2="50" y2="146"></line>
+        <line class="p2e-belt" x1="18" y1="124" x2="82" y2="124"></line>
+      </svg>
       <span class="p2-enemy-label">상대 · 청</span>
     </div>
 
