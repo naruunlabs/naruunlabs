@@ -464,12 +464,12 @@ body.two-player-mode #p2Status{
    화면을 5등분했을 때 2번째 칸/4번째 칸 가운데(아이가 보는 위치와 겹치도록) 배치.
    1인모드의 HEAD/BODY 조준경과 같은 느낌의 링+크로스헤어 디자인. */
 .p2-enemy{
-  display:none; position:fixed; bottom:120px; width:128px; height:128px; z-index:12;
+  display:none; position:fixed; top:46%; width:128px; height:128px; z-index:12;
   pointer-events:none; text-align:center;
 }
 body.two-player-mode.sparring-mode .p2-enemy{ display:block; }
-#p2EnemyC{ left:30%; transform:translateX(-50%); }
-#p2EnemyH{ left:70%; transform:translateX(-50%); }
+#p2EnemyC{ left:30%; transform:translate(-50%,-50%); }
+#p2EnemyH{ left:70%; transform:translate(-50%,-50%); }
 .p2-enemy::before{
   content:""; position:absolute; inset:0; border-radius:50%;
   box-shadow:0 0 24px 0 var(--p2e-glow), inset 0 0 22px var(--p2e-glow);
