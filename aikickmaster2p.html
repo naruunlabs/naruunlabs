@@ -503,8 +503,8 @@ body.sparring-mode .p2-hpbar{
 }
 .p2-hpbar-fill{
   display:block; height:100%; width:100%;
-  background:linear-gradient(90deg,#2ecc71,#FF6A1A,#E3172E);
-  transition:width .25s ease;
+  background:#2ecc71;
+  transition:width .25s ease, background .25s ease;
 }
 
 /* 2인 경기 종료 — 화면 가운데 크게 */
@@ -7000,7 +7000,12 @@ function render2pScoreSparring(key){
     label2:'콤보', val2:'x'+st.maxCombo
   });
   const fill=document.getElementById('p2'+key+'HpFill');
-  if(fill) fill.style.width=Math.max(0,(st.hp/250)*100)+'%';
+  if(fill){
+    const pct=Math.max(0,(st.hp/250)*100);
+    fill.style.width=pct+'%';
+    // 1인 겨루기 HP 게이지와 같은 방식: 막대 전체가 남은 비율에 따라 초록→주황→빨강으로 색이 바뀐다.
+    fill.style.background = pct>65 ? '#2ecc71' : (pct>35 ? '#FF6A1A' : '#E3172E');
+  }
 }
 function finishSparring2p(){
   if(currentMode!=='sparring' || twoPlayerMode!==true) return;
