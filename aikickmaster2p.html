@@ -383,45 +383,66 @@ body.two-player-mode .hud-sparring-row,
 body.two-player-mode .stats-row{
   display:none !important;
 }
+/* 다른 HUD 버튼(발차기연구소 등)과 같은 언어로 맞춤 —
+   상자 배경 없이, 굵은 고딕 + 텍스트 글로우로만 구분한다. */
 #p2PlayerToggle{
   display:none;
 }
 #p2PlayerToggle.show{
-  display:flex !important; position:fixed !important; left:14px !important; top:296px !important;
-  width:130px !important; flex-direction:column !important; gap:6px !important; z-index:20 !important;
+  display:flex !important; position:fixed !important; left:22px !important; top:296px !important;
+  width:174px !important; flex-direction:column !important; gap:0 !important; z-index:65 !important;
 }
 #p2PlayerToggle button{
-  width:100%; min-height:32px; border-radius:8px; border:1.5px solid rgba(76,163,255,.32);
-  background:rgba(13,28,48,.86); color:#cfe2ff; font-size:12px; font-weight:800; cursor:pointer;
+  all:unset; box-sizing:border-box;
+  width:100%; height:28px; min-height:28px; padding-left:12px;
+  border-left:2px solid rgba(255,255,255,.22);
+  background:linear-gradient(90deg,rgba(0,0,0,.46),rgba(0,0,0,0));
+  color:rgba(255,255,255,.58); font-size:14px; font-weight:1000; letter-spacing:.2px;
+  text-shadow:0 2px 10px rgba(0,0,0,.9);
+  cursor:pointer; display:flex; align-items:center;
 }
-#p2PlayerToggle button.active{ background:linear-gradient(180deg,#3d8bff,#1f5fd6); color:#fff; border-color:#5fa2ff; }
+#p2PlayerToggle button.active{
+  color:#fff; border-left-color:var(--arcade-red);
+  text-shadow:0 2px 12px rgba(0,0,0,.95),0 0 14px rgba(255,48,79,.78);
+}
 
 #p2Hud{ display:none; }
 body.two-player-mode #p2Hud{
-  display:flex !important; position:fixed !important; top:140px !important; left:50% !important;
-  transform:translateX(-50%) !important; width:min(640px,80vw) !important; gap:14px !important;
-  z-index:15 !important; align-items:stretch !important;
+  display:flex !important; position:fixed !important; top:132px !important; left:50% !important;
+  transform:translateX(-50%) !important; width:min(560px,74vw) !important; gap:36px !important;
+  z-index:15 !important; align-items:flex-start !important; pointer-events:none !important;
 }
 .p2-player{
-  flex:1; min-width:0; background:rgba(8,16,28,0.88);
-  border:1.5px solid rgba(76,163,255,0.32); border-radius:16px;
-  padding:12px 14px; text-align:center; box-shadow:0 10px 26px rgba(0,0,0,.35);
+  flex:1; min-width:0; background:transparent; border:0; padding:0; text-align:center;
 }
-.p2-player.p2-hong{ border-color:rgba(227,23,46,0.35); }
-.p2-name{ font-size:13px; font-weight:900; margin-bottom:4px; letter-spacing:.04em; }
-.p2-player.p2-cheong .p2-name{ color:#5fa2ff; }
-.p2-player.p2-hong .p2-name{ color:#ff7583; }
-.p2-count{ font-size:26px; font-weight:900; color:#fff; font-variant-numeric:tabular-nums; }
-.p2-count small{ font-size:13px; color:#8ba3bd; font-weight:700; }
-.p2-line{ margin-top:5px; font-size:11.5px; color:#9ab0c7; font-weight:700; }
-.p2-line b{ color:#fff; font-weight:900; }
-.p2-presence{ margin-top:7px; font-size:11px; font-weight:800; color:#8ba3bd; }
-.p2-presence.on{ color:#43f799; }
+.p2-name{
+  font-size:14px; font-weight:1000; letter-spacing:.5px; margin-bottom:2px;
+  text-shadow:0 2px 8px rgba(0,0,0,.95);
+}
+.p2-player.p2-cheong .p2-name{ color:var(--arcade-blue); }
+.p2-player.p2-hong .p2-name{ color:var(--arcade-red); }
+.p2-count{
+  font-size:44px; font-weight:1000; line-height:1; color:#fff; font-variant-numeric:tabular-nums;
+  text-shadow:0 4px 18px rgba(0,0,0,.96),0 0 22px rgba(49,183,255,.55);
+}
+.p2-player.p2-hong .p2-count{ text-shadow:0 4px 18px rgba(0,0,0,.96),0 0 22px rgba(255,48,79,.55); }
+.p2-count small{ font-size:16px; color:rgba(255,255,255,.5); font-weight:800; text-shadow:none; }
+.p2-line{
+  margin-top:6px; font-size:12px; font-weight:1000; letter-spacing:.3px;
+  color:rgba(255,255,255,.62); text-shadow:0 2px 8px rgba(0,0,0,.95);
+}
+.p2-line b{ color:#fff; font-weight:1000; margin-left:4px; }
+.p2-presence{
+  margin-top:6px; font-size:11px; font-weight:1000; letter-spacing:.3px;
+  color:rgba(255,255,255,.5); text-shadow:0 2px 8px rgba(0,0,0,.9);
+}
+.p2-presence.on{ color:var(--arcade-green); text-shadow:0 2px 10px rgba(0,0,0,.95),0 0 12px rgba(81,255,157,.6); }
 #p2Status{ display:none; }
 body.two-player-mode #p2Status{
-  display:block !important; position:fixed !important; top:104px !important; left:50% !important;
-  transform:translateX(-50%) !important; text-align:center; font-size:13px; font-weight:900;
-  color:var(--gold); z-index:15 !important;
+  display:block !important; position:fixed !important; top:96px !important; left:50% !important;
+  transform:translateX(-50%) !important; text-align:center; font-size:15px; font-weight:1000;
+  letter-spacing:.3px; color:var(--arcade-gold); text-shadow:0 3px 12px rgba(0,0,0,.95),0 0 16px rgba(255,209,90,.7);
+  z-index:15 !important;
 }
 .settings-modal-box{
   background:#0d1c30;
