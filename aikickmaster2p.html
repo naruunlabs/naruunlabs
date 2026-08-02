@@ -460,35 +460,39 @@ body.two-player-mode #p2Status{
 }
 #p2Notice.show{ display:block; }
 
-/* 겨루기 전용 상대 그래픽 — 청 화면(왼쪽 절반)엔 홍 색, 홍 화면(오른쪽 절반)엔 청 색 조준 반응.
-   화면을 5등분했을 때 2번째 칸/4번째 칸 가운데(아이가 보는 위치와 겹치도록) 배치.
-   1인모드의 HEAD/BODY 조준경과 같은 느낌의 링+크로스헤어 디자인. */
+/* 겨루기 전용 상대 그래픽 — 청 화면(왼쪽 절반)엔 홍 색, 홍 화면(오른쪽 절반)엔 청 색 사람 실루엣.
+   화면을 5등분했을 때 2번째 칸/4번째 칸 가운데(아이가 보는 위치와 겹치도록), 세로 중앙에 배치.
+   1인모드의 은은한 실루엣 그림자와 같은 계열이지만, 2인은 상대가 없으니 색이 있는 반투명
+   사람 모양(머리+몸통)으로 "여기가 상대다"를 바로 알아보게 한다. */
 .p2-enemy{
-  display:none; position:fixed; top:46%; width:128px; height:128px; z-index:12;
+  display:none; position:fixed; top:46%; width:118px; height:186px; z-index:12;
   pointer-events:none; text-align:center;
 }
 body.two-player-mode.sparring-mode .p2-enemy{ display:block; }
 #p2EnemyC{ left:30%; transform:translate(-50%,-50%); }
 #p2EnemyH{ left:70%; transform:translate(-50%,-50%); }
-.p2-enemy::before{
-  content:""; position:absolute; inset:0; border-radius:50%;
-  box-shadow:0 0 24px 0 var(--p2e-glow), inset 0 0 22px var(--p2e-glow);
+.p2-enemy-head{
+  position:absolute; left:50%; top:0; transform:translateX(-50%);
+  width:56px; height:56px; border-radius:50%;
+  background:radial-gradient(circle,var(--p2e-fill) 0 60%,rgba(0,0,0,0) 100%);
   border:2px solid var(--p2e-line);
-  background:radial-gradient(circle,var(--p2e-fill),rgba(0,0,0,0) 70%);
-  transition:transform .18s ease, opacity .18s ease, box-shadow .18s ease;
+  box-shadow:0 0 18px var(--p2e-glow), inset 0 0 16px var(--p2e-glow);
+  transition:transform .16s ease, box-shadow .16s ease;
 }
-.p2-enemy::after{
-  content:""; position:absolute; left:50%; top:50%; width:58%; height:58%;
-  transform:translate(-50%,-50%); border-radius:50%;
-  border:1px dashed var(--p2e-line); opacity:.75;
-  transition:transform .28s ease, opacity .28s ease;
+.p2-enemy-torso{
+  position:absolute; left:50%; top:52px; transform:translateX(-50%);
+  width:96px; height:128px; border-radius:44px 44px 22px 22px;
+  background:linear-gradient(180deg,var(--p2e-fill),rgba(0,0,0,0) 88%);
+  border:2px solid var(--p2e-line);
+  box-shadow:0 0 20px var(--p2e-glow), inset 0 0 18px var(--p2e-glow);
+  transition:transform .16s ease, box-shadow .16s ease;
 }
-.p2-enemy-hong{ --p2e-line:rgba(255,48,79,.7); --p2e-glow:rgba(255,48,79,.30); --p2e-fill:rgba(255,48,79,.20); }
-.p2-enemy-cheong{ --p2e-line:rgba(49,183,255,.7); --p2e-glow:rgba(49,183,255,.30); --p2e-fill:rgba(49,183,255,.20); }
-.p2-enemy.hit::before{ transform:scale(1.16); box-shadow:0 0 34px 0 var(--p2e-glow), inset 0 0 30px var(--p2e-glow); }
-.p2-enemy.hit::after{ transform:translate(-50%,-50%) scale(1.35); opacity:0; }
+.p2-enemy-hong{ --p2e-line:rgba(255,48,79,.75); --p2e-glow:rgba(255,48,79,.35); --p2e-fill:rgba(255,48,79,.22); }
+.p2-enemy-cheong{ --p2e-line:rgba(49,183,255,.75); --p2e-glow:rgba(49,183,255,.35); --p2e-fill:rgba(49,183,255,.22); }
+.p2-enemy.hit .p2-enemy-head{ transform:translateX(-50%) scale(1.14); box-shadow:0 0 28px var(--p2e-glow), inset 0 0 24px var(--p2e-glow); }
+.p2-enemy.hit .p2-enemy-torso{ transform:translateX(-50%) scale(1.08); box-shadow:0 0 30px var(--p2e-glow), inset 0 0 26px var(--p2e-glow); }
 .p2-enemy-label{
-  position:absolute; left:50%; bottom:-24px; transform:translateX(-50%); white-space:nowrap;
+  position:absolute; left:50%; bottom:-20px; transform:translateX(-50%); white-space:nowrap;
   font-size:12px; font-weight:1000; text-shadow:0 2px 8px rgba(0,0,0,.95);
 }
 #p2EnemyC .p2-enemy-label{ color:var(--arcade-red); }
@@ -2501,6 +2505,24 @@ body.hud-v21.akm-ui #enemyTarget .enemyAura::after{
   animation:enemyAuraSpin 11s linear infinite reverse !important;
 }
 @keyframes enemyAuraSpin{ to{ transform:rotate(360deg); } }
+
+/* 2026-08-02: 1인 실루엣 그림자를 밝은 방에서도 더 잘 보이게 대비 강화 + 은은한 듀오톤 컬러.
+   모양·크기·위치는 원본과 동일 — 눈에 잘 띄게 색만 손봄. */
+body.hud-v21.akm-ui #enemyTarget::before{
+  background:
+    radial-gradient(circle at 50% 14%, rgba(255,255,255,.18) 0 42px, rgba(10,14,24,.66) 43px 58px, transparent 59px),
+    linear-gradient(180deg, rgba(255,36,77,.18), rgba(25,186,255,.18) 55%, rgba(10,14,24,.58)) !important;
+  border-color:rgba(255,255,255,.34) !important;
+  box-shadow:
+    inset 0 0 34px rgba(255,255,255,.12),
+    0 0 34px rgba(0,0,0,.55),
+    0 0 26px rgba(76,163,255,.22) !important;
+}
+body.hud-v21.akm-ui #enemyTarget::after{
+  border-top-color:rgba(255,255,255,.30) !important;
+  background:
+    linear-gradient(90deg, transparent 0 8%, rgba(10,14,24,.52) 25%, rgba(10,14,24,.62) 50%, rgba(10,14,24,.52) 75%, transparent 92%) !important;
+}
 body.hud-v21.akm-ui #damagePopup{
   border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important;
   font-size:46px !important; font-weight:1000 !important; color:#fff !important;
@@ -3658,8 +3680,16 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
 
     <!-- 2026-08-02 · 겨루기 전용: 청 화면엔 홍을 상징하는 적 그래픽(빨강),
          홍 화면엔 청을 상징하는 적 그래픽(파랑)을 교차로 보여준다. -->
-    <div id="p2EnemyC" class="p2-enemy p2-enemy-hong"><span class="p2-enemy-label">상대 · 홍</span></div>
-    <div id="p2EnemyH" class="p2-enemy p2-enemy-cheong"><span class="p2-enemy-label">상대 · 청</span></div>
+    <div id="p2EnemyC" class="p2-enemy p2-enemy-hong">
+      <div class="p2-enemy-head"></div>
+      <div class="p2-enemy-torso"></div>
+      <span class="p2-enemy-label">상대 · 홍</span>
+    </div>
+    <div id="p2EnemyH" class="p2-enemy p2-enemy-cheong">
+      <div class="p2-enemy-head"></div>
+      <div class="p2-enemy-torso"></div>
+      <span class="p2-enemy-label">상대 · 청</span>
+    </div>
 
     <!-- 2인 안내 토스트 — 잠깐 떴다 사라짐 (예: 격파·겨루기는 2인 미지원 안내) -->
     <div id="p2Notice"></div>
