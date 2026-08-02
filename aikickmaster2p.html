@@ -367,6 +367,42 @@ html body:not(.beta-on) .hud-lab-row,
 html body:not(.beta-on) #kickLabModal{
   display:none !important; visibility:hidden !important; pointer-events:none !important;
 }
+
+/* ── 2인 모드 (2026-08-02, 테스트 중) ────────────────────────────────
+   1인 모드 기존 화면·로직은 전혀 건드리지 않는다. body 에 two-player-mode
+   클래스가 붙었을 때만 격파·겨루기 메뉴와 1인 점수판을 숨기고,
+   대신 청/홍 2인 점수판(p2Hud)을 보여준다.
+   격파·겨루기 모드는 2인에서 아직 준비 중이라 목록에서 숨긴다. */
+.hud-players-row{ margin-bottom:6px; }
+body.two-player-mode .hud-balloon-row,
+body.two-player-mode .hud-sparring-row,
+body.two-player-mode .stats-row{
+  display:none !important;
+}
+#p2Hud{ display:none; }
+body.two-player-mode #p2Hud{
+  display:flex; gap:10px; margin:10px 0 4px; align-items:stretch;
+}
+.p2-player{
+  flex:1; min-width:0; background:rgba(13,28,48,0.86);
+  border:1.5px solid rgba(76,163,255,0.28); border-radius:14px;
+  padding:10px 12px; text-align:center;
+}
+.p2-player.p2-hong{ border-color:rgba(227,23,46,0.32); }
+.p2-name{ font-size:13px; font-weight:900; margin-bottom:4px; }
+.p2-player.p2-cheong .p2-name{ color:#5fa2ff; }
+.p2-player.p2-hong .p2-name{ color:#ff7583; }
+.p2-count{ font-size:22px; font-weight:900; color:#fff; font-variant-numeric:tabular-nums; }
+.p2-count small{ font-size:12px; color:#8ba3bd; font-weight:700; }
+.p2-line{ margin-top:4px; font-size:11px; color:#9ab0c7; font-weight:700; }
+.p2-line b{ color:#fff; font-weight:900; }
+.p2-presence{ margin-top:6px; font-size:10.5px; font-weight:800; color:#8ba3bd; }
+.p2-presence.on{ color:#43f799; }
+#p2Status{
+  display:none; text-align:center; font-size:12px; font-weight:900; color:var(--gold);
+  margin:2px 0 8px; min-height:16px;
+}
+body.two-player-mode #p2Status{ display:block; }
 .settings-modal-box{
   background:#0d1c30;
   border:1.5px solid rgba(76,163,255,0.35);
@@ -3381,6 +3417,14 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
       <button type="button" class="diff-btn sparring-type-btn" data-sparring-type="live" onclick="setSparringMode('live')">실전모드</button>
     </div>
 
+    <!-- 2026-08-02 · 2인 모드 (테스트 중). 발차기 모드(앞R/앞L/돌R/돌L)만
+         2인을 지원한다. 격파·겨루기는 아직 1인 전용. -->
+    <div class="section-label">— 인원 선택</div>
+    <div class="mode-row hud-players-row">
+      <button class="drill-btn active" id="m_p1" onclick="setPlayerCount(1)">1인</button>
+      <button class="drill-btn" id="m_p2" onclick="setPlayerCount(2)">2인 (테스트)</button>
+    </div>
+
     <div class="section-label">— 연습 모드</div>
     <div class="mode-row hud-kick-row hud-kick-row1 hud-kick-tabs">
       <button class="drill-btn active" id="m_apcha_r" onclick="setMode('apcha_r')">앞R</button>
@@ -3437,6 +3481,25 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
       </div>
       <button id="startBtn2" class="primary-start" onclick="startGame()">시작!</button>
       <div id="gameResult2" style="text-align:center;font-size:13px;font-weight:700;color:var(--green);min-height:18px;"></div>
+    </div>
+
+    <!-- 2026-08-02 · 2인 점수판. 1인 stats-row 와 자리를 바꿔가며 보인다. -->
+    <div id="p2Status">경기 준비</div>
+    <div id="p2Hud">
+      <div class="p2-player p2-cheong">
+        <div class="p2-name">청</div>
+        <div class="p2-count"><span id="p2cCount">0</span><small>/<span id="p2cTarget">10</span></small></div>
+        <div class="p2-line">이번 점수 <b id="p2cScore">—</b></div>
+        <div class="p2-line">평균 <b id="p2cAvg">—</b></div>
+        <div class="p2-presence" id="p2cPresence">인식 대기</div>
+      </div>
+      <div class="p2-player p2-hong">
+        <div class="p2-name">홍</div>
+        <div class="p2-count"><span id="p2hCount">0</span><small>/<span id="p2hTarget">10</span></small></div>
+        <div class="p2-line">이번 점수 <b id="p2hScore">—</b></div>
+        <div class="p2-line">평균 <b id="p2hAvg">—</b></div>
+        <div class="p2-presence" id="p2hPresence">인식 대기</div>
+      </div>
     </div>
 
     <div class="stats-row">
@@ -5404,7 +5467,7 @@ function onDrillKick(peak, traj){
     lastGrade=result.msg;
     lastColor='#FFB14A';
     sndFail();
-    popup(result.msg,'#FFB14A');
+    if(!twoPlayerMode) popup(result.msg,'#FFB14A'); // 2인은 화면 중앙 팝업 대신 점수판에만 반영(아래 render2p*)
     trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajKneeAngle3D=[]; trajShoulderW=[]; trajActive=false; drillSide=0; resetPreRoll();
     return;
   }
@@ -5416,13 +5479,13 @@ function onDrillKick(peak, traj){
   lastColor='#4caf50';
 
   sndSuccess();
-  popup(result.score+'점','#4caf50');
-  renderStats();
+  if(!twoPlayerMode){ popup(result.score+'점','#4caf50'); renderStats(); }
 
   trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajKneeAngle3D=[]; trajShoulderW=[]; trajActive=false; drillSide=0; resetPreRoll();
 
   if(drillDone>=drillTarget){
-    if(drillRunMode==='auto') setTimeout(finishAutoDrillStage,700);
+    if(twoPlayerMode){ /* run2pFrame 안에서 saveToSlot 이후 check2pFinish 호출 */ }
+    else if(drillRunMode==='auto') setTimeout(finishAutoDrillStage,700);
     else setTimeout(finishDrill,700);
   }
 }
@@ -5850,14 +5913,21 @@ window.startGame=()=>{
     else if(isDrillMode()){
       drillTarget=parseInt(drillCountSel.value);
       drillDone=0; drillScores=[];
-      if(drillRunMode==='auto'){
+      if(twoPlayerMode){
+        resetSlot2p(slot2p.c); resetSlot2p(slot2p.h);
+        document.getElementById('p2cTarget').textContent=drillTarget;
+        document.getElementById('p2hTarget').textContent=drillTarget;
+        render2pScore('c'); render2pScore('h');
+        render2pStatus('경기 진행 중');
+      }else if(drillRunMode==='auto'){
         autoDrillIndex=0;
         autoDrillResults={};
         autoDrillTransitioning=false;
         beginAutoDrillStage(0,false);
       }
     }
-    setStartBtn(false,'■ 종료'); renderStats();
+    setStartBtn(false,'■ 종료');
+    if(!twoPlayerMode) renderStats();
   });
 };
 
@@ -5972,6 +6042,9 @@ function diagLogPush(result){
     date:now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0'),
     time:now.toLocaleTimeString('ko-KR',{hour12:false}),
     mode:currentMode, level:(typeof kickLevel!=='undefined'?kickLevel:'hard'),
+    // 2026-08-02: 1인/2인, 2인이면 청·홍 구분해서 기록 (연구소에서 나중에 비교하기 위함)
+    players:(twoPlayerMode?'2인':'1인'),
+    player:(twoPlayerMode?(active2pSlot===slot2p.c?'청':active2pSlot===slot2p.h?'홍':'?'):'-'),
     result:result.ok?'ok':'reject'
   };
   if(result.ok) entry.score=result.score; else entry.reason=result.reason;
@@ -6344,16 +6417,26 @@ function computeMetrics(lm,wlm=null){
 }
 
 /* ── MediaPipe ── */
-async function initModel(){
+/* 2026-08-02: 성능 저하 대응을 위해 모델을 full/lite 로 바꿔 다시 만들 수 있게 함.
+   기본은 지금까지와 같은 full 모델 · numPoses:1(1인). 2인 모드일 때만 numPoses:2 로 요청한다. */
+const MODEL_URLS={
+  full:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task",
+  lite:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task"
+};
+let visionResolver=null, currentModelKind='full', currentDelegate='GPU';
+async function initModel(numPoses=1, modelKind='full'){
   statusEl.textContent='AI 모델 로딩 중…';
-  const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
-  const MODEL_URL="https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task";
+  if(!visionResolver) visionResolver=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+  const vision=visionResolver;
+  const MODEL_URL=MODEL_URLS[modelKind]||MODEL_URLS.full;
+  if(poseLandmarker){ try{ poseLandmarker.close(); }catch(e){} poseLandmarker=null; }
   try{
     // 1차 시도: GPU 가속 (대부분의 기기)
     poseLandmarker=await PoseLandmarker.createFromOptions(vision,{
       baseOptions:{ modelAssetPath:MODEL_URL, delegate:"GPU" },
-      runningMode:"VIDEO", numPoses:1
+      runningMode:"VIDEO", numPoses
     });
+    currentDelegate='GPU';
   }catch(gpuErr){
     // 2차 시도: GPU 미지원 기기(구형 태블릿 등)는 CPU로 자동 전환
     console.warn('GPU 가속 초기화 실패 → CPU 모드로 전환합니다.', gpuErr);
@@ -6361,16 +6444,19 @@ async function initModel(){
     try{
       poseLandmarker=await PoseLandmarker.createFromOptions(vision,{
         baseOptions:{ modelAssetPath:MODEL_URL, delegate:"CPU" },
-        runningMode:"VIDEO", numPoses:1
+        runningMode:"VIDEO", numPoses
       });
+      currentDelegate='CPU';
     }catch(cpuErr){
       console.error('AI 모델 초기화 실패:', cpuErr);
       statusEl.textContent='AI 모델을 불러오지 못했습니다. 인터넷 연결 확인 후 새로고침 해주세요.';
       throw cpuErr;
     }
   }
+  currentModelKind=modelKind;
   drawingUtils=new DrawingUtils(ctx);
   statusEl.textContent='카메라 준비 중…';
+  perfResetMonitor();
 }
 async function startCamera(){
   if(stream) stream.getTracks().forEach(t=>t.stop());
@@ -6383,90 +6469,248 @@ async function startCamera(){
   }catch(e){ statusEl.textContent='카메라 실패: '+e.message; }
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   2인 모드 (2026-08-02, 테스트 중)
+   ──────────────────────────────────────────────────────────────────────
+   1인 판정에 쓰던 전역변수(kicking, trajX, smHipW … )를 그대로 재사용한다.
+   새로 만들지 않고, "슬롯에 저장 → 그 선수 값을 전역변수로 불러오기 →
+   기존 코드(processPersonFrame) 그대로 실행 → 결과를 다시 슬롯에 저장"
+   방식으로 같은 판정 엔진을 청/홍 두 번 돌린다.
+   1인 모드(twoPlayerMode=false)일 때는 이 슬롯 로직을 아예 타지 않으므로
+   기존 1인 동작에는 영향이 없다. ══════════════════════════════════════ */
+let twoPlayerMode=false;
+function makeKickSlot(key){
+  return {
+    key, everSeen:false,
+    kicking:false, peakPct:0, aboveFrames:0, belowFrames:0, trajActive:false, kickStartT:0, drillSide:0,
+    trajX:[], trajY:[], trajHipX:[], trajTorso:[], trajHipW:[], trajKneeX:[], trajKneeAngle:[], trajHipVis:[], trajKneeVis:[], trajKneeAngle3D:[], trajShoulderW:[],
+    prevFoot:{left:null,right:null},
+    smHipY:null, smTorso:null, smHipX:null, smHipW:null, shoulderSamples:[],
+    drillDone:0, drillScores:[], lastScore:null, lastGrade:'', lastColor:'var(--gold)',
+    lastKickCompleteT:0, finished:false
+  };
+}
+let slot2p={ c:makeKickSlot('c'), h:makeKickSlot('h') };
+let active2pSlot=null; // 지금 전역변수에 불러와 있는 슬롯(스왑 표시)
+
+function saveToSlot(slot){
+  slot.kicking=kicking; slot.peakPct=peakPct; slot.aboveFrames=aboveFrames; slot.belowFrames=belowFrames;
+  slot.trajActive=trajActive; slot.kickStartT=kickStartT; slot.drillSide=drillSide;
+  slot.trajX=trajX; slot.trajY=trajY; slot.trajHipX=trajHipX; slot.trajTorso=trajTorso; slot.trajHipW=trajHipW;
+  slot.trajKneeX=trajKneeX; slot.trajKneeAngle=trajKneeAngle; slot.trajHipVis=trajHipVis; slot.trajKneeVis=trajKneeVis;
+  slot.trajKneeAngle3D=trajKneeAngle3D; slot.trajShoulderW=trajShoulderW;
+  slot.prevFoot=prevFoot;
+  slot.smHipY=smHipY; slot.smTorso=smTorso; slot.smHipX=smHipX; slot.smHipW=smHipW; slot.shoulderSamples=shoulderSamples;
+  slot.drillDone=drillDone; slot.drillScores=drillScores; slot.lastScore=lastScore; slot.lastGrade=lastGrade; slot.lastColor=lastColor;
+  slot.lastKickCompleteT=lastKickCompleteT;
+}
+function loadFromSlot(slot){
+  kicking=slot.kicking; peakPct=slot.peakPct; aboveFrames=slot.aboveFrames; belowFrames=slot.belowFrames;
+  trajActive=slot.trajActive; kickStartT=slot.kickStartT; drillSide=slot.drillSide;
+  trajX=slot.trajX; trajY=slot.trajY; trajHipX=slot.trajHipX; trajTorso=slot.trajTorso; trajHipW=slot.trajHipW;
+  trajKneeX=slot.trajKneeX; trajKneeAngle=slot.trajKneeAngle; trajHipVis=slot.trajHipVis; trajKneeVis=slot.trajKneeVis;
+  trajKneeAngle3D=slot.trajKneeAngle3D; trajShoulderW=slot.trajShoulderW;
+  prevFoot=slot.prevFoot;
+  smHipY=slot.smHipY; smTorso=slot.smTorso; smHipX=slot.smHipX; smHipW=slot.smHipW; shoulderSamples=slot.shoulderSamples;
+  drillDone=slot.drillDone; drillScores=slot.drillScores; lastScore=slot.lastScore; lastGrade=slot.lastGrade; lastColor=slot.lastColor;
+  lastKickCompleteT=slot.lastKickCompleteT;
+  active2pSlot=slot;
+}
+function resetSlot2p(slot){
+  const key=slot.key;
+  Object.assign(slot, makeKickSlot(key));
+}
+function hipXOf(lm){
+  if(!lm||!lm[23]||!lm[24]) return null;
+  return (lm[23].x+lm[24].x)/2;
+}
+window.setPlayerCount=async function(n){
+  const want=(n===2)?2:1;
+  if((want===2)===twoPlayerMode) return;
+  if(running){ statusEl.textContent='경기/연습을 먼저 종료한 뒤 인원을 바꿔주세요'; return; }
+  twoPlayerMode=(want===2);
+  document.body.classList.toggle('two-player-mode',twoPlayerMode);
+  document.getElementById('m_p1')?.classList.toggle('active',!twoPlayerMode);
+  document.getElementById('m_p2')?.classList.toggle('active',twoPlayerMode);
+  if(twoPlayerMode){
+    resetSlot2p(slot2p.c); resetSlot2p(slot2p.h);
+    document.getElementById('p2cTarget').textContent=drillTarget;
+    document.getElementById('p2hTarget').textContent=drillTarget;
+    render2pStatus('경기 준비');
+  }
+  try{
+    await initModel(twoPlayerMode?2:1, currentModelKind);
+  }catch(e){ console.error('2인 모드 전환 중 모델 재초기화 실패',e); }
+};
+
+function render2pPresence(key,present){
+  const el=document.getElementById('p2'+key+'Presence');
+  if(!el) return;
+  el.textContent=present?'인식 완료':'찾는 중';
+  el.classList.toggle('on',!!present);
+}
+function render2pScore(key){
+  const slot=slot2p[key];
+  const cEl=document.getElementById('p2'+key+'Count'); if(cEl) cEl.textContent=slot.drillDone;
+  const sEl=document.getElementById('p2'+key+'Score'); if(sEl) sEl.textContent=(slot.lastScore==null?'—':slot.lastScore);
+  const aEl=document.getElementById('p2'+key+'Avg'); if(aEl) aEl.textContent=(avgOf(slot.drillScores)??'—');
+}
+function render2pStatus(text){
+  const el=document.getElementById('p2Status');
+  if(el && text!=null) el.textContent=text;
+}
+function check2pFinish(){
+  const c=slot2p.c, h=slot2p.h;
+  if(c.drillDone>=drillTarget) c.finished=true;
+  if(h.drillDone>=drillTarget) h.finished=true;
+  if(c.finished && h.finished){
+    running=false; setPlayingUi(false);
+    const cAvg=avgOf(c.drillScores)||0, hAvg=avgOf(h.drillScores)||0;
+    const result=cAvg===hAvg?'무승부':(cAvg>hAvg?'청 승리':'홍 승리');
+    render2pStatus(result+' · 청 평균 '+cAvg+' · 홍 평균 '+hAvg);
+    setStartBtn(false,'다시 시작');
+  }
+}
+
+/* 한 사람(랜드마크 1세트)에 대한 매 프레임 처리.
+   기존 loop() 안에 있던 코드를 그대로 옮긴 것 — 로직은 한 글자도 안 바꿨다.
+   1인 모드에서는 이 함수가 그대로 한 번 불리므로 동작이 예전과 완전히 같다. */
+function processPersonFrame(lm, wlm){
+  drawingUtils.drawConnectors(lm,PoseLandmarker.POSE_CONNECTIONS,{color:(twoPlayerMode?(active2pSlot===slot2p.c?'rgba(43,127,255,0.6)':'rgba(227,23,46,0.6)'):'rgba(255,106,26,0.6)'),lineWidth:2});
+  drawingUtils.drawLandmarks(lm,{color:(twoPlayerMode?(active2pSlot===slot2p.c?'#2b7fff':'#E3172E'):'#E3172E'),lineWidth:1,radius:3});
+
+  const ankleVis=Math.max(lm[27]?.visibility??0,lm[28]?.visibility??0);
+  if(ankleVis>0.25){
+    const m=computeMetrics(lm,wlm);
+    if(m){
+      if(!twoPlayerMode) barFill.style.width=m.pct+'%';
+      smHipY=(smHipY==null)?m.hipY:smHipY*0.7+m.hipY*0.3;
+      smTorso=(smTorso==null)?m.torso:smTorso*0.7+m.torso*0.3;
+      smHipX=(smHipX==null)?m.hipX:smHipX*0.8+m.hipX*0.2; // 엉덩이 X 스무딩
+      if(typeof m.hipW==='number' && m.pct<30 && m.speed<0.015 && (m.hipVis??0)>=JUDGE.ROUND.HIP_VIS_MIN){
+        smHipW=(smHipW==null)?m.hipW:smHipW*0.94+m.hipW*0.06;
+        if(typeof m.shoulderW==='number') pushShoulderSample(m.shoulderW);
+      }
+      const mirrored=camWrap.classList.contains('mirrored');
+      const fx=(mirrored?1-m.ankleX:m.ankleX)*100, fy=m.ankleY*100;
+
+      const canScore=!twoPlayerMode || !active2pSlot.finished;
+      if(running && canScore) runKick(m.pct,m);
+      else if(!running){ kicking=false; aboveFrames=0; belowFrames=0; peakPct=0; trajActive=false; }
+
+      if(!twoPlayerMode && (isDrillMode()||currentMode==='sparring')&&running){
+        preT.push(performance.now());
+        preFootY.push(Number.isFinite(m.footY)?m.footY:null);
+        preKneeAngle.push(Number.isFinite(m.kneeAngle)?m.kneeAngle:null);
+        preKneeVis.push(Number.isFinite(m.kneeVis)?m.kneeVis:0);
+        preKneeAngle3D.push(Number.isFinite(m.kneeAngle3D)?m.kneeAngle3D:null);
+        if(preT.length>PRE_MAX){ preT.shift(); preFootY.shift(); preKneeAngle.shift(); preKneeVis.shift(); preKneeAngle3D.shift(); }
+        if(!trajActive) pushPreTraj(m);
+      }
+      if(!twoPlayerMode && labModalOpen) updateLabLive(m);
+
+      if((isDrillMode()||currentMode==='sparring')&&running&&trajActive){
+        const MAX_TRAJ=40;
+        trajX.push(m.footX); trajY.push(m.footY); trajHipX.push(m.hipX);
+        trajTorso.push(m.torso);
+        trajHipW.push((smHipW && smHipW>0.005 && typeof m.hipW==='number' && (m.hipVis??0)>=JUDGE.ROUND.HIP_VIS_MIN) ? m.hipW/smHipW : 1);
+        trajKneeX.push(Number.isFinite(m.kneeX)?m.kneeX:m.hipX);
+        trajKneeAngle.push(Number.isFinite(m.kneeAngle)?m.kneeAngle:null);
+        trajHipVis.push(m.hipVis??0);
+        trajKneeVis.push(Number.isFinite(m.kneeVis)?m.kneeVis:0);
+        trajKneeAngle3D.push(Number.isFinite(m.kneeAngle3D)?m.kneeAngle3D:null);
+        trajShoulderW.push(shoulderRatioNow(m));
+        if(trajX.length>MAX_TRAJ){ trajX.shift(); trajY.shift(); trajHipX.shift(); trajTorso.shift(); trajHipW.shift(); trajKneeX.shift(); trajKneeAngle.shift(); trajHipVis.shift(); trajKneeVis.shift(); trajKneeAngle3D.shift(); trajShoulderW.shift(); }
+      }
+      if(!twoPlayerMode && (isDrillMode() || (currentMode==='sparring' && sparringMode==='practice')) && drillKickType()==='apcha') drawApchaGuide();
+      if(!twoPlayerMode && (isDrillMode() || (currentMode==='sparring' && sparringMode==='practice')) && drillKickType()==='dollo') drawDolloGuide();
+      if(!twoPlayerMode && currentMode==='sparring' && sparringMode==='live') updateAdaptiveSparringTarget();
+
+      if(!twoPlayerMode && currentMode==='balloon'&&running) checkBalloons(fx,fy);
+    }
+  } else {
+    if(!twoPlayerMode) barFill.style.width='0%';
+    if(!running && !twoPlayerMode){ statusEl.style.opacity='1'; statusEl.textContent='전신이 보이게 뒤로 물러서세요'; };
+    kicking=false; aboveFrames=0; belowFrames=0;
+  }
+}
+
+/* 2인 프레임 처리 — 화면 왼쪽=청, 오른쪽=홍으로 자리를 고정한다.
+   (완수님 확인: 시합 중 자리를 바꾸지 않는 전제) */
+function run2pFrame(result){
+  const lms=result.landmarks||[];
+  const wlms=result.worldLandmarks||[];
+  const mirrored=camWrap.classList.contains('mirrored');
+  const people=lms.map((lm,i)=>{
+    const hx=hipXOf(lm);
+    if(hx==null) return null;
+    return { lm, wlm:wlms[i]||null, screenX: mirrored?1-hx:hx };
+  }).filter(Boolean);
+  people.sort((a,b)=>a.screenX-b.screenX);
+  const cPerson=people[0]||null, hPerson=people[1]||null;
+
+  loadFromSlot(slot2p.c);
+  if(cPerson && !slot2p.c.finished){ processPersonFrame(cPerson.lm,cPerson.wlm); render2pPresence('c',true); }
+  else { kicking=false; aboveFrames=0; belowFrames=0; render2pPresence('c',!!cPerson); }
+  saveToSlot(slot2p.c); render2pScore('c');
+
+  loadFromSlot(slot2p.h);
+  if(hPerson && !slot2p.h.finished){ processPersonFrame(hPerson.lm,hPerson.wlm); render2pPresence('h',true); }
+  else { kicking=false; aboveFrames=0; belowFrames=0; render2pPresence('h',!!hPerson); }
+  saveToSlot(slot2p.h); render2pScore('h');
+
+  if(running) check2pFinish();
+  active2pSlot=null;
+  if(running && !slot2p.c.finished && !slot2p.h.finished){
+    const cOn=document.getElementById('p2cPresence')?.classList.contains('on');
+    const hOn=document.getElementById('p2hPresence')?.classList.contains('on');
+    render2pStatus((cOn&&hOn)?'경기 진행 중':'두 선수 인식 대기');
+  }
+}
+
+/* ── 성능 대응 (2026-08-02) ──────────────────────────────────────────
+   대기 중(경기 전)에는 추론을 매 프레임이 아니라 3프레임에 한 번만 돌려
+   fps 를 낮추고 발열·배터리 소모를 줄인다. 경기가 시작되면 다시 매 프레임.
+   실측 fps 가 계속 낮으면(태블릿 저사양 · 2인은 연산량이 거의 2배)
+   자동으로 lite 모델로 한 번 전환한다. */
+let idleFrameCounter=0;
+let perfLowStreakMs=0, perfLastCheck=0, perfDowngraded=false;
+const PERF_LOW_FPS=12, PERF_LOW_HOLD_MS=6000;
+function perfResetMonitor(){ perfLowStreakMs=0; perfLastCheck=0; }
+function perfMonitorTick(now, inferMs){
+  if(!perfLastCheck){ perfLastCheck=now; return; }
+  const dt=now-perfLastCheck; perfLastCheck=now;
+  const estFps=inferMs>0?Math.min(60,1000/Math.max(inferMs,1)):60;
+  if(estFps<PERF_LOW_FPS) perfLowStreakMs+=dt; else perfLowStreakMs=0;
+  if(!perfDowngraded && currentModelKind==='full' && perfLowStreakMs>=PERF_LOW_HOLD_MS){
+    perfDowngraded=true;
+    console.warn('성능 저하 감지 → lite 모델로 자동 전환합니다.');
+    const keepNum=twoPlayerMode?2:1;
+    initModel(keepNum,'lite').catch(e=>console.error('lite 전환 실패',e));
+  }
+}
+
 function loop(){
   if(poseLandmarker && video.readyState>=2 && video.currentTime!==lastVideoTime){
     lastVideoTime=video.currentTime;
+    // 대기 중(연습/경기 진행 아님)에는 3프레임에 한 번만 추론 — 성능 절약
+    if(!running){
+      idleFrameCounter++;
+      if(idleFrameCounter%3!==0){ requestAnimationFrame(loop); return; }
+    }
     if(canvas.width!==video.videoWidth){ canvas.width=video.videoWidth; canvas.height=video.videoHeight; }
+    const t0=performance.now();
     const result=poseLandmarker.detectForVideo(video,performance.now());
+    const inferMs=performance.now()-t0;
+    perfMonitorTick(performance.now(),inferMs);
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    if(result.landmarks && result.landmarks.length>0){
+    if(twoPlayerMode){
+      run2pFrame(result);
+    } else if(result.landmarks && result.landmarks.length>0){
       const lm=result.landmarks[0];
-      drawingUtils.drawConnectors(lm,PoseLandmarker.POSE_CONNECTIONS,{color:'rgba(255,106,26,0.6)',lineWidth:2});
-      drawingUtils.drawLandmarks(lm,{color:'#E3172E',lineWidth:1,radius:3});
-
-      const ankleVis=Math.max(lm[27]?.visibility??0,lm[28]?.visibility??0);
-      if(ankleVis>0.25){
-        /* 2026-07-27 계측기: 미디어파이프는 2D 화면 좌표(landmarks)와
-           3D 월드 좌표(worldLandmarks)를 같은 추론에서 함께 내놓는다.
-           지금까지 2D만 쓰고 있었는데, 앞차기는 발이 카메라 쪽으로 와서
-           화면상 허벅지·정강이가 겹쳐 보이면 무릎 각도가 뭉개진다.
-           3D는 카메라 방향과 무관하므로 비교용으로 함께 기록한다.
-           (아직 판정에는 쓰지 않는다 — 실측 비교 후 결정) */
-        const wlm=(result.worldLandmarks && result.worldLandmarks.length>0)?result.worldLandmarks[0]:null;
-        const m=computeMetrics(lm,wlm);
-        if(m){
-          barFill.style.width=m.pct+'%';
-          smHipY=(smHipY==null)?m.hipY:smHipY*0.7+m.hipY*0.3;
-          smTorso=(smTorso==null)?m.torso:smTorso*0.7+m.torso*0.3;
-          smHipX=(smHipX==null)?m.hipX:smHipX*0.8+m.hipX*0.2; // 엉덩이 X 스무딩
-          // 서 있을 때(발이 낮을 때)만 골반 폭 기준값 갱신 → 발차기 중 회전은 기준에 섞이지 않음
-          if(typeof m.hipW==='number' && m.pct<30 && m.speed<0.015 && (m.hipVis??0)>=JUDGE.ROUND.HIP_VIS_MIN){
-            smHipW=(smHipW==null)?m.hipW:smHipW*0.94+m.hipW*0.06;
-            // 2026-07-29: 어깨 폭은 평균이 아니라 최근 표본을 쌓아 90퍼센타일을 쓴다
-            if(typeof m.shoulderW==='number') pushShoulderSample(m.shoulderW);
-          }
-          const mirrored=camWrap.classList.contains('mirrored');
-          const fx=(mirrored?1-m.ankleX:m.ankleX)*100, fy=m.ankleY*100;
-
-          if(running) runKick(m.pct,m);
-          else { kicking=false; aboveFrames=0; belowFrames=0; peakPct=0; trajActive=false; }
-
-          /* 프리롤 수집: 발차기 중인지와 무관하게 항상 쌓는다.
-             앞차기 체임버 측정에서만 되돌아본다. (2026-07-27) */
-          if((isDrillMode()||currentMode==='sparring')&&running){
-            preT.push(performance.now());
-            preFootY.push(Number.isFinite(m.footY)?m.footY:null);
-            preKneeAngle.push(Number.isFinite(m.kneeAngle)?m.kneeAngle:null);
-            preKneeVis.push(Number.isFinite(m.kneeVis)?m.kneeVis:0);
-            preKneeAngle3D.push(Number.isFinite(m.kneeAngle3D)?m.kneeAngle3D:null);
-            if(preT.length>PRE_MAX){ preT.shift(); preFootY.shift(); preKneeAngle.shift(); preKneeVis.shift(); preKneeAngle3D.shift(); }
-            // 2026-07-29: 측정 전용 모드용 전체 궤적 프리롤 (짧은 발차기 대비)
-            if(!trajActive) pushPreTraj(m);
-          }
-          // 연구소 실시간 표시 (열려 있을 때만)
-          if(labModalOpen) updateLabLive(m);
-
-          // 발차기 궤적 수집: 연습/겨루기 공통
-          if((isDrillMode()||currentMode==='sparring')&&running&&trajActive){
-            const MAX_TRAJ=40;
-            trajX.push(m.footX); trajY.push(m.footY); trajHipX.push(m.hipX);
-            trajTorso.push(m.torso);
-            trajHipW.push((smHipW && smHipW>0.005 && typeof m.hipW==='number' && (m.hipVis??0)>=JUDGE.ROUND.HIP_VIS_MIN) ? m.hipW/smHipW : 1);
-            trajKneeX.push(Number.isFinite(m.kneeX)?m.kneeX:m.hipX);
-            trajKneeAngle.push(Number.isFinite(m.kneeAngle)?m.kneeAngle:null);
-            trajHipVis.push(m.hipVis??0);
-            trajKneeVis.push(Number.isFinite(m.kneeVis)?m.kneeVis:0);
-            // 계측 전용 두 줄 (판정 미사용)
-            trajKneeAngle3D.push(Number.isFinite(m.kneeAngle3D)?m.kneeAngle3D:null);
-            trajShoulderW.push(shoulderRatioNow(m));
-            if(trajX.length>MAX_TRAJ){ trajX.shift(); trajY.shift(); trajHipX.shift(); trajTorso.shift(); trajHipW.shift(); trajKneeX.shift(); trajKneeAngle.shift(); trajHipVis.shift(); trajKneeVis.shift(); trajKneeAngle3D.shift(); trajShoulderW.shift(); }
-          }
-          // 연습 가이드 라인
-          if((isDrillMode() || (currentMode==='sparring' && sparringMode==='practice')) && drillKickType()==='apcha') drawApchaGuide();
-          if((isDrillMode() || (currentMode==='sparring' && sparringMode==='practice')) && drillKickType()==='dollo') drawDolloGuide();
-          if(currentMode==='sparring' && sparringMode==='live') updateAdaptiveSparringTarget();
-          // 발 궤적 표시는 현재 비활성화.
-          // 점수/겨루기 판정에는 trajX/trajY를 그대로 사용하되, 화면에는 그리지 않는다.
-          // if((isDrillMode()||currentMode==='sparring')&&trajX.length>1) drawDrillTrail();
-
-          if(currentMode==='balloon'&&running) checkBalloons(fx,fy);
-        }
-      } else {
-        barFill.style.width='0%';
-        if(!running){ statusEl.style.opacity='1'; statusEl.textContent='전신이 보이게 뒤로 물러서세요'; };
-        kicking=false; aboveFrames=0; belowFrames=0;
-      }
+      const wlm=(result.worldLandmarks && result.worldLandmarks.length>0)?result.worldLandmarks[0]:null;
+      processPersonFrame(lm,wlm);
     } else {
       barFill.style.width='0%';
       if(!running){ statusEl.style.opacity='1'; statusEl.textContent='사람을 찾는 중…'; }
