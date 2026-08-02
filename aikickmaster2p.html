@@ -460,28 +460,53 @@ body.two-player-mode #p2Status{
 }
 #p2Notice.show{ display:block; }
 
-/* 겨루기 전용 상대 그래픽 — 청 화면(왼쪽 절반)엔 홍 색, 홍 화면(오른쪽 절반)엔 청 색 오라.
-   실제 사람 모습을 가리지 않도록 은은하게, 화면 아래쪽에 둔다. */
+/* 겨루기 전용 상대 그래픽 — 청 화면(왼쪽 절반)엔 홍 색, 홍 화면(오른쪽 절반)엔 청 색 조준 반응.
+   화면을 5등분했을 때 2번째 칸/4번째 칸 가운데(아이가 보는 위치와 겹치도록) 배치.
+   1인모드의 HEAD/BODY 조준경과 같은 느낌의 링+크로스헤어 디자인. */
 .p2-enemy{
-  display:none; position:fixed; bottom:110px; width:150px; height:150px; z-index:12;
-  pointer-events:none; border-radius:50%; text-align:center;
+  display:none; position:fixed; bottom:120px; width:128px; height:128px; z-index:12;
+  pointer-events:none; text-align:center;
 }
 body.two-player-mode.sparring-mode .p2-enemy{ display:block; }
-#p2EnemyC{ left:8%; }
-#p2EnemyH{ right:8%; }
+#p2EnemyC{ left:30%; transform:translateX(-50%); }
+#p2EnemyH{ left:70%; transform:translateX(-50%); }
 .p2-enemy::before{
   content:""; position:absolute; inset:0; border-radius:50%;
-  filter:blur(2px); opacity:.55; transition:transform .18s ease, opacity .18s ease;
+  box-shadow:0 0 24px 0 var(--p2e-glow), inset 0 0 22px var(--p2e-glow);
+  border:2px solid var(--p2e-line);
+  background:radial-gradient(circle,var(--p2e-fill),rgba(0,0,0,0) 70%);
+  transition:transform .18s ease, opacity .18s ease, box-shadow .18s ease;
 }
-.p2-enemy-hong::before{ background:radial-gradient(circle,rgba(255,48,79,.55),rgba(255,48,79,0) 68%); border:2px solid rgba(255,48,79,.5); }
-.p2-enemy-cheong::before{ background:radial-gradient(circle,rgba(49,183,255,.55),rgba(49,183,255,0) 68%); border:2px solid rgba(49,183,255,.5); }
-.p2-enemy.hit::before{ transform:scale(1.18); opacity:.9; }
+.p2-enemy::after{
+  content:""; position:absolute; left:50%; top:50%; width:58%; height:58%;
+  transform:translate(-50%,-50%); border-radius:50%;
+  border:1px dashed var(--p2e-line); opacity:.75;
+  transition:transform .28s ease, opacity .28s ease;
+}
+.p2-enemy-hong{ --p2e-line:rgba(255,48,79,.7); --p2e-glow:rgba(255,48,79,.30); --p2e-fill:rgba(255,48,79,.20); }
+.p2-enemy-cheong{ --p2e-line:rgba(49,183,255,.7); --p2e-glow:rgba(49,183,255,.30); --p2e-fill:rgba(49,183,255,.20); }
+.p2-enemy.hit::before{ transform:scale(1.16); box-shadow:0 0 34px 0 var(--p2e-glow), inset 0 0 30px var(--p2e-glow); }
+.p2-enemy.hit::after{ transform:translate(-50%,-50%) scale(1.35); opacity:0; }
 .p2-enemy-label{
-  position:absolute; left:50%; bottom:-26px; transform:translateX(-50%); white-space:nowrap;
+  position:absolute; left:50%; bottom:-24px; transform:translateX(-50%); white-space:nowrap;
   font-size:12px; font-weight:1000; text-shadow:0 2px 8px rgba(0,0,0,.95);
 }
 #p2EnemyC .p2-enemy-label{ color:var(--arcade-red); }
 #p2EnemyH .p2-enemy-label{ color:var(--arcade-blue); }
+
+/* 2인 겨루기 HP 게이지 — 1인 모드의 enemyHpTrack/Fill과 같은 스타일.
+   평소 점수줄(.p2-line) 아래 얇게 깔린다. */
+.p2-hpbar{ display:none; }
+body.sparring-mode .p2-hpbar{
+  display:block; flex:0 0 100%; width:100%; margin-top:5px; height:10px;
+  border-radius:999px; overflow:hidden; background:rgba(0,0,0,.45);
+  border:1px solid rgba(255,255,255,.20); pointer-events:none;
+}
+.p2-hpbar-fill{
+  display:block; height:100%; width:100%;
+  background:linear-gradient(90deg,#2ecc71,#FF6A1A,#E3172E);
+  transition:width .25s ease;
+}
 
 /* 2인 경기 종료 — 화면 가운데 크게 */
 #p2Result{
@@ -2460,6 +2485,22 @@ body.hud-v21.akm-ui #enemyTarget .enemyBody{
 }
 body.hud-v21.akm-ui #enemyTarget .enemyHead{border-width:3px !important; box-shadow:0 0 32px rgba(255,48,79,.72), inset 0 0 28px rgba(255,48,79,.20) !important;}
 body.hud-v21.akm-ui #enemyTarget .enemyBody{border-width:3px !important; box-shadow:0 0 32px rgba(49,183,255,.70), inset 0 0 28px rgba(49,183,255,.18) !important;}
+
+/* 2026-08-02: 락온 느낌을 살리는 회전 링 장식 — enemyHead/enemyBody 크기·위치(판정용 rect)는 그대로 두고
+   #enemyTarget 전체를 감싸는 얇은 점선 링만 두 겹 추가해 조준경 느낌을 더한다. */
+body.hud-v21.akm-ui #enemyTarget .enemyAura::before,
+body.hud-v21.akm-ui #enemyTarget .enemyAura::after{
+  content:"" !important; position:absolute !important; inset:-16px !important; border-radius:50% !important;
+  border:1px dashed rgba(255,255,255,.26) !important; pointer-events:none !important;
+}
+body.hud-v21.akm-ui #enemyTarget .enemyAura::before{
+  animation:enemyAuraSpin 7s linear infinite !important;
+}
+body.hud-v21.akm-ui #enemyTarget .enemyAura::after{
+  inset:-30px !important; border-color:rgba(255,255,255,.14) !important;
+  animation:enemyAuraSpin 11s linear infinite reverse !important;
+}
+@keyframes enemyAuraSpin{ to{ transform:rotate(360deg); } }
 body.hud-v21.akm-ui #damagePopup{
   border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important;
   font-size:46px !important; font-weight:1000 !important; color:#fff !important;
@@ -3603,6 +3644,7 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
         <span class="p2-line"><span id="p2cLabel1">이번</span> <b id="p2cVal1">—</b></span>
         <span class="p2-line"><span id="p2cLabel2">평균</span> <b id="p2cVal2">—</b></span>
         <span class="p2-presence" id="p2cPresence">인식 대기</span>
+        <span class="p2-hpbar" id="p2cHpBar"><span class="p2-hpbar-fill" id="p2cHpFill"></span></span>
       </div>
       <div class="p2-player p2-hong">
         <span class="p2-name">홍</span>
@@ -3610,6 +3652,7 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
         <span class="p2-line"><span id="p2hLabel1">이번</span> <b id="p2hVal1">—</b></span>
         <span class="p2-line"><span id="p2hLabel2">평균</span> <b id="p2hVal2">—</b></span>
         <span class="p2-presence" id="p2hPresence">인식 대기</span>
+        <span class="p2-hpbar" id="p2hHpBar"><span class="p2-hpbar-fill" id="p2hHpFill"></span></span>
       </div>
     </div>
 
@@ -6923,6 +6966,8 @@ function render2pScoreSparring(key){
     label1:'데미지', val1:st.damage,
     label2:'콤보', val2:'x'+st.maxCombo
   });
+  const fill=document.getElementById('p2'+key+'HpFill');
+  if(fill) fill.style.width=Math.max(0,(st.hp/250)*100)+'%';
 }
 function finishSparring2p(){
   if(currentMode!=='sparring' || twoPlayerMode!==true) return;
