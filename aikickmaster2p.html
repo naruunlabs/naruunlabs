@@ -468,7 +468,7 @@ body.two-player-mode #p2Status{
   display:none; position:fixed; top:46%; width:112px; height:200px; z-index:12;
   pointer-events:none; text-align:center;
 }
-body.two-player-mode.sparring-mode .p2-enemy{ display:block; }
+body.two-player-mode.sparring-mode.playing-ui .p2-enemy{ display:block; }
 #p2EnemyC{ left:30%; transform:translate(-50%,-50%); }
 #p2EnemyH{ left:70%; transform:translate(-50%,-50%); }
 .p2-enemy-svg{
@@ -7008,7 +7008,9 @@ function render2pScoreSparring(key){
   }
 }
 function finishSparring2p(){
-  if(currentMode!=='sparring' || twoPlayerMode!==true) return;
+  if(currentMode!=='sparring' || twoPlayerMode!==true || !running) return;
+  running=false; setPlayingUi(false); timerBadge.classList.remove('show');
+  if(gameTimer){ clearInterval(gameTimer); gameTimer=null; }
   const c=sparringState2p.c, h=sparringState2p.h;
   let winner;
   if(c.hp<=0 && h.hp<=0) winner=null;
