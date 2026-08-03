@@ -3686,6 +3686,12 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
       <div id="readySub"></div>
     </div>
     <div id="popOverlay"><div id="popScore"></div></div>
+    <!-- 2026-08-03 · 2인 전용 점수/피드백 팝업.
+         1인은 화면 한가운데 큰 점수가 뜨지만 2인은 그 자리가 겹치므로,
+         청은 왼쪽 절반 가운데, 홍은 오른쪽 절반 가운데에 각자 띄운다.
+         내용(점수·등급·실패 안내문)은 1인과 완전히 같은 popup() 을 거친다. -->
+    <div id="p2PopC" class="p2-pop p2-pop-c"><div class="p2-pop-score"></div></div>
+    <div id="p2PopH" class="p2-pop p2-pop-h"><div class="p2-pop-score"></div></div>
   </div>
 
   <div class="panel">
@@ -4768,6 +4774,12 @@ function popup(text,color){
     else if(lastScore>=80) grade='GOOD!';
     else if(lastScore>=70) grade='성공!';
   }
+  /* 2026-08-03: 2인 모드에서는 가운데가 아니라 지금 처리 중인 선수 쪽에 띄운다.
+     (run2pFrame 이 선수를 하나씩 처리하므로 active2pSlot 이 곧 "지금 그 선수"다) */
+  if(typeof twoPlayerMode!=='undefined' && twoPlayerMode && active2pSlot){
+    showP2Popup(active2pSlot===slot2p.c?'c':'h', text, grade, color);
+    return;
+  }
   popScore.innerHTML = text + (grade ? '<div class="popGrade">'+grade+'</div>' : '');
   popScore.style.color=color;
   // 점수가 아닌 안내문은 긴 문장이 잘리지 않도록 절반 크기로 표시
@@ -5832,7 +5844,8 @@ function onDrillKick(peak, traj){
     lastGrade=result.msg;
     lastColor='#FFB14A';
     sndFail();
-    if(!twoPlayerMode) popup(result.msg,'#FFB14A'); // 2인은 화면 중앙 팝업 대신 점수판에만 반영(아래 render2p*)
+    // 2026-08-03: 2인도 1인과 똑같이 안내문을 띄운다. popup() 이 알아서 그 선수 쪽으로 보낸다.
+    popup(result.msg,'#FFB14A');
     trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajKneeAngle3D=[]; trajShoulderW=[]; trajActive=false; drillSide=0; resetPreRoll();
     return;
   }
@@ -5845,7 +5858,9 @@ function onDrillKick(peak, traj){
 
   sndSuccess();
   flashEdge(twoPlayerMode ? (active2pSlot===slot2p.c?'c':'h') : null);
-  if(!twoPlayerMode){ popup(result.score+'점','#4caf50'); renderStats(); }
+  // 2026-08-03: 점수 팝업도 2인에서 그대로 띄운다 (각자 자기 앞에 뜬다)
+  popup(result.score+'점','#4caf50');
+  if(!twoPlayerMode) renderStats();
 
   trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajKneeAngle3D=[]; trajShoulderW=[]; trajActive=false; drillSide=0; resetPreRoll();
 
@@ -6291,6 +6306,8 @@ window.startGame=()=>{
   };
   runReadyCountdown(subTexts[startMode]||'',()=>{
     if(currentMode!==startMode) return;
+    // 2026-08-03: 어떤 모드든 2인 경기를 시작할 때는 두 슬롯을 먼저 깨끗이 비운다.
+    if(twoPlayerMode) reset2pAll();
     running=true; setPlayingUi(true); statusEl.textContent=''; statusEl.style.opacity='0';
     if(currentMode==='balloon'){
       const sec=parseInt(balloonTimeSel?.value||'30');
@@ -6333,6 +6350,7 @@ function resetCounters(){
   kicking=false; aboveFrames=0; belowFrames=0; peakPct=0; lastRankTs=null;
   trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajKneeAngle3D=[]; trajShoulderW=[]; trajActive=false; drillSide=0; resetPreRoll();
   popOverlay.classList.remove('show');
+  if(typeof clearP2Popups==='function') clearP2Popups(); // 2인 개인별 팝업도 함께 지운다
   drillResult.classList.remove('show','auto-summary','final-result'); sparringHud?.classList.remove('show');
   if(drillResultTimer){ clearTimeout(drillResultTimer); drillResultTimer=null; }
 }
@@ -6601,6 +6619,8 @@ window.setMode=(mode)=>{
     document.body.classList.toggle('sparring-live', mode==='sparring' && sparringMode==='live');
   }catch(e){}
   ensureAudio(); stopGame(); currentMode=mode; updateModeBadge(); updateKickButtonVisibility();
+  // 2026-08-03: 모드를 바꿀 때도 2인 슬롯을 비운다 (이전 경기의 finished 가 남지 않도록)
+  if(typeof twoPlayerMode!=='undefined' && twoPlayerMode) reset2pAll();
   const drillPanel=document.getElementById('drillModePanel');
   const diffPanel=document.getElementById('difficultyPanel');
   const sparPanel=document.getElementById('sparringTypePanel');
@@ -6876,6 +6896,10 @@ function makeKickSlot(key){
     key, everSeen:false,
     kicking:false, peakPct:0, aboveFrames:0, belowFrames:0, trajActive:false, kickStartT:0, drillSide:0,
     trajX:[], trajY:[], trajHipX:[], trajTorso:[], trajHipW:[], trajKneeX:[], trajKneeAngle:[], trajHipVis:[], trajKneeVis:[], trajKneeAngle3D:[], trajShoulderW:[],
+    /* 2026-08-03 추가: 프리롤 버퍼도 선수별로 따로 가진다.
+       앞차기 체임버(무릎 접힘) 판정이 이 버퍼를 보기 때문에, 예전처럼 2인에서
+       프리롤을 아예 안 쌓으면 1인과 다른 점수가 나온다. */
+    preT:[], preFootY:[], preKneeAngle:[], preKneeVis:[], preKneeAngle3D:[], preTraj:[],
     prevFoot:{left:null,right:null},
     smHipY:null, smTorso:null, smHipX:null, smHipW:null, shoulderSamples:[],
     drillDone:0, drillScores:[], lastScore:null, lastGrade:'', lastColor:'var(--gold)',
@@ -6891,6 +6915,8 @@ function saveToSlot(slot){
   slot.trajX=trajX; slot.trajY=trajY; slot.trajHipX=trajHipX; slot.trajTorso=trajTorso; slot.trajHipW=trajHipW;
   slot.trajKneeX=trajKneeX; slot.trajKneeAngle=trajKneeAngle; slot.trajHipVis=trajHipVis; slot.trajKneeVis=trajKneeVis;
   slot.trajKneeAngle3D=trajKneeAngle3D; slot.trajShoulderW=trajShoulderW;
+  slot.preT=preT; slot.preFootY=preFootY; slot.preKneeAngle=preKneeAngle; slot.preKneeVis=preKneeVis;
+  slot.preKneeAngle3D=preKneeAngle3D; slot.preTraj=preTraj;
   slot.prevFoot=prevFoot;
   slot.smHipY=smHipY; slot.smTorso=smTorso; slot.smHipX=smHipX; slot.smHipW=smHipW; slot.shoulderSamples=shoulderSamples;
   slot.drillDone=drillDone; slot.drillScores=drillScores; slot.lastScore=lastScore; slot.lastGrade=lastGrade; slot.lastColor=lastColor;
@@ -6902,6 +6928,8 @@ function loadFromSlot(slot){
   trajX=slot.trajX; trajY=slot.trajY; trajHipX=slot.trajHipX; trajTorso=slot.trajTorso; trajHipW=slot.trajHipW;
   trajKneeX=slot.trajKneeX; trajKneeAngle=slot.trajKneeAngle; trajHipVis=slot.trajHipVis; trajKneeVis=slot.trajKneeVis;
   trajKneeAngle3D=slot.trajKneeAngle3D; trajShoulderW=slot.trajShoulderW;
+  preT=slot.preT; preFootY=slot.preFootY; preKneeAngle=slot.preKneeAngle; preKneeVis=slot.preKneeVis;
+  preKneeAngle3D=slot.preKneeAngle3D; preTraj=slot.preTraj;
   prevFoot=slot.prevFoot;
   smHipY=slot.smHipY; smTorso=slot.smTorso; smHipX=slot.smHipX; smHipW=slot.smHipW; shoulderSamples=slot.shoulderSamples;
   drillDone=slot.drillDone; drillScores=slot.drillScores; lastScore=slot.lastScore; lastGrade=slot.lastGrade; lastColor=slot.lastColor;
@@ -6911,6 +6939,15 @@ function loadFromSlot(slot){
 function resetSlot2p(slot){
   const key=slot.key;
   Object.assign(slot, makeKickSlot(key));
+}
+/* 2026-08-03 버그수정: 예전에는 발차기 드릴을 시작할 때만 슬롯을 초기화했다.
+   그래서 발차기 10회를 끝내면 두 슬롯 모두 finished=true 로 남고, 그 상태로
+   겨루기·격파를 시작하면 run2pFrame 이 processPersonFrame 자체를 건너뛰어
+   "발차기 인식이 하나도 안 되는" 증상이 났다.
+   → 모드와 상관없이 경기 시작·모드 전환 때마다 두 슬롯을 모두 초기화한다. */
+function reset2pAll(){
+  resetSlot2p(slot2p.c); resetSlot2p(slot2p.h);
+  active2pSlot=null;
 }
 function hipXOf(lm){
   if(!lm||!lm[23]||!lm[24]) return null;
@@ -6993,6 +7030,28 @@ function showP2Float(key,text,kind){
 }
 function showP2Damage(key,dmg,zone){
   showP2Float(key,'-'+dmg+(zone==='head'?' 머리':' 몸통'),zone);
+}
+/* 2026-08-03: 1인의 가운데 점수 팝업(#popOverlay)을 선수별 자리에 그대로 옮긴 것.
+   popup() 이 2인 모드일 때 이쪽으로 넘겨준다. */
+let p2PopTimer={c:null,h:null};
+function showP2Popup(key,text,grade,color){
+  const el=document.getElementById(key==='c'?'p2PopC':'p2PopH');
+  if(!el) return;
+  const scoreEl=el.querySelector('.p2-pop-score');
+  if(!scoreEl) return;
+  scoreEl.innerHTML = text + (grade ? '<div class="popGrade">'+grade+'</div>' : '');
+  scoreEl.style.color=color;
+  // 점수가 아닌 안내 문장은 작은 글씨로 여러 줄 표시
+  el.classList.toggle('compact-message', typeof lastScore!=='number');
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  if(p2PopTimer[key]) clearTimeout(p2PopTimer[key]);
+  p2PopTimer[key]=setTimeout(()=>el.classList.remove('show'),1000);
+}
+function clearP2Popups(){
+  ['c','h'].forEach(k=>{
+    document.getElementById(k==='c'?'p2PopC':'p2PopH')?.classList.remove('show');
+    if(p2PopTimer[k]){ clearTimeout(p2PopTimer[k]); p2PopTimer[k]=null; }
+  });
 }
 function render2pScore(key){
   if(currentMode==='balloon') return render2pScoreBalloon(key);
@@ -7172,6 +7231,18 @@ function newMissionFor(key){
   sparringMission2p[key]={...base,targetPct};
   return sparringMission2p[key];
 }
+/* 2026-08-03: 1인의 updateAdaptiveSparringTarget 과 같은 계산.
+   지금 처리 중인 선수(active2pSlot)의 키에 맞춰 그 사람 앞 타겟 높이를 조정한다.
+   가로 위치(left 28%/72%)와 크기는 CSS 가 잡으므로 top 만 건드린다. */
+function updateAdaptiveSparringTarget2p(){
+  if(smHipY==null || smTorso==null || !active2pSlot) return;
+  const el=document.getElementById(active2pSlot===slot2p.c?'p2EnemyC':'p2EnemyH');
+  if(!el) return;
+  const shoulderY=smHipY-smTorso;
+  const headY=Math.max(0.10, shoulderY-smTorso*0.38);
+  const bodyY=Math.min(0.84, smHipY-smTorso*0.05);
+  el.style.top=(((headY+bodyY)/2)*100).toFixed(1)+'%';
+}
 function sparringHitZone2p(){
   if(trajY.length && Math.min(...trajY)<0.27) return 'head';
   if(peakPct>=90) return 'head';
@@ -7195,8 +7266,8 @@ function handleSparringPracticeKick2p(peak){
   drillScores.push(score);
   sndScore(score);
   flashEdge(key);
-  // 2026-08-03: 가운데 팝업 대신 각자 자리에 점수를 띄운다(2인은 가운데가 겹친다)
-  showP2Float(key, score+'점 '+lastGrade, score>=88?'head':'body');
+  // 2026-08-03: 1인 연습모드와 똑같은 점수 팝업 — popup() 이 이 선수 쪽으로 보내준다
+  popup(String(score), lastColor);
   newMissionFor(key); // 이 선수만 다음 미션으로
   render2pScoreSparringPractice(key);
   trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajKneeAngle3D=[]; trajShoulderW=[]; trajActive=false; drillSide=0; resetPreRoll();
@@ -7224,8 +7295,10 @@ function handleSparringKick2p(peak){
   render2pScoreSparring('c'); render2pScoreSparring('h');
   if(st.combo>=2) sndCombo(st.combo-1); else sndImpact(zone);
   flashEdge(key);
-  // 2026-08-03: 1인 모드의 #damagePopup 에 해당하는 피드백을 2인에도 추가
-  showP2Damage(key,dmg,zone);
+  // 2026-08-03: 1인 모드의 #damagePopup · 콤보 배지에 해당하는 피드백을 2인에도 추가
+  showP2Float(key,
+    '-'+dmg+(zone==='head'?' 머리':' 몸통')+(st.combo>=2?'  '+st.combo+'COMBO':''),
+    zone);
   // 2026-08-03: 타겟이 1인 모드와 같은 구조가 되었으므로 타격 애니메이션도 같은 클래스를 쓴다.
   const enemyEl=document.getElementById(key==='c'?'p2EnemyC':'p2EnemyH');
   if(enemyEl){
@@ -7324,7 +7397,10 @@ function processPersonFrame(lm, wlm){
       if(running && canScore) runKick(m.pct,m);
       else if(!running){ kicking=false; aboveFrames=0; belowFrames=0; peakPct=0; trajActive=false; }
 
-      if(!twoPlayerMode && (isDrillMode()||currentMode==='sparring')&&running){
+      /* 2026-08-03: 예전에는 !twoPlayerMode 로 막아서 2인에서는 프리롤이 하나도 안 쌓였다.
+         앞차기 판정(무릎 체임버)이 이 버퍼를 보기 때문에 2인 점수가 1인과 달라지는 원인이었다.
+         이제 프리롤도 슬롯에 저장되므로 선수별로 안전하게 쌓을 수 있다. */
+      if((isDrillMode()||currentMode==='sparring')&&running){
         preT.push(performance.now());
         preFootY.push(Number.isFinite(m.footY)?m.footY:null);
         preKneeAngle.push(Number.isFinite(m.kneeAngle)?m.kneeAngle:null);
@@ -7355,6 +7431,8 @@ function processPersonFrame(lm, wlm){
       if((isDrillMode() || (currentMode==='sparring' && sparringMode==='practice')) && drillKickType()==='apcha') drawApchaGuide();
       if((isDrillMode() || (currentMode==='sparring' && sparringMode==='practice')) && drillKickType()==='dollo') drawDolloGuide();
       if(!twoPlayerMode && currentMode==='sparring' && sparringMode==='live') updateAdaptiveSparringTarget();
+      // 2026-08-03: 2인도 1인처럼 상대 타겟 높이를 그 선수 키에 맞춘다
+      if(twoPlayerMode && currentMode==='sparring' && sparringMode==='live') updateAdaptiveSparringTarget2p();
 
       if(!twoPlayerMode && currentMode==='balloon'&&running) checkBalloons(fx,fy);
       if(twoPlayerMode && currentMode==='balloon'&&running && !active2pSlot.finished) checkBalloons2p(active2pSlot===slot2p.c?'c':'h', fx, fy);
@@ -7671,7 +7749,9 @@ body.hud-v21.akm-ui .kick-level-panel .diff-btn{
 .p2-enemy-target{
   display:none !important;
   position:absolute !important;
-  top:50% !important;
+  /* top 은 !important 를 쓰지 않는다 — JS(updateAdaptiveSparringTarget2p)가
+     선수 키에 맞춰 인라인으로 조정하기 때문. */
+  top:50%;
   pointer-events:none !important;
   z-index:12 !important;
 }
@@ -7704,6 +7784,42 @@ body.hud-v21.akm-ui.two-player-mode .p2-enemy-target{
 }
 .p2-enemy-label-c{ color:var(--arcade-blue) !important; }
 .p2-enemy-label-h{ color:var(--arcade-red) !important; }
+
+/* =========================================================
+   2026-08-03 · 2인 개인별 점수 팝업
+   1인 모드의 가운데 큰 점수 팝업(#popOverlay/#popScore)과 같은 모양·같은 내용을
+   청은 화면 왼쪽 절반, 홍은 오른쪽 절반에 각자 띄운다.
+   ========================================================= */
+.p2-pop{
+  display:none; position:fixed; top:34%; transform:translate(-50%,-50%);
+  z-index:30; pointer-events:none; text-align:center; width:44vw;
+}
+.p2-pop.show{ display:block; }
+#p2PopC{ left:25%; }
+#p2PopH{ left:75%; }
+.p2-pop-score{
+  font-size:clamp(70px, 9.5vw, 150px); font-weight:1000; line-height:.9;
+  color:#ffe36b; letter-spacing:-2px;
+  text-shadow:0 6px 30px rgba(0,0,0,.92), 0 0 40px rgba(255,209,90,.9);
+  animation:p2PopIn .34s cubic-bezier(.2,1.5,.4,1) both;
+}
+/* 청은 파란 기운, 홍은 붉은 기운을 한 겹 더 얹어 누구 점수인지 바로 보이게 */
+.p2-pop-c .p2-pop-score{ text-shadow:0 6px 30px rgba(0,0,0,.92), 0 0 40px rgba(49,183,255,.95); }
+.p2-pop-h .p2-pop-score{ text-shadow:0 6px 30px rgba(0,0,0,.92), 0 0 40px rgba(255,48,79,.95); }
+.p2-pop .popGrade{
+  margin-top:12px; font-size:clamp(30px, 4vw, 56px); font-weight:1000; color:#fff;
+  letter-spacing:1px; text-shadow:0 4px 18px rgba(0,0,0,.92), 0 0 24px rgba(255,255,255,.35);
+}
+/* 점수가 아니라 안내문("발이 덜 올라갔어요" 등)일 때는 작게 여러 줄로 */
+.p2-pop.compact-message .p2-pop-score{
+  font-size:clamp(24px, 2.9vw, 40px) !important; line-height:1.25 !important;
+  letter-spacing:0 !important; word-break:keep-all; padding:0 10px;
+}
+@keyframes p2PopIn{
+  0%{ opacity:0; transform:scale(.5); }
+  60%{ opacity:1; transform:scale(1.1); }
+  100%{ opacity:1; transform:scale(1); }
+}
 
 /* ── ③ 1인·2인 공통: 타겟을 더 진하게 ── */
 #enemyTarget,
