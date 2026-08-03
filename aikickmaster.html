@@ -6674,6 +6674,51 @@ body.hud-v21.akm-ui .kick-level-panel .diff-btn{
     right:72px !important;
   }
 }
+
+/* =========================================================
+   2026-08-03 · 겨루기 타겟을 더 진하게 (완수님 피드백)
+   도장 조명에서 타격존이 옅어 보인다고 하셔서 머리/몸통 락온 링의
+   테두리·채움·조준선을 또렷하게 올렸다. 크기·위치·판정은 그대로다.
+   ※ aikickmaster2p.html 에도 같은 값이 들어가 있다 (두 파일을 함께 맞출 것)
+   ========================================================= */
+#enemyTarget{ opacity:1 !important; }
+#enemyTarget .enemyAura{ opacity:.95 !important; }
+#enemyTarget .enemyHead{
+  background:
+    radial-gradient(circle,
+      rgba(255,255,255,.26) 0 21%,
+      rgba(255,36,77,.10) 22% 30%,
+      rgba(255,36,77,.62) 31% 48%,
+      rgba(255,36,77,.20) 49% 100%) !important;
+  border:4px solid rgba(255,36,77,1) !important;
+  box-shadow:
+    0 0 42px rgba(255,36,77,1),
+    0 0 14px rgba(0,0,0,.6),
+    inset 0 0 30px rgba(255,36,77,.45) !important;
+  color:#fff !important;
+  text-shadow:0 2px 8px rgba(0,0,0,.95), 0 0 14px rgba(255,36,77,.9) !important;
+}
+#enemyTarget .enemyBody{
+  background:
+    radial-gradient(circle,
+      rgba(255,255,255,.26) 0 22%,
+      rgba(25,186,255,.10) 23% 31%,
+      rgba(25,186,255,.58) 32% 50%,
+      rgba(25,186,255,.20) 51% 100%) !important;
+  border:4px solid rgba(25,186,255,1) !important;
+  box-shadow:
+    0 0 44px rgba(25,186,255,1),
+    0 0 14px rgba(0,0,0,.6),
+    inset 0 0 30px rgba(25,186,255,.42) !important;
+  color:#fff !important;
+  text-shadow:0 2px 8px rgba(0,0,0,.95), 0 0 14px rgba(25,186,255,.9) !important;
+}
+#enemyTarget .enemyHead::before, #enemyTarget .enemyHead::after{
+  background:rgba(255,255,255,.95) !important;
+}
+#enemyTarget .enemyBody::before, #enemyTarget .enemyBody::after{
+  background:rgba(255,255,255,.92) !important;
+}
 </style>
 <script id="fix4-start-stop-text-helper">
 (function(){

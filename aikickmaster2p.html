@@ -446,6 +446,29 @@ body.two-player-mode #p2Hud{
   color:rgba(255,255,255,.62); text-shadow:0 2px 8px rgba(0,0,0,.95);
 }
 .p2-line b{ color:#fff; font-weight:1000; margin-left:3px; }
+/* 2026-08-03: 값이 없는 칸은 숨긴다(발차기·격파 모드에서는 세 번째 칸을 안 쓴다) */
+.p2-line3.hide{ display:none !important; }
+/* 2026-08-03: 겨루기 모드 HUD 가독성 — HP 숫자를 크게, 남은시간은 금색으로 */
+body.sparring-mode.two-player-mode .p2-count{ font-size:36px; }
+body.sparring-mode.two-player-mode .p2-line{ font-size:15px; }
+body.sparring-mode.two-player-mode .p2-line3 b{ color:var(--arcade-gold); }
+body.sparring-mode.two-player-mode .p2-count small{ font-size:14px; }
+/* 2026-08-03: 겨루기 데미지 팝업(2인) — 1인 모드의 #damagePopup 을 좌/우 각자 자리에 띄운다.
+   1인은 상대가 화면 가운데 하나뿐이라 가운데 팝업이면 됐지만, 2인은 누가 때렸는지
+   바로 알아야 해서 청은 왼쪽(30%), 홍은 오른쪽(70%)에 띄운다. */
+.p2-dmg{
+  position:fixed; top:38%; transform:translate(-50%,-50%);
+  font-size:44px; font-weight:1000; color:#fff; letter-spacing:-1px;
+  text-shadow:0 4px 18px rgba(0,0,0,.95); pointer-events:none; z-index:60;
+  animation:p2DmgFly .8s ease forwards;
+}
+.p2-dmg.head{ color:#ff8ea0; text-shadow:0 4px 18px rgba(0,0,0,.95),0 0 26px rgba(255,48,79,.9); }
+.p2-dmg.body{ color:#8fd4ff; text-shadow:0 4px 18px rgba(0,0,0,.95),0 0 26px rgba(49,183,255,.9); }
+@keyframes p2DmgFly{
+  0%{ opacity:0; transform:translate(-50%,-50%) scale(.5); }
+  22%{ opacity:1; transform:translate(-50%,-50%) scale(1.14); }
+  100%{ opacity:0; transform:translate(-50%,-130%) scale(1); }
+}
 .p2-presence{
   font-size:12px; font-weight:1000; letter-spacing:.2px;
   color:rgba(255,255,255,.5); text-shadow:0 2px 8px rgba(0,0,0,.9);
@@ -476,7 +499,11 @@ body.two-player-mode #p2Status{
   display:none; position:fixed; top:46%; width:112px; height:200px; z-index:12;
   pointer-events:none; text-align:center;
 }
-body.two-player-mode.sparring-live.playing-ui .p2-enemy{ display:block; }
+/* 2026-08-03 버그수정: 예전에는 .sparring-live 만 보고 켰다. sparring-live 는
+   "겨루기 세부설정이 실전"이라는 뜻일 뿐이라, 앞차기/돌려차기 모드에서도 몸에 붙어
+   있어서 발차기 모드인데 겨루기 상대 타겟이 뜨는 문제가 있었다.
+   → .sparring-mode(지금 모드가 겨루기)를 반드시 함께 요구한다. */
+body.two-player-mode.sparring-mode.sparring-live.playing-ui .p2-enemy{ display:block; }
 #p2EnemyC{ left:30%; transform:translate(-50%,-50%); }
 #p2EnemyH{ left:70%; transform:translate(-50%,-50%); }
 .p2-enemy-svg{
@@ -504,10 +531,12 @@ body.two-player-mode.sparring-live.playing-ui .p2-enemy{ display:block; }
 /* 2인 겨루기 HP 게이지 — 1인 모드의 enemyHpTrack/Fill과 같은 스타일.
    평소 점수줄(.p2-line) 아래 얇게 깔린다. */
 .p2-hpbar{ display:none; }
-body.sparring-live .p2-hpbar{
-  display:block; flex:0 0 100%; width:100%; margin-top:5px; height:10px;
-  border-radius:999px; overflow:hidden; background:rgba(0,0,0,.45);
-  border:1px solid rgba(255,255,255,.20); pointer-events:none;
+/* 2026-08-03: 위 .p2-enemy 와 같은 이유로 .sparring-mode 를 함께 요구한다. */
+body.sparring-mode.sparring-live .p2-hpbar{
+  display:block; flex:0 0 100%; width:100%; margin-top:6px; height:15px;
+  border-radius:999px; overflow:hidden; background:rgba(0,0,0,.55);
+  border:1.5px solid rgba(255,255,255,.28); pointer-events:none;
+  box-shadow:0 3px 12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12);
 }
 .p2-hpbar-fill{
   display:block; height:100%; width:100%;
@@ -522,13 +551,26 @@ body.sparring-live .p2-hpbar{
   backdrop-filter:blur(6px);
 }
 #p2Result.show{ display:flex; }
+/* 2026-08-03: "잘 안 보인다" 피드백 반영 — 승리 문구를 도장 뒤쪽에서도 읽히도록
+   화면 폭에 비례해 크게 키우고, 등장할 때 살짝 튀어나오게 했다. */
 #p2ResultTitle{
-  font-size:44px; font-weight:1000; color:#fff; letter-spacing:-.5px; text-align:center;
-  text-shadow:0 6px 24px rgba(0,0,0,.9),0 0 30px rgba(255,209,90,.5);
+  font-size:clamp(66px, 13vw, 168px); font-weight:1000; color:#fff;
+  letter-spacing:-2px; line-height:1.02; text-align:center; padding:0 12px;
+  text-shadow:0 8px 34px rgba(0,0,0,.95),0 0 46px rgba(255,209,90,.85),0 0 96px rgba(255,209,90,.45);
+  animation:p2ResultPop .5s cubic-bezier(.2,1.5,.4,1) both;
 }
+#p2Result.show #p2ResultTitle{ animation:p2ResultPop .5s cubic-bezier(.2,1.5,.4,1) both; }
+@keyframes p2ResultPop{
+  0%{ opacity:0; transform:scale(.55); }
+  60%{ opacity:1; transform:scale(1.08); }
+  100%{ opacity:1; transform:scale(1); }
+}
+/* 청 승리 / 홍 승리에 따라 글자 색까지 바꿔서 멀리서도 구분되게 */
+#p2ResultTitle.win-c{ color:#8fd4ff; text-shadow:0 8px 34px rgba(0,0,0,.95),0 0 46px rgba(49,183,255,.95),0 0 96px rgba(49,183,255,.5); }
+#p2ResultTitle.win-h{ color:#ffa8b6; text-shadow:0 8px 34px rgba(0,0,0,.95),0 0 46px rgba(255,48,79,.95),0 0 96px rgba(255,48,79,.5); }
 #p2ResultScores{
-  font-size:22px; font-weight:900; color:rgba(255,255,255,.85); text-align:center;
-  text-shadow:0 3px 14px rgba(0,0,0,.9);
+  font-size:clamp(26px, 4.4vw, 48px); font-weight:1000; color:#fff; text-align:center;
+  letter-spacing:-.5px; text-shadow:0 4px 18px rgba(0,0,0,.95),0 0 26px rgba(255,255,255,.25);
 }
 #p2ResultScores b.p2rc{ color:var(--arcade-blue); }
 #p2ResultScores b.p2rh{ color:var(--arcade-red); }
@@ -613,14 +655,22 @@ body.hud-v21.sparring-mode #comboBadge{top:164px; right:14px;}
 @keyframes damagePop{0%{opacity:0; transform:translate(-50%,-50%) scale(.45)}25%{opacity:1; transform:translate(-50%,-50%) scale(1.08)}100%{opacity:0; transform:translate(-50%,-74%) scale(1)}}
 
 /* 겨루기 타격존 */
-#enemyTarget{position:absolute; left:50%; top:50%; transform:translate(-50%,-43%) perspective(520px) rotateY(-8deg); width:260px; height:430px; opacity:.72; filter:drop-shadow(0 0 18px rgba(76,163,255,.46)) drop-shadow(0 20px 24px rgba(0,0,0,.32)); transition:transform .18s ease, filter .18s ease, opacity .18s ease;}
-#enemyTarget .enemyGear, #enemyTarget .enemyFace, #enemyTarget .enemyHogu, #enemyTarget .enemyBelt, #enemyTarget .enemyArm, #enemyTarget .enemyLeg{display:none !important;}
-#enemyTarget .enemyAura{position:absolute; inset:0; border-radius:50%; background:radial-gradient(circle at 50% 20%,rgba(255,80,110,.20),rgba(255,80,110,0) 24%), radial-gradient(circle at 50% 55%,rgba(76,163,255,.22),rgba(76,163,255,0) 35%), linear-gradient(180deg,rgba(76,163,255,.06),rgba(76,163,255,0));}
-#enemyTarget .enemyHead{position:absolute; top:24px; left:50%; transform:translateX(-50%); width:86px; height:86px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-size:12px; font-weight:900; letter-spacing:.5px; color:#fff; background:radial-gradient(circle,rgba(255,255,255,.10) 0 28%,rgba(255,77,109,.20) 29% 45%,rgba(255,77,109,.04) 46% 100%); border:2px solid rgba(255,77,109,.86); box-shadow:0 0 22px rgba(255,77,109,.50), inset 0 0 22px rgba(255,77,109,.22);}
-#enemyTarget .enemyBody{position:absolute; top:220px; left:50%; transform:translateX(-50%); width:142px; height:118px; display:flex; align-items:center; justify-content:center; border-radius:30px; font-size:14px; font-weight:900; letter-spacing:.5px; color:#fff; background:radial-gradient(circle,rgba(255,255,255,.10) 0 27%,rgba(76,163,255,.20) 28% 48%,rgba(76,163,255,.04) 49% 100%); border:2px solid rgba(76,163,255,.84); box-shadow:0 0 24px rgba(76,163,255,.50), inset 0 0 24px rgba(76,163,255,.20);}
-#enemyTarget.hit-body{animation:enemyHitBody .45s ease;}
-#enemyTarget.hit-head{animation:enemyHitHead .45s ease;}
-#enemyTarget.hit-critical{filter:drop-shadow(0 0 28px rgba(255,77,109,.75)) drop-shadow(0 22px 20px rgba(0,0,0,.35));}
+#enemyTarget,
+.enemy-target{position:absolute; left:50%; top:50%; transform:translate(-50%,-43%) perspective(520px) rotateY(-8deg); width:260px; height:430px; opacity:.72; filter:drop-shadow(0 0 18px rgba(76,163,255,.46)) drop-shadow(0 20px 24px rgba(0,0,0,.32)); transition:transform .18s ease, filter .18s ease, opacity .18s ease;}
+#enemyTarget .enemyGear, #enemyTarget .enemyFace, #enemyTarget .enemyHogu, #enemyTarget .enemyBelt, #enemyTarget .enemyArm, #enemyTarget .enemyLeg,
+.enemy-target .enemyGear, .enemy-target .enemyFace, .enemy-target .enemyHogu, .enemy-target .enemyBelt, .enemy-target .enemyArm, .enemy-target .enemyLeg{display:none !important;}
+#enemyTarget .enemyAura,
+.enemy-target .enemyAura{position:absolute; inset:0; border-radius:50%; background:radial-gradient(circle at 50% 20%,rgba(255,80,110,.20),rgba(255,80,110,0) 24%), radial-gradient(circle at 50% 55%,rgba(76,163,255,.22),rgba(76,163,255,0) 35%), linear-gradient(180deg,rgba(76,163,255,.06),rgba(76,163,255,0));}
+#enemyTarget .enemyHead,
+.enemy-target .enemyHead{position:absolute; top:24px; left:50%; transform:translateX(-50%); width:86px; height:86px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-size:12px; font-weight:900; letter-spacing:.5px; color:#fff; background:radial-gradient(circle,rgba(255,255,255,.10) 0 28%,rgba(255,77,109,.20) 29% 45%,rgba(255,77,109,.04) 46% 100%); border:2px solid rgba(255,77,109,.86); box-shadow:0 0 22px rgba(255,77,109,.50), inset 0 0 22px rgba(255,77,109,.22);}
+#enemyTarget .enemyBody,
+.enemy-target .enemyBody{position:absolute; top:220px; left:50%; transform:translateX(-50%); width:142px; height:118px; display:flex; align-items:center; justify-content:center; border-radius:30px; font-size:14px; font-weight:900; letter-spacing:.5px; color:#fff; background:radial-gradient(circle,rgba(255,255,255,.10) 0 27%,rgba(76,163,255,.20) 28% 48%,rgba(76,163,255,.04) 49% 100%); border:2px solid rgba(76,163,255,.84); box-shadow:0 0 24px rgba(76,163,255,.50), inset 0 0 24px rgba(76,163,255,.20);}
+#enemyTarget.hit-body,
+.enemy-target.hit-body{animation:enemyHitBody .45s ease;}
+#enemyTarget.hit-head,
+.enemy-target.hit-head{animation:enemyHitHead .45s ease;}
+#enemyTarget.hit-critical,
+.enemy-target.hit-critical{filter:drop-shadow(0 0 28px rgba(255,77,109,.75)) drop-shadow(0 22px 20px rgba(0,0,0,.35));}
 @keyframes enemyHitBody{0%{transform:translate(-50%,-43%) perspective(520px) rotateY(-8deg) scale(1)}35%{transform:translate(calc(-50% + 22px),-43%) perspective(520px) rotateY(-18deg) scale(1.02)}100%{transform:translate(-50%,-43%) perspective(520px) rotateY(-8deg) scale(1)}}
 @keyframes enemyHitHead{0%{transform:translate(-50%,-43%) perspective(520px) rotateY(-8deg) rotate(0)}25%{transform:translate(calc(-50% - 16px),-44%) perspective(520px) rotateY(8deg) rotate(-3deg)}55%{transform:translate(calc(-50% + 12px),-42%) perspective(520px) rotateY(-16deg) rotate(2deg)}100%{transform:translate(-50%,-43%) perspective(520px) rotateY(-8deg) rotate(0)}}
 
@@ -643,7 +693,8 @@ body.hud-v21 #drillResultSub{font-size:20px; color:#cdd8e8; font-weight:700;}
   body.hud-v21 .stat-box{min-height:78px;}
   body.hud-v21 .stat-num{font-size:32px;}
   body.hud-v21 #enemyHpWrap{width:min(410px,44vw);}
-  #enemyTarget{width:240px; height:400px;}
+  #enemyTarget,
+  .enemy-target{width:240px; height:400px;}
   body.hud-v21 .btns{width:280px;}
 }
 
@@ -1044,7 +1095,8 @@ body.hud-v21 .diff-btn.active{
    버튼/레이아웃/기능은 v2.7.1 안정본 유지 */
 
 /* 겨루기 상대 전체: 더 크고 선명한 게임 타겟 느낌 */
-#enemyTarget{
+#enemyTarget,
+.enemy-target{
   width:270px !important;
   height:440px !important;
   opacity:.47 !important;
@@ -1058,16 +1110,23 @@ body.hud-v21 .diff-btn.active{
 
 /* 기존 장비/팔다리 도형은 숨기고 타격존 중심으로 */
 #enemyTarget .enemyGear,
+.enemy-target .enemyGear,
 #enemyTarget .enemyFace,
+.enemy-target .enemyFace,
 #enemyTarget .enemyHogu,
+.enemy-target .enemyHogu,
 #enemyTarget .enemyBelt,
+.enemy-target .enemyBelt,
 #enemyTarget .enemyArm,
-#enemyTarget .enemyLeg{
+.enemy-target .enemyArm,
+#enemyTarget .enemyLeg,
+.enemy-target .enemyLeg{
   display:none !important;
 }
 
 /* 상대 주변 에너지 아우라 */
-#enemyTarget .enemyAura{
+#enemyTarget .enemyAura,
+.enemy-target .enemyAura{
   position:absolute !important;
   inset:-10px !important;
   border-radius:50% !important;
@@ -1085,7 +1144,8 @@ body.hud-v21 .diff-btn.active{
 }
 
 /* 은은한 사람 실루엣 몸통 그림자 */
-#enemyTarget::before{
+#enemyTarget::before,
+.enemy-target::before{
   content:"" !important;
   display:block !important;
   position:absolute !important;
@@ -1106,7 +1166,8 @@ body.hud-v21 .diff-btn.active{
 }
 
 /* 어깨 라인 */
-#enemyTarget::after{
+#enemyTarget::after,
+.enemy-target::after{
   content:"" !important;
   display:block !important;
   position:absolute !important;
@@ -1123,7 +1184,8 @@ body.hud-v21 .diff-btn.active{
 }
 
 /* 머리 타격존: 빨간 락온 타겟 */
-#enemyTarget .enemyHead{
+#enemyTarget .enemyHead,
+.enemy-target .enemyHead{
   top:22px !important;
   left:50% !important;
   width:92px !important;
@@ -1150,19 +1212,23 @@ body.hud-v21 .diff-btn.active{
 
 /* 머리 조준선 */
 #enemyTarget .enemyHead::before,
-#enemyTarget .enemyHead::after{
+.enemy-target .enemyHead::before,
+#enemyTarget .enemyHead::after,
+.enemy-target .enemyHead::after{
   content:"" !important;
   position:absolute !important;
   background:rgba(255,255,255,.70) !important;
   box-shadow:0 0 10px rgba(255,36,77,.9);
 }
-#enemyTarget .enemyHead::before{
+#enemyTarget .enemyHead::before,
+.enemy-target .enemyHead::before{
   width:74px !important;
   height:2px !important;
   left:8px !important;
   top:45px !important;
 }
-#enemyTarget .enemyHead::after{
+#enemyTarget .enemyHead::after,
+.enemy-target .enemyHead::after{
   width:2px !important;
   height:74px !important;
   left:45px !important;
@@ -1170,7 +1236,8 @@ body.hud-v21 .diff-btn.active{
 }
 
 /* 몸통 타격존: 파란 락온 타겟 */
-#enemyTarget .enemyBody{
+#enemyTarget .enemyBody,
+.enemy-target .enemyBody{
   top:214px !important;
   left:50% !important;
   width:152px !important;
@@ -1197,19 +1264,23 @@ body.hud-v21 .diff-btn.active{
 
 /* 몸통 조준선 */
 #enemyTarget .enemyBody::before,
-#enemyTarget .enemyBody::after{
+.enemy-target .enemyBody::before,
+#enemyTarget .enemyBody::after,
+.enemy-target .enemyBody::after{
   content:"" !important;
   position:absolute !important;
   background:rgba(255,255,255,.68) !important;
   box-shadow:0 0 10px rgba(25,186,255,.9);
 }
-#enemyTarget .enemyBody::before{
+#enemyTarget .enemyBody::before,
+.enemy-target .enemyBody::before{
   width:118px !important;
   height:2px !important;
   left:17px !important;
   top:61px !important;
 }
-#enemyTarget .enemyBody::after{
+#enemyTarget .enemyBody::after,
+.enemy-target .enemyBody::after{
   width:2px !important;
   height:96px !important;
   left:75px !important;
@@ -1217,21 +1288,26 @@ body.hud-v21 .diff-btn.active{
 }
 
 /* 라벨을 조금 더 게임처럼 */
-#enemyTarget .enemyHead{
+#enemyTarget .enemyHead,
+.enemy-target .enemyHead{
   font-family:inherit !important;
 }
-#enemyTarget .enemyBody{
+#enemyTarget .enemyBody,
+.enemy-target .enemyBody{
   font-family:inherit !important;
 }
 
 /* 타격 애니메이션 강화 */
-#enemyTarget.hit-body{
+#enemyTarget.hit-body,
+.enemy-target.hit-body{
   animation:v272HitBody .45s ease !important;
 }
-#enemyTarget.hit-head{
+#enemyTarget.hit-head,
+.enemy-target.hit-head{
   animation:v272HitHead .45s ease !important;
 }
-#enemyTarget.hit-critical{
+#enemyTarget.hit-critical,
+.enemy-target.hit-critical{
   filter:
     drop-shadow(0 0 36px rgba(255,36,77,.85))
     drop-shadow(0 0 34px rgba(25,186,255,.48))
@@ -1259,24 +1335,29 @@ body.hud-v21 .diff-btn.active{
 
 /* 태블릿 화면에서 너무 커지지 않게 */
 @media (orientation:landscape) and (max-width:1220px){
-  #enemyTarget{
+  #enemyTarget,
+  .enemy-target{
     width:240px !important;
     height:400px !important;
     transform:translate(-50%,-42%) perspective(500px) rotateY(-5deg) scale(1.00) !important;
   }
-  #enemyTarget::before{
+  #enemyTarget::before,
+  .enemy-target::before{
     width:136px !important;
     height:320px !important;
   }
-  #enemyTarget::after{
+  #enemyTarget::after,
+  .enemy-target::after{
     width:210px !important;
   }
-  #enemyTarget .enemyHead{
+  #enemyTarget .enemyHead,
+  .enemy-target .enemyHead{
     width:82px !important;
     height:82px !important;
     top:24px !important;
   }
-  #enemyTarget .enemyBody{
+  #enemyTarget .enemyBody,
+  .enemy-target .enemyBody{
     width:136px !important;
     height:112px !important;
     top:200px !important;
@@ -1953,50 +2034,59 @@ body.hud-v21 .btn-new{
 }
 
 /* 겨루기 타겟 10~15% 축소 */
-#enemyTarget{
+#enemyTarget,
+.enemy-target{
   width:235px !important;
   height:385px !important;
   transform:translate(-50%,-42%) perspective(500px) rotateY(-5deg) scale(.94) !important;
 }
-#enemyTarget::before{
+#enemyTarget::before,
+.enemy-target::before{
   width:132px !important;
   height:316px !important;
   top:18px !important;
 }
-#enemyTarget::after{
+#enemyTarget::after,
+.enemy-target::after{
   width:204px !important;
   height:146px !important;
   top:120px !important;
 }
-#enemyTarget .enemyHead{
+#enemyTarget .enemyHead,
+.enemy-target .enemyHead{
   width:78px !important;
   height:78px !important;
   top:24px !important;
   font-size:12px !important;
 }
-#enemyTarget .enemyHead::before{
+#enemyTarget .enemyHead::before,
+.enemy-target .enemyHead::before{
   width:62px !important;
   left:8px !important;
   top:38px !important;
 }
-#enemyTarget .enemyHead::after{
+#enemyTarget .enemyHead::after,
+.enemy-target .enemyHead::after{
   height:62px !important;
   left:38px !important;
   top:8px !important;
 }
-#enemyTarget .enemyBody{
+#enemyTarget .enemyBody,
+.enemy-target .enemyBody{
   width:130px !important;
   height:104px !important;
   top:194px !important;
   border-radius:30px !important;
   font-size:14px !important;
 }
-#enemyTarget .enemyBody::before{
+#enemyTarget .enemyBody::before,
+.enemy-target .enemyBody::before{
   width:100px !important;
   left:15px !important;
   top:51px !important;
 }
-#enemyTarget .enemyBody::after{
+#enemyTarget .enemyBody::after,
+.enemy-target .enemyBody::after{
   height:80px !important;
   left:64px !important;
   top:12px !important;
@@ -2041,7 +2131,8 @@ body.hud-v21 .btn-new{
   body.hud-v21 #gameArea{
     width:210px !important;
   }
-  #enemyTarget{
+  #enemyTarget,
+  .enemy-target{
     transform:translate(-50%,-42%) perspective(500px) rotateY(-5deg) scale(.86) !important;
   }
 }
@@ -2481,29 +2572,38 @@ body.hud-v21.akm-ui #comboBadge{
 }
 
 /* 겨루기 타겟 더 게임 오브젝트처럼 */
-body.hud-v21.akm-ui #enemyTarget{
+body.hud-v21.akm-ui #enemyTarget,
+body.hud-v21.akm-ui .enemy-target{
   width:288px !important; height:455px !important; opacity:.96 !important;
   transform:translate(-50%,-42%) perspective(560px) rotateY(-7deg) scale(1.03) !important;
   filter:drop-shadow(0 0 34px rgba(49,183,255,.50)) drop-shadow(0 0 30px rgba(255,48,79,.35)) drop-shadow(0 30px 28px rgba(0,0,0,.62)) !important;
 }
 body.hud-v21.akm-ui #enemyTarget .enemyHead,
-body.hud-v21.akm-ui #enemyTarget .enemyBody{
+body.hud-v21.akm-ui .enemy-target .enemyHead,
+body.hud-v21.akm-ui #enemyTarget .enemyBody,
+body.hud-v21.akm-ui .enemy-target .enemyBody{
   backdrop-filter:blur(3px); font-size:13px !important; font-weight:1000 !important;
 }
-body.hud-v21.akm-ui #enemyTarget .enemyHead{border-width:3px !important; box-shadow:0 0 32px rgba(255,48,79,.72), inset 0 0 28px rgba(255,48,79,.20) !important;}
-body.hud-v21.akm-ui #enemyTarget .enemyBody{border-width:3px !important; box-shadow:0 0 32px rgba(49,183,255,.70), inset 0 0 28px rgba(49,183,255,.18) !important;}
+body.hud-v21.akm-ui #enemyTarget .enemyHead,
+body.hud-v21.akm-ui .enemy-target .enemyHead{border-width:3px !important; box-shadow:0 0 32px rgba(255,48,79,.72), inset 0 0 28px rgba(255,48,79,.20) !important;}
+body.hud-v21.akm-ui #enemyTarget .enemyBody,
+body.hud-v21.akm-ui .enemy-target .enemyBody{border-width:3px !important; box-shadow:0 0 32px rgba(49,183,255,.70), inset 0 0 28px rgba(49,183,255,.18) !important;}
 
 /* 2026-08-02: 락온 느낌을 살리는 회전 링 장식 — enemyHead/enemyBody 크기·위치(판정용 rect)는 그대로 두고
    #enemyTarget 전체를 감싸는 얇은 점선 링만 두 겹 추가해 조준경 느낌을 더한다. */
 body.hud-v21.akm-ui #enemyTarget .enemyAura::before,
-body.hud-v21.akm-ui #enemyTarget .enemyAura::after{
+body.hud-v21.akm-ui .enemy-target .enemyAura::before,
+body.hud-v21.akm-ui #enemyTarget .enemyAura::after,
+body.hud-v21.akm-ui .enemy-target .enemyAura::after{
   content:"" !important; position:absolute !important; inset:-16px !important; border-radius:50% !important;
   border:1px dashed rgba(255,255,255,.26) !important; pointer-events:none !important;
 }
-body.hud-v21.akm-ui #enemyTarget .enemyAura::before{
+body.hud-v21.akm-ui #enemyTarget .enemyAura::before,
+body.hud-v21.akm-ui .enemy-target .enemyAura::before{
   animation:enemyAuraSpin 7s linear infinite !important;
 }
-body.hud-v21.akm-ui #enemyTarget .enemyAura::after{
+body.hud-v21.akm-ui #enemyTarget .enemyAura::after,
+body.hud-v21.akm-ui .enemy-target .enemyAura::after{
   inset:-30px !important; border-color:rgba(255,255,255,.14) !important;
   animation:enemyAuraSpin 11s linear infinite reverse !important;
 }
@@ -2511,7 +2611,8 @@ body.hud-v21.akm-ui #enemyTarget .enemyAura::after{
 
 /* 2026-08-02: 1인 실루엣 그림자를 밝은 방에서도 더 잘 보이게 대비 강화 + 은은한 듀오톤 컬러.
    모양·크기·위치는 원본과 동일 — 눈에 잘 띄게 색만 손봄. */
-body.hud-v21.akm-ui #enemyTarget::before{
+body.hud-v21.akm-ui #enemyTarget::before,
+body.hud-v21.akm-ui .enemy-target::before{
   background:
     radial-gradient(circle at 50% 14%, rgba(255,255,255,.18) 0 42px, rgba(10,14,24,.66) 43px 58px, transparent 59px),
     linear-gradient(180deg, rgba(255,36,77,.18), rgba(25,186,255,.18) 55%, rgba(10,14,24,.58)) !important;
@@ -2521,7 +2622,8 @@ body.hud-v21.akm-ui #enemyTarget::before{
     0 0 34px rgba(0,0,0,.55),
     0 0 26px rgba(76,163,255,.22) !important;
 }
-body.hud-v21.akm-ui #enemyTarget::after{
+body.hud-v21.akm-ui #enemyTarget::after,
+body.hud-v21.akm-ui .enemy-target::after{
   border-top-color:rgba(255,255,255,.30) !important;
   background:
     linear-gradient(90deg, transparent 0 8%, rgba(10,14,24,.52) 25%, rgba(10,14,24,.62) 50%, rgba(10,14,24,.52) 75%, transparent 92%) !important;
@@ -2561,7 +2663,8 @@ body.hud-v21.akm-ui #drillResultText{font-size:64px !important; font-weight:1000
   body.hud-v21.akm-ui .mode-row.hud-kick-row .drill-btn,
   body.hud-v21.akm-ui .mode-row.hud-kick-tabs .drill-btn{font-size:14px !important; min-width:36px !important;}
   body.hud-v21.akm-ui #enemyHpWrap{width:min(500px,54vw) !important;}
-  body.hud-v21.akm-ui #enemyTarget{transform:translate(-50%,-42%) perspective(560px) rotateY(-7deg) scale(.92) !important;}
+  body.hud-v21.akm-ui #enemyTarget,
+  body.hud-v21.akm-ui .enemy-target{transform:translate(-50%,-42%) perspective(560px) rotateY(-7deg) scale(.92) !important;}
 }
 
 
@@ -2596,10 +2699,12 @@ body.hud-v21.akm-ui #drillResultText{font-size:64px !important; font-weight:1000
   14%{opacity:1; transform:scale(.98);}
   100%{opacity:0; transform:scale(1.22);}
 }
-body.hud-v21.akm-ui #enemyTarget.hit-body{
+body.hud-v21.akm-ui #enemyTarget.hit-body,
+body.hud-v21.akm-ui .enemy-target.hit-body{
   animation:enemyImpactBody .38s cubic-bezier(.2,1.15,.35,1) !important;
 }
-body.hud-v21.akm-ui #enemyTarget.hit-head{
+body.hud-v21.akm-ui #enemyTarget.hit-head,
+body.hud-v21.akm-ui .enemy-target.hit-head{
   animation:enemyImpactHead .44s cubic-bezier(.2,1.15,.35,1) !important;
 }
 @keyframes enemyImpactBody{
@@ -2910,7 +3015,8 @@ body.hud-v21 .panel{
   body.hud-v21 .mode-row.hud-kick-row .drill-btn{font-size:15px !important; padding:2px 1px !important;}
   .mode-row.hud-kick-row{gap:14px !important;}
 
-  #enemyTarget{transform:translate(-50%,-45%) perspective(500px) rotateY(-5deg) scale(.92) !important;}
+  #enemyTarget,
+  .enemy-target{transform:translate(-50%,-45%) perspective(500px) rotateY(-5deg) scale(.92) !important;}
 }
 
 /* 키가 낮은 화면에서는 추가 압축 */
@@ -2995,7 +3101,9 @@ body.hud-v21.akm-ui.settings-open.sparring-mode .stats-row{
   top:236px !important;
 }
 #enemyTarget,
-body.hud-v21.akm-ui #enemyTarget{
+.enemy-target,
+body.hud-v21.akm-ui #enemyTarget,
+body.hud-v21.akm-ui .enemy-target{
   opacity:.28 !important;
 }
 
@@ -3128,11 +3236,18 @@ body.hud-v21:not(.sparring-mode) #sparringTypePanel{display:none !important;}
 body.hud-v21.sparring-mode #difficultyPanel{display:none !important;}
 body.hud-v21.sparring-mode #sparringTypePanel{display:flex !important;}
 body.hud-v21.sparring-practice #enemyTarget,
+body.hud-v21.sparring-practice .enemy-target,
 body.hud-v21.sparring-practice #enemyHpWrap,
 body.hud-v21.sparring-practice #comboBadge{display:none !important;}
-body.hud-v21.sparring-live #enemyTarget,
-body.hud-v21.sparring-live #enemyHpWrap,
-body.hud-v21.sparring-live #comboBadge{display:block;}
+/* 2026-08-03: 겨루기 모드일 때만 켠다 (발차기 모드에서 새어나오지 않도록) */
+body.hud-v21.sparring-mode.sparring-live #enemyTarget,
+body.hud-v21.sparring-mode.sparring-live .enemy-target,
+body.hud-v21.sparring-mode.sparring-live #enemyHpWrap,
+body.hud-v21.sparring-mode.sparring-live #comboBadge{display:block;}
+body.hud-v21:not(.sparring-mode) #enemyTarget,
+body.hud-v21:not(.sparring-mode) .enemy-target,
+body.hud-v21:not(.sparring-mode) #enemyHpWrap,
+body.hud-v21:not(.sparring-mode) #comboBadge{display:none !important;}
 body.hud-v21 .sparring-type-panel .diff-btn{min-width:78px !important;}
 
 
@@ -3684,6 +3799,8 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
         <span class="p2-count"><span id="p2cCount">0</span><small id="p2cSuffix">/10</small></span>
         <span class="p2-line"><span id="p2cLabel1">이번</span> <b id="p2cVal1">—</b></span>
         <span class="p2-line"><span id="p2cLabel2">평균</span> <b id="p2cVal2">—</b></span>
+        <!-- 2026-08-03 추가: 겨루기에서 남은시간을 보여줄 세 번째 칸 -->
+        <span class="p2-line p2-line3"><span id="p2cLabel3"></span> <b id="p2cVal3"></b></span>
         <span class="p2-presence" id="p2cPresence">인식 대기</span>
         <span class="p2-hpbar" id="p2cHpBar"><span class="p2-hpbar-fill" id="p2cHpFill"></span></span>
       </div>
@@ -3692,6 +3809,8 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
         <span class="p2-count"><span id="p2hCount">0</span><small id="p2hSuffix">/10</small></span>
         <span class="p2-line"><span id="p2hLabel1">이번</span> <b id="p2hVal1">—</b></span>
         <span class="p2-line"><span id="p2hLabel2">평균</span> <b id="p2hVal2">—</b></span>
+        <!-- 2026-08-03 추가: 겨루기에서 남은시간을 보여줄 세 번째 칸 -->
+        <span class="p2-line p2-line3"><span id="p2hLabel3"></span> <b id="p2hVal3"></b></span>
         <span class="p2-presence" id="p2hPresence">인식 대기</span>
         <span class="p2-hpbar" id="p2hHpBar"><span class="p2-hpbar-fill" id="p2hHpFill"></span></span>
       </div>
@@ -3699,23 +3818,25 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
 
     <!-- 2026-08-02 · 겨루기 전용: 청 화면엔 홍을 상징하는 적 그래픽(빨강),
          홍 화면엔 청을 상징하는 적 그래픽(파랑)을 교차로 보여준다. -->
-    <div id="p2EnemyC" class="p2-enemy p2-enemy-hong">
-      <svg class="p2-enemy-svg" viewBox="0 0 100 180" preserveAspectRatio="xMidYMid meet">
-        <ellipse class="p2e-head" cx="50" cy="24" rx="22" ry="20"></ellipse>
-        <path class="p2e-vest" d="M30,52 Q40,44 50,56 Q60,44 70,52 Q92,62 94,80 L88,142 Q86,162 68,170 Q50,174 32,170 Q14,162 12,142 L6,80 Q8,62 30,52 Z"></path>
-        <line class="p2e-seam" x1="50" y1="66" x2="50" y2="146"></line>
-        <line class="p2e-belt" x1="18" y1="124" x2="82" y2="124"></line>
-      </svg>
-      <span class="p2-enemy-label">상대 · 홍</span>
+    <!-- 2026-08-03: 헤드기어+호구 SVG 를 버리고 1인 모드 #enemyTarget 과 완전히 같은 구조로 교체.
+         CSS 도 #enemyTarget 규칙을 .enemy-target 클래스에 함께 적용해뒀으므로 생김새가 똑같다. -->
+    <div id="p2EnemyC" class="enemy-target p2-enemy-target">
+      <div class="enemyAura"></div>
+      <div class="enemyGear"></div><div class="enemyFace"></div><div class="enemyHogu"></div><div class="enemyBelt"></div>
+      <div class="enemyArm enemyArmL"></div><div class="enemyArm enemyArmR"></div>
+      <div class="enemyLeg enemyLegL"></div><div class="enemyLeg enemyLegR"></div>
+      <div class="enemyHead">HEAD</div>
+      <div class="enemyBody">BODY</div>
+      <span class="p2-enemy-label p2-enemy-label-c">청 공격 →</span>
     </div>
-    <div id="p2EnemyH" class="p2-enemy p2-enemy-cheong">
-      <svg class="p2-enemy-svg" viewBox="0 0 100 180" preserveAspectRatio="xMidYMid meet">
-        <ellipse class="p2e-head" cx="50" cy="24" rx="22" ry="20"></ellipse>
-        <path class="p2e-vest" d="M30,52 Q40,44 50,56 Q60,44 70,52 Q92,62 94,80 L88,142 Q86,162 68,170 Q50,174 32,170 Q14,162 12,142 L6,80 Q8,62 30,52 Z"></path>
-        <line class="p2e-seam" x1="50" y1="66" x2="50" y2="146"></line>
-        <line class="p2e-belt" x1="18" y1="124" x2="82" y2="124"></line>
-      </svg>
-      <span class="p2-enemy-label">상대 · 청</span>
+    <div id="p2EnemyH" class="enemy-target p2-enemy-target">
+      <div class="enemyAura"></div>
+      <div class="enemyGear"></div><div class="enemyFace"></div><div class="enemyHogu"></div><div class="enemyBelt"></div>
+      <div class="enemyArm enemyArmL"></div><div class="enemyArm enemyArmR"></div>
+      <div class="enemyLeg enemyLegL"></div><div class="enemyLeg enemyLegR"></div>
+      <div class="enemyHead">HEAD</div>
+      <div class="enemyBody">BODY</div>
+      <span class="p2-enemy-label p2-enemy-label-h">← 홍 공격</span>
     </div>
 
     <!-- 2인 안내 토스트 — 잠깐 떴다 사라짐 (예: 격파·겨루기는 2인 미지원 안내) -->
@@ -4283,8 +4404,10 @@ window.setSparringMode=(type)=>{
   sparringMode=type;
   try{ localStorage.setItem('akm_sparring_mode', type); }catch(e){}
   document.querySelectorAll('.sparring-type-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.sparringType===type));
-  document.body.classList.toggle('sparring-practice', type==='practice');
-  document.body.classList.toggle('sparring-live', type==='live');
+  // 2026-08-03: 지금 모드가 겨루기일 때만 body 에 표시한다.
+  // (예전에는 앞차기 모드에서도 sparring-live 가 붙어서 겨루기 타겟이 새어나왔다)
+  document.body.classList.toggle('sparring-practice', currentMode==='sparring' && type==='practice');
+  document.body.classList.toggle('sparring-live', currentMode==='sparring' && type==='live');
   if(currentMode==='sparring'){
     stopGame();
     sparringMission=null;
@@ -4300,8 +4423,9 @@ function initSparringMode(){
   if(saved!=='practice' && saved!=='live') saved='practice';
   sparringMode=saved;
   document.querySelectorAll('.sparring-type-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.sparringType===saved));
-  document.body.classList.toggle('sparring-practice', saved==='practice');
-  document.body.classList.toggle('sparring-live', saved==='live');
+  // 2026-08-03: 시작 시 현재 모드는 앞차기이므로 겨루기 클래스를 붙이지 않는다.
+  document.body.classList.toggle('sparring-practice', currentMode==='sparring' && saved==='practice');
+  document.body.classList.toggle('sparring-live', currentMode==='sparring' && saved==='live');
 }
 function nextSparringMission(){
   const base=SPARRING_MISSIONS[Math.floor(Math.random()*SPARRING_MISSIONS.length)];
@@ -4665,6 +4789,8 @@ function modeTitleText(){
   if(currentMode==='sparring'){
     if(sparringMode==='practice'){
       const mission=sparringMission;
+      // 2026-08-03: 2인은 청/홍 미션이 서로 달라서 배지에 하나만 쓰면 헷갈린다.
+      if(twoPlayerMode) return ['겨루기 연습모드','청·홍 각자 자기 화살표를 따라 차기'];
       return ['겨루기 연습모드', mission ? '화살표 미션 · '+mission.label : '랜덤 발차기 화살표 미션'];
     }
     return ['겨루기 실전모드','키에 맞춰 나오는 머리/몸통 타겟 공격'];
@@ -6115,6 +6241,8 @@ function startTimed(sec,onEnd){
   gameRemain=sec; timerBadgeNum.textContent=sec; timerBadge.classList.add('show'); renderStats();
   gameTimer=setInterval(()=>{
     gameRemain--; timerBadgeNum.textContent=Math.max(0,gameRemain); renderStats();
+    // 2026-08-03: 2인 HUD 의 남은시간도 1초마다 확실히 갱신 (인식이 잠깐 끊겨도 시계는 돈다)
+    if(typeof twoPlayerMode!=='undefined' && twoPlayerMode){ render2pScore('c'); render2pScore('h'); }
     if(gameRemain<=0){ clearInterval(gameTimer); gameTimer=null; onEnd(); }
   },1000);
 }
@@ -6166,11 +6294,11 @@ window.startGame=()=>{
     running=true; setPlayingUi(true); statusEl.textContent=''; statusEl.style.opacity='0';
     if(currentMode==='balloon'){
       const sec=parseInt(balloonTimeSel?.value||'30');
-      if(twoPlayerMode){ startBalloon2p(); render2pStatus('경기 진행 중'); startTimed(sec,finishBalloon2p); }
+      if(twoPlayerMode){ startBalloon2p(); startTimed(sec,finishBalloon2p); render2pStatus(p2RunningStatusText('경기 진행 중')); }
       else{ startBalloon(); startTimed(sec,finishBalloon); }
     }
     else if(currentMode==='sparring'){
-      if(twoPlayerMode){ startSparring2p(); render2pStatus('경기 진행 중'); const sec=parseInt(sparringTimeSel?.value||'30'); startTimed(sec,finishSparring2p); }
+      if(twoPlayerMode){ startSparring2p(); const sec=parseInt(sparringTimeSel?.value||'30'); startTimed(sec,finishSparring2p); render2pStatus(p2RunningStatusText('경기 진행 중')); render2pScore('c'); render2pScore('h'); }
       else startSparring();
     }
     else if(isDrillMode()){
@@ -6841,6 +6969,30 @@ function setP2Fields(key,f){
   if(g('Val1')) g('Val1').textContent=f.val1;
   if(g('Label2')) g('Label2').textContent=f.label2;
   if(g('Val2')) g('Val2').textContent=f.val2;
+  // 2026-08-03 추가: 세 번째 칸(겨루기 남은시간 등). 값이 없으면 칸 자체를 숨긴다.
+  const l3=g('Label3'), v3=g('Val3');
+  if(l3) l3.textContent=f.label3||'';
+  if(v3) v3.textContent=f.val3||'';
+  if(l3 && l3.parentElement) l3.parentElement.classList.toggle('hide', !f.label3 && !f.val3);
+}
+/* 2026-08-03: 2인 경기 남은시간 — 격파/겨루기 모두 상태줄에도 같이 보여준다.
+   (1인 모드의 TIME 박스는 stats-row 안에 있어서 2인에서는 통째로 숨겨진다) */
+function p2RunningStatusText(base){
+  const t=(running && gameTimer) ? ' · 남은시간 '+Math.max(0,gameRemain)+'초' : '';
+  return (base||'경기 진행 중')+t;
+}
+/* 2026-08-03: 2인 전용 뜨는 숫자 — 때린/찬 사람 쪽(청 왼쪽, 홍 오른쪽)에 튀어오른다.
+   1인 모드는 화면 가운데 팝업 하나면 됐지만, 2인은 누구 것인지 바로 알아야 한다. */
+function showP2Float(key,text,kind){
+  const el=document.createElement('div');
+  el.className='p2-dmg '+(kind==='head'?'head':'body');
+  el.textContent=text;
+  el.style.left=(key==='c'?'30%':'70%');
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),820);
+}
+function showP2Damage(key,dmg,zone){
+  showP2Float(key,'-'+dmg+(zone==='head'?' 머리':' 몸통'),zone);
 }
 function render2pScore(key){
   if(currentMode==='balloon') return render2pScoreBalloon(key);
@@ -6852,7 +7004,8 @@ function render2pScoreKick(key){
   setP2Fields(key,{
     count:slot.drillDone, suffix:'/'+drillTarget,
     label1:'이번', val1:(slot.lastScore==null?'—':slot.lastScore),
-    label2:'평균', val2:(avgOf(slot.drillScores)??'—')
+    label2:'평균', val2:(avgOf(slot.drillScores)??'—'),
+    label3:'', val3:''
   });
 }
 function render2pStatus(text){
@@ -6887,7 +7040,14 @@ function showP2Result(cLabel,cVal,hLabel,hVal,winnerKey){
   render2pStatus(title);
   const titleEl=document.getElementById('p2ResultTitle');
   const scoresEl=document.getElementById('p2ResultScores');
-  if(titleEl) titleEl.textContent=title;
+  if(titleEl){
+    titleEl.textContent=title;
+    // 2026-08-03: 승자 색으로 글자색까지 바꿔서 멀리서도 한눈에 보이게 한다.
+    titleEl.classList.remove('win-c','win-h');
+    if(twoPlayerShowResult && winnerKey) titleEl.classList.add(winnerKey==='c'?'win-c':'win-h');
+    // 애니메이션 재생을 매번 강제(연속 경기에서도 팝 효과가 다시 나오도록)
+    titleEl.style.animation='none'; void titleEl.offsetWidth; titleEl.style.animation='';
+  }
   if(scoresEl) scoresEl.innerHTML='청 <b class="p2rc">'+cLabel+' '+cVal+'</b> · 홍 <b class="p2rh">'+hLabel+' '+hVal+'</b>';
   document.getElementById('p2Result')?.classList.add('show');
   setStartBtn(false,'다시 시작');
@@ -6983,7 +7143,7 @@ function startBalloon2p(){
 }
 function render2pScoreBalloon(key){
   const remain=running?Math.max(0,gameRemain)+'초':'—';
-  setP2Fields(key,{ count:balloonCount2p[key], suffix:'개', label1:'남은시간', val1:remain, label2:'', val2:'' });
+  setP2Fields(key,{ count:balloonCount2p[key], suffix:'개', label1:'남은시간', val1:remain, label2:'', val2:'', label3:'', val3:'' });
 }
 function finishBalloon2p(){
   running=false; setPlayingUi(false); timerBadge.classList.remove('show'); clearBalloons2p();
@@ -7001,6 +7161,17 @@ function finishBalloon2p(){
    ══════════════════════════════════════════════════════════════════════ */
 function makeSparringSlot(){ return {hp:250,damage:0,combo:0,maxCombo:0,lastHitT:0}; }
 let sparringState2p={c:makeSparringSlot(), h:makeSparringSlot()};
+/* 2026-08-03: 겨루기 연습모드 미션을 청/홍 각자 따로 가진다.
+   예전에는 미션이 하나뿐이라 청이 차는 순간 홍의 화살표까지 바뀌어버렸다.
+   run2pFrame 이 선수별로 전역 sparringMission 을 갈아끼워주므로,
+   기존 화살표 그리기 코드(drawApchaGuide/drawDolloGuide)는 그대로 쓸 수 있다. */
+let sparringMission2p={c:null,h:null};
+function newMissionFor(key){
+  const base=SPARRING_MISSIONS[Math.floor(Math.random()*SPARRING_MISSIONS.length)];
+  const targetPct=68+Math.round(Math.random()*24);
+  sparringMission2p[key]={...base,targetPct};
+  return sparringMission2p[key];
+}
 function sparringHitZone2p(){
   if(trajY.length && Math.min(...trajY)<0.27) return 'head';
   if(peakPct>=90) return 'head';
@@ -7011,9 +7182,10 @@ function sparringHitZone2p(){
    drillDone/drillScores/lastScore 등은 이미 슬롯에 저장되는 전역변수라 그대로 쓰면
    run2pFrame의 save/loadFromSlot이 알아서 청/홍 것을 따로 보관해준다. */
 function handleSparringPracticeKick2p(peak){
+  const key = active2pSlot===slot2p.c ? 'c' : 'h';
   const result=analyzeTraj(peak);
   let score=result.score || Math.max(40, Math.min(100, Math.round(peak)));
-  const mission=sparringMission || nextSparringMission();
+  const mission=sparringMission2p[key] || newMissionFor(key);
   const bonus=Math.max(0, Math.round((mission.targetPct-70)/8));
   score=Math.max(40, Math.min(100, score+bonus));
   lastScore=score;
@@ -7021,10 +7193,12 @@ function handleSparringPracticeKick2p(peak){
   lastGrade=score>=95?'PERFECT':score>=88?'GREAT':score>=75?'GOOD':'TRY';
   drillDone++;
   drillScores.push(score);
-  popup(String(score), lastColor);
   sndScore(score);
-  flashEdge(active2pSlot===slot2p.c?'c':'h');
-  nextSparringMission();
+  flashEdge(key);
+  // 2026-08-03: 가운데 팝업 대신 각자 자리에 점수를 띄운다(2인은 가운데가 겹친다)
+  showP2Float(key, score+'점 '+lastGrade, score>=88?'head':'body');
+  newMissionFor(key); // 이 선수만 다음 미션으로
+  render2pScoreSparringPractice(key);
   trajX=[]; trajY=[]; trajHipX=[]; trajTorso=[]; trajHipW=[]; trajKneeX=[]; trajKneeAngle=[]; trajHipVis=[]; trajKneeVis=[]; trajKneeAngle3D=[]; trajShoulderW=[]; trajActive=false; drillSide=0; resetPreRoll();
 }
 function handleSparringKick2p(peak){
@@ -7050,14 +7224,26 @@ function handleSparringKick2p(peak){
   render2pScoreSparring('c'); render2pScoreSparring('h');
   if(st.combo>=2) sndCombo(st.combo-1); else sndImpact(zone);
   flashEdge(key);
+  // 2026-08-03: 1인 모드의 #damagePopup 에 해당하는 피드백을 2인에도 추가
+  showP2Damage(key,dmg,zone);
+  // 2026-08-03: 타겟이 1인 모드와 같은 구조가 되었으므로 타격 애니메이션도 같은 클래스를 쓴다.
   const enemyEl=document.getElementById(key==='c'?'p2EnemyC':'p2EnemyH');
-  if(enemyEl){ enemyEl.classList.remove('hit'); void enemyEl.offsetWidth; enemyEl.classList.add('hit'); setTimeout(()=>enemyEl.classList.remove('hit'),320); }
+  if(enemyEl){
+    const cls=(zone==='head')?'hit-head':'hit-body';
+    enemyEl.classList.remove('hit-head','hit-body','hit-critical');
+    void enemyEl.offsetWidth;
+    enemyEl.classList.add(cls);
+    if(dmg>=22) enemyEl.classList.add('hit-critical');
+    setTimeout(()=>enemyEl.classList.remove('hit-head','hit-body','hit-critical'),450);
+  }
   if(oppSt.hp<=0) setTimeout(finishSparring2p,500);
 }
 function startSparring2p(){
   if(sparringMode==='practice'){
     resetSlot2p(slot2p.c); resetSlot2p(slot2p.h);
-    sparringMission=null; nextSparringMission();
+    // 2026-08-03: 청/홍 각자 첫 미션을 따로 뽑는다
+    newMissionFor('c'); newMissionFor('h');
+    sparringMission=sparringMission2p.c;
     render2pScoreSparringPractice('c'); render2pScoreSparringPractice('h');
     return;
   }
@@ -7066,10 +7252,13 @@ function startSparring2p(){
 }
 function render2pScoreSparringPractice(key){
   const slot=slot2p[key];
+  const mission=sparringMission2p[key];
   setP2Fields(key,{
     count:slot.drillDone, suffix:'회',
     label1:'이번', val1:(slot.lastScore==null?'—':slot.lastScore),
-    label2:'평균', val2:(avgOf(slot.drillScores)??'—')
+    label2:'평균', val2:(avgOf(slot.drillScores)??'—'),
+    // 2026-08-03: 지금 차야 할 발차기를 글자로도 알려준다(화살표와 함께).
+    label3:'미션', val3:(mission?mission.label:'—')
   });
 }
 function render2pScoreSparring(key){
@@ -7077,7 +7266,9 @@ function render2pScoreSparring(key){
   setP2Fields(key,{
     count:(st.hp<=0?'K.O.':Math.round(st.hp)), suffix:(st.hp<=0?'':'hp'),
     label1:'데미지', val1:st.damage,
-    label2:'콤보', val2:'x'+st.maxCombo
+    label2:'콤보', val2:'x'+st.maxCombo,
+    // 2026-08-03: 겨루기에도 남은시간 표시(1인 TIME 박스가 2인에선 숨겨지기 때문)
+    label3:'시간', val3:(running?Math.max(0,gameRemain)+'초':'—')
   });
   const fill=document.getElementById('p2'+key+'HpFill');
   if(fill){
@@ -7157,8 +7348,12 @@ function processPersonFrame(lm, wlm){
         trajShoulderW.push(shoulderRatioNow(m));
         if(trajX.length>MAX_TRAJ){ trajX.shift(); trajY.shift(); trajHipX.shift(); trajTorso.shift(); trajHipW.shift(); trajKneeX.shift(); trajKneeAngle.shift(); trajHipVis.shift(); trajKneeVis.shift(); trajKneeAngle3D.shift(); trajShoulderW.shift(); }
       }
-      if(!twoPlayerMode && (isDrillMode() || (currentMode==='sparring' && sparringMode==='practice')) && drillKickType()==='apcha') drawApchaGuide();
-      if(!twoPlayerMode && (isDrillMode() || (currentMode==='sparring' && sparringMode==='practice')) && drillKickType()==='dollo') drawDolloGuide();
+      /* 2026-08-03 버그수정: 예전에는 !twoPlayerMode 조건 때문에 2인에서는 화살표가
+         아예 안 그려졌다. 겨루기 연습모드에서 무슨 발차기를 해야 하는지 알 수 없었던 원인.
+         drawApchaGuide/drawDolloGuide 는 smHipX·smHipY 등 슬롯별로 갈아끼워지는
+         전역값만 쓰기 때문에, 선수별로 호출하면 각자 몸 위에 따로 그려진다. */
+      if((isDrillMode() || (currentMode==='sparring' && sparringMode==='practice')) && drillKickType()==='apcha') drawApchaGuide();
+      if((isDrillMode() || (currentMode==='sparring' && sparringMode==='practice')) && drillKickType()==='dollo') drawDolloGuide();
       if(!twoPlayerMode && currentMode==='sparring' && sparringMode==='live') updateAdaptiveSparringTarget();
 
       if(!twoPlayerMode && currentMode==='balloon'&&running) checkBalloons(fx,fy);
@@ -7185,11 +7380,17 @@ function run2pFrame(result){
   people.sort((a,b)=>a.screenX-b.screenX);
   const cPerson=people[0]||null, hPerson=people[1]||null;
 
+  // 2026-08-03: 겨루기 연습모드는 선수마다 미션이 다르므로, 그 선수를 처리하기 직전에
+  // 전역 sparringMission 을 그 선수 것으로 갈아끼운다(화살표·채점 모두 여기를 본다).
+  const practice2p = (currentMode==='sparring' && sparringMode==='practice');
+
+  if(practice2p) sparringMission=sparringMission2p.c||newMissionFor('c');
   loadFromSlot(slot2p.c);
   if(cPerson && !slot2p.c.finished){ processPersonFrame(cPerson.lm,cPerson.wlm); render2pPresence('c',true); }
   else { kicking=false; aboveFrames=0; belowFrames=0; render2pPresence('c',!!cPerson); }
   saveToSlot(slot2p.c); render2pScore('c');
 
+  if(practice2p) sparringMission=sparringMission2p.h||newMissionFor('h');
   loadFromSlot(slot2p.h);
   if(hPerson && !slot2p.h.finished){ processPersonFrame(hPerson.lm,hPerson.wlm); render2pPresence('h',true); }
   else { kicking=false; aboveFrames=0; belowFrames=0; render2pPresence('h',!!hPerson); }
@@ -7200,7 +7401,7 @@ function run2pFrame(result){
   if(running && !slot2p.c.finished && !slot2p.h.finished){
     const cOn=document.getElementById('p2cPresence')?.classList.contains('on');
     const hOn=document.getElementById('p2hPresence')?.classList.contains('on');
-    render2pStatus((cOn&&hOn)?'경기 진행 중':'두 선수 인식 대기');
+    render2pStatus((cOn&&hOn)?p2RunningStatusText('경기 진행 중'):'두 선수 인식 대기');
   }
 }
 
@@ -7321,7 +7522,8 @@ window.__startApp = async function() {
 
 <style id="akm-v281-ready-target-fix">
 /* v2.8.1: 겨루기 타겟 투명도 재조정 */
-body.hud-v21.akm-ui #enemyTarget{
+body.hud-v21.akm-ui #enemyTarget,
+body.hud-v21.akm-ui .enemy-target{
   opacity:.38 !important;
 }
 
@@ -7454,6 +7656,106 @@ body.hud-v21.akm-ui .kick-level-panel .diff-btn{
     top:58px !important;
     right:72px !important;
   }
+}
+
+/* =========================================================
+   2026-08-03 · 겨루기 타겟 정리 (완수님 피드백)
+   ① 2인 겨루기 타겟을 1인과 완전히 같은 모양으로 (위 #enemyTarget 규칙을
+      .enemy-target 클래스에도 전부 함께 걸어두었다)
+   ② 2인은 좌/우 두 개를 각자 자리에 세운다
+   ③ 1인·2인 공통으로 타겟을 더 진하게 (도장 조명에서 옅어 보인다는 피드백)
+   ⚠ 판정 로직은 손대지 않았다 — 겉모습만 바뀐다.
+   ========================================================= */
+
+/* ── ② 2인 타겟 위치: 청은 화면 왼쪽 28%, 홍은 오른쪽 72% ── */
+.p2-enemy-target{
+  display:none !important;
+  position:absolute !important;
+  top:50% !important;
+  pointer-events:none !important;
+  z-index:12 !important;
+}
+#p2EnemyC{ left:28% !important; }
+#p2EnemyH{ left:72% !important; }
+/* 2인 겨루기 실전 + 경기 진행 중일 때만 보인다 */
+body.two-player-mode.sparring-mode.sparring-live.playing-ui .p2-enemy-target{
+  display:block !important;
+}
+/* 1인 모드에서는 절대 안 보이게 (위 .enemy-target 공통 규칙이 켜더라도 막는다) */
+body:not(.two-player-mode) .p2-enemy-target{ display:none !important; }
+
+/* 2인은 두 개가 나란히 서므로 1인보다 살짝 작게 잡아 서로 안 겹치게 한다.
+   (앞쪽 body.hud-v21.akm-ui .enemy-target 규칙보다 선택자를 길게 써서 이긴다) */
+body.hud-v21.akm-ui.two-player-mode .p2-enemy-target{
+  width:min(300px, 34vw) !important;
+  height:min(474px, 54vh) !important;
+}
+@media (orientation:landscape) and (max-width:1220px){
+  body.hud-v21.akm-ui.two-player-mode .p2-enemy-target{
+    width:min(250px, 32vw) !important; height:min(400px, 52vh) !important;
+  }
+}
+
+.p2-enemy-label{
+  position:absolute !important; left:50% !important; bottom:-26px !important;
+  transform:translateX(-50%) !important; white-space:nowrap !important;
+  font-size:15px !important; font-weight:1000 !important; letter-spacing:.4px !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.95) !important; z-index:6 !important;
+}
+.p2-enemy-label-c{ color:var(--arcade-blue) !important; }
+.p2-enemy-label-h{ color:var(--arcade-red) !important; }
+
+/* ── ③ 1인·2인 공통: 타겟을 더 진하게 ── */
+#enemyTarget,
+.enemy-target{
+  opacity:1 !important;
+}
+#enemyTarget .enemyAura,
+.enemy-target .enemyAura{
+  opacity:.95 !important;
+}
+/* 머리 타격존: 빨간 락온 링을 더 선명하게 */
+#enemyTarget .enemyHead,
+.enemy-target .enemyHead{
+  background:
+    radial-gradient(circle,
+      rgba(255,255,255,.26) 0 21%,
+      rgba(255,36,77,.10) 22% 30%,
+      rgba(255,36,77,.62) 31% 48%,
+      rgba(255,36,77,.20) 49% 100%) !important;
+  border:4px solid rgba(255,36,77,1) !important;
+  box-shadow:
+    0 0 42px rgba(255,36,77,1),
+    0 0 14px rgba(0,0,0,.6),
+    inset 0 0 30px rgba(255,36,77,.45) !important;
+  color:#fff !important;
+  text-shadow:0 2px 8px rgba(0,0,0,.95), 0 0 14px rgba(255,36,77,.9) !important;
+}
+/* 몸통 타격존: 파란 락온 링을 더 선명하게 */
+#enemyTarget .enemyBody,
+.enemy-target .enemyBody{
+  background:
+    radial-gradient(circle,
+      rgba(255,255,255,.26) 0 22%,
+      rgba(25,186,255,.10) 23% 31%,
+      rgba(25,186,255,.58) 32% 50%,
+      rgba(25,186,255,.20) 51% 100%) !important;
+  border:4px solid rgba(25,186,255,1) !important;
+  box-shadow:
+    0 0 44px rgba(25,186,255,1),
+    0 0 14px rgba(0,0,0,.6),
+    inset 0 0 30px rgba(25,186,255,.42) !important;
+  color:#fff !important;
+  text-shadow:0 2px 8px rgba(0,0,0,.95), 0 0 14px rgba(25,186,255,.9) !important;
+}
+/* 조준선(십자선)도 또렷하게 */
+#enemyTarget .enemyHead::before, #enemyTarget .enemyHead::after,
+.enemy-target .enemyHead::before, .enemy-target .enemyHead::after{
+  background:rgba(255,255,255,.95) !important;
+}
+#enemyTarget .enemyBody::before, #enemyTarget .enemyBody::after,
+.enemy-target .enemyBody::before, .enemy-target .enemyBody::after{
+  background:rgba(255,255,255,.92) !important;
 }
 </style>
 <script id="fix4-start-stop-text-helper">
