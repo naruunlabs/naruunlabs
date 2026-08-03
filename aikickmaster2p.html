@@ -456,18 +456,28 @@ body.sparring-mode.two-player-mode .p2-count small{ font-size:14px; }
 /* 2026-08-03: 겨루기 데미지 팝업(2인) — 1인 모드의 #damagePopup 을 좌/우 각자 자리에 띄운다.
    1인은 상대가 화면 가운데 하나뿐이라 가운데 팝업이면 됐지만, 2인은 누가 때렸는지
    바로 알아야 해서 청은 왼쪽(30%), 홍은 오른쪽(70%)에 띄운다. */
+/* 2026-08-03: "피드백이 약하다"는 의견 반영 — 데미지 숫자를 확 키우고
+   튀어오르는 폭도 늘렸다. 도장 뒤쪽에서도 몇 점 넣었는지 바로 보이게. */
 .p2-dmg{
-  position:fixed; top:38%; transform:translate(-50%,-50%);
-  font-size:44px; font-weight:1000; color:#fff; letter-spacing:-1px;
-  text-shadow:0 4px 18px rgba(0,0,0,.95); pointer-events:none; z-index:60;
-  animation:p2DmgFly .8s ease forwards;
+  position:fixed; top:34%; transform:translate(-50%,-50%);
+  font-size:clamp(66px, 8.6vw, 132px); font-weight:1000; color:#fff;
+  letter-spacing:-3px; line-height:.92; white-space:nowrap;
+  text-shadow:0 6px 26px rgba(0,0,0,.98); pointer-events:none; z-index:60;
+  animation:p2DmgFly .95s cubic-bezier(.15,1.4,.4,1) forwards;
 }
-.p2-dmg.head{ color:#ff8ea0; text-shadow:0 4px 18px rgba(0,0,0,.95),0 0 26px rgba(255,48,79,.9); }
-.p2-dmg.body{ color:#8fd4ff; text-shadow:0 4px 18px rgba(0,0,0,.95),0 0 26px rgba(49,183,255,.9); }
+/* 부위 이름·콤보는 숫자보다 작게 (숫자가 주인공) */
+.p2-dmg small{
+  display:block; margin-top:6px; font-size:clamp(20px, 2.4vw, 36px);
+  letter-spacing:0; font-weight:1000;
+}
+.p2-dmg.head{ color:#ff6d84; text-shadow:0 6px 26px rgba(0,0,0,.98),0 0 46px rgba(255,48,79,1); }
+.p2-dmg.body{ color:#5fc3ff; text-shadow:0 6px 26px rgba(0,0,0,.98),0 0 46px rgba(49,183,255,1); }
+.p2-dmg .p2-dmg-combo{ color:var(--arcade-gold); }
 @keyframes p2DmgFly{
-  0%{ opacity:0; transform:translate(-50%,-50%) scale(.5); }
-  22%{ opacity:1; transform:translate(-50%,-50%) scale(1.14); }
-  100%{ opacity:0; transform:translate(-50%,-130%) scale(1); }
+  0%{ opacity:0; transform:translate(-50%,-50%) scale(.42); }
+  20%{ opacity:1; transform:translate(-50%,-50%) scale(1.22); }
+  34%{ transform:translate(-50%,-50%) scale(1); }
+  100%{ opacity:0; transform:translate(-50%,-120%) scale(1); }
 }
 .p2-presence{
   font-size:12px; font-weight:1000; letter-spacing:.2px;
@@ -6567,21 +6577,38 @@ let labLastEntry=null;
    발 높이가 기준선을 못 넘는 것인지, 아니면 몸을 돌리는 순간 발 자체를
    놓치는 것인지는 로그만 봐서는 알 수 없다 — 인식이 안 되면 로그가
    아예 안 남기 때문이다. 그래서 매 프레임 상태를 그대로 띄운다. */
-function updateLabLive(m){
-  const el=document.getElementById('labLive');
-  if(!el) return;
-  if(!m){ el.textContent='사람이 안 보입니다'; return; }
+/* 한 사람분 측정값을 만든다. 1인·2인이 같은 계산을 쓴다. */
+function labRowsHtml(m){
   const TH=effThreshPct();
   const over=m.pct>=TH;
   const vis=m.visibility??0;
   const row=(k,v,warn)=>'<div><span style="opacity:.55">'+k+'</span> <span style="color:'+(warn?'#ff8795':'#cdd8e8')+'">'+v+'</span></div>';
-  el.innerHTML=
-    row('발 높이', Math.round(m.pct)+'% (기준 '+Math.round(TH)+'%)', !over)+
+  return row('발 높이', Math.round(m.pct)+'% (기준 '+Math.round(TH)+'%)', !over)+
     row('기준선 넘음', over?'예':'아니오', !over)+
     row('발 보임', vis.toFixed(2), vis<0.5)+
     row('무릎 보임', (m.kneeVis??0).toFixed(2), (m.kneeVis??0)<0.5)+
     row('어깨폭 비율', shoulderRatioNow(m).toFixed(2), false)+
     row('추적 중', trajActive?('예 · '+trajX.length+'프레임'):'아니오', false);
+}
+/* 2026-08-03: 연구실이 2인 모드에서도 돌아간다.
+   run2pFrame 이 선수를 하나씩 처리하므로, 각 선수 값을 따로 담아뒀다가
+   청·홍 두 칸으로 함께 보여준다. */
+let labP2Html={c:'',h:''};
+function updateLabLive(m){
+  const el=document.getElementById('labLive');
+  if(!el) return;
+  if(typeof twoPlayerMode!=='undefined' && twoPlayerMode && active2pSlot){
+    const key=active2pSlot===slot2p.c?'c':'h';
+    labP2Html[key]= m ? labRowsHtml(m) : '<div style="opacity:.55">안 보입니다</div>';
+    el.innerHTML=
+      '<div style="color:#4ca3ff;font-weight:900;letter-spacing:.5px">청</div>'+
+      (labP2Html.c||'<div style="opacity:.55">인식 대기</div>')+
+      '<div style="color:#ff5470;font-weight:900;letter-spacing:.5px;margin-top:9px">홍</div>'+
+      (labP2Html.h||'<div style="opacity:.55">인식 대기</div>');
+    return;
+  }
+  if(!m){ el.textContent='사람이 안 보입니다'; return; }
+  el.innerHTML=labRowsHtml(m);
 }
 
 function updateLabLastKick(){
@@ -7044,17 +7071,17 @@ function p2RunningStatusText(base){
 }
 /* 2026-08-03: 2인 전용 뜨는 숫자 — 때린/찬 사람 쪽(청 왼쪽, 홍 오른쪽)에 튀어오른다.
    1인 모드는 화면 가운데 팝업 하나면 됐지만, 2인은 누구 것인지 바로 알아야 한다. */
-function showP2Float(key,text,kind){
+function showP2Float(key,text,kind,sub){
   const el=document.createElement('div');
   el.className='p2-dmg '+(kind==='head'?'head':'body');
   el.textContent=text;
-  el.style.left=(key==='c'?'30%':'70%');
+  if(sub){ const s=document.createElement('small'); s.innerHTML=sub; el.appendChild(s); }
+  el.style.left=(key==='c'?'28%':'72%');
   document.body.appendChild(el);
-  setTimeout(()=>el.remove(),820);
+  setTimeout(()=>el.remove(),980);
 }
-function showP2Damage(key,dmg,zone){
-  showP2Float(key,'-'+dmg+(zone==='head'?' 머리':' 몸통'),zone);
-}
+/* 데미지 표시는 handleSparringKick2p 이 showP2Float 로 직접 부른다.
+   (2026-08-03: 숫자를 크게, 부위·콤보를 작은 줄로 분리하면서 정리) */
 /* 2026-08-03: 1인의 가운데 점수 팝업(#popOverlay)을 선수별 자리에 그대로 옮긴 것.
    popup() 이 2인 모드일 때 이쪽으로 넘겨준다. */
 let p2PopTimer={c:null,h:null};
@@ -7405,10 +7432,11 @@ function handleSparringKick2p(peak){
   render2pScoreSparring('c'); render2pScoreSparring('h');
   if(st.combo>=2) sndCombo(st.combo-1); else sndImpact(zone);
   flashEdge(key);
-  // 2026-08-03: 1인 모드의 #damagePopup · 콤보 배지에 해당하는 피드백을 2인에도 추가
-  showP2Float(key,
-    '-'+dmg+(zone==='head'?' 머리':' 몸통')+(st.combo>=2?'  '+st.combo+'COMBO':''),
-    zone);
+  // 2026-08-03: 1인 모드의 #damagePopup · 콤보 배지에 해당하는 피드백을 2인에도 추가.
+  //             숫자를 크게, 부위·콤보는 그 아래 작은 줄로 뺀다.
+  showP2Float(key, '-'+dmg, zone,
+    (zone==='head'?'머리 공격':'몸통 공격')+
+    (st.combo>=2?' · <span class="p2-dmg-combo">'+st.combo+' COMBO</span>':''));
   // 2026-08-03: 타겟이 1인 모드와 같은 구조가 되었으므로 타격 애니메이션도 같은 클래스를 쓴다.
   const enemyEl=document.getElementById(key==='c'?'p2EnemyC':'p2EnemyH');
   if(enemyEl){
@@ -7521,7 +7549,7 @@ function processPersonFrame(lm, wlm){
         if(preT.length>PRE_MAX){ preT.shift(); preFootY.shift(); preKneeAngle.shift(); preKneeVis.shift(); preKneeAngle3D.shift(); }
         if(!trajActive) pushPreTraj(m);
       }
-      if(!twoPlayerMode && labModalOpen) updateLabLive(m);
+      if(labModalOpen) updateLabLive(m); // 2026-08-03: 2인에서도 연구실 측정 (청·홍 따로 표시)
 
       if((isDrillMode()||currentMode==='sparring')&&running&&trajActive){
         const MAX_TRAJ=40;
@@ -7567,11 +7595,19 @@ function run2pFrame(result){
     if(hx==null) return null;
     return { lm, wlm:wlms[i]||null, screenX: mirrored?1-hx:hx };
   }).filter(Boolean);
-  // 중앙선을 기준으로 슬롯을 고정한다. 한 명이 잠깐 사라져도 남은 선수가
-  // 상대 슬롯으로 넘어가지 않도록, 왼쪽은 청·오른쪽은 홍으로만 배정한다.
-  const leftPeople=people.filter(p=>p.screenX<.5).sort((a,b)=>Math.abs(a.screenX-.25)-Math.abs(b.screenX-.25));
-  const rightPeople=people.filter(p=>p.screenX>=.5).sort((a,b)=>Math.abs(a.screenX-.75)-Math.abs(b.screenX-.75));
-  const cPerson=leftPeople[0]||null, hPerson=rightPeople[0]||null;
+  /* 슬롯 배정 (2026-08-03 보완)
+     ① 두 명이 다 보이면: 화면상 왼쪽 사람 = 청, 오른쪽 사람 = 홍.
+        중앙선으로 나누지 않는다 — 한 선수가 신나서 중앙선을 넘으면
+        상대 슬롯을 빼앗아 두 선수 점수가 뒤섞이기 때문이다.
+     ② 한 명만 보이면: 그 사람이 서 있는 쪽(중앙선 기준)으로 배정한다.
+        이러면 잠깐 한 명이 안 잡혀도 남은 선수가 상대 슬롯으로 넘어가지 않는다. */
+  let cPerson=null, hPerson=null;
+  if(people.length>=2){
+    const sorted=people.slice().sort((a,b)=>a.screenX-b.screenX);
+    cPerson=sorted[0]; hPerson=sorted[sorted.length-1];
+  } else if(people.length===1){
+    if(people[0].screenX<0.5) cPerson=people[0]; else hPerson=people[0];
+  }
 
   // 2026-08-03: 겨루기 연습모드는 선수마다 미션이 다르므로, 그 선수를 처리하기 직전에
   // 전역 sparringMission 을 그 선수 것으로 갈아끼운다(화살표·채점 모두 여기를 본다).
