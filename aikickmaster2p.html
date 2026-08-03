@@ -3659,8 +3659,8 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
         <div class="enemyArm enemyArmR"></div>
         <div class="enemyLeg enemyLegL"></div>
         <div class="enemyLeg enemyLegR"></div>
-        <div class="enemyHead" aria-label="머리 타격존"></div>
-        <div class="enemyBody" aria-label="몸통 타격존"></div>
+        <div class="enemyHead" aria-label="머리 타격존">HEAD</div>
+        <div class="enemyBody" aria-label="몸통 타격존">BODY</div>
       </div>
       <div id="comboBadge">0 COMBO</div>
       <div id="damagePopup"></div>
@@ -3831,18 +3831,16 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
       <div class="enemyGear"></div><div class="enemyFace"></div><div class="enemyHogu"></div><div class="enemyBelt"></div>
       <div class="enemyArm enemyArmL"></div><div class="enemyArm enemyArmR"></div>
       <div class="enemyLeg enemyLegL"></div><div class="enemyLeg enemyLegR"></div>
-      <div class="enemyHead" aria-label="머리 타격존"></div>
-      <div class="enemyBody" aria-label="몸통 타격존"></div>
-      <span class="p2-enemy-label p2-enemy-label-c">청 공격 →</span>
+      <div class="enemyHead" aria-label="머리 타격존">HEAD</div>
+      <div class="enemyBody" aria-label="몸통 타격존">BODY</div>
     </div>
     <div id="p2EnemyH" class="enemy-target p2-enemy-target">
       <div class="enemyAura"></div>
       <div class="enemyGear"></div><div class="enemyFace"></div><div class="enemyHogu"></div><div class="enemyBelt"></div>
       <div class="enemyArm enemyArmL"></div><div class="enemyArm enemyArmR"></div>
       <div class="enemyLeg enemyLegL"></div><div class="enemyLeg enemyLegR"></div>
-      <div class="enemyHead" aria-label="머리 타격존"></div>
-      <div class="enemyBody" aria-label="몸통 타격존"></div>
-      <span class="p2-enemy-label p2-enemy-label-h">← 홍 공격</span>
+      <div class="enemyHead" aria-label="머리 타격존">HEAD</div>
+      <div class="enemyBody" aria-label="몸통 타격존">BODY</div>
     </div>
 
     <!-- 2인 안내 토스트 — 잠깐 떴다 사라짐 (예: 격파·겨루기는 2인 미지원 안내) -->
@@ -8045,79 +8043,18 @@ body.hud-v21.akm-ui.two-player-mode .p2-enemy-target{
   font-size:14px !important;font-weight:900 !important;box-shadow:none !important;backdrop-filter:blur(4px);
 }
 
-body.hud-v21.akm-ui #enemyTarget,
-body.hud-v21.akm-ui .enemy-target{
-  width:260px !important;height:430px !important;opacity:.82 !important;
-  filter:drop-shadow(0 20px 24px rgba(0,0,0,.68)) !important;
+/* 2026-08-03 (완수님 결정): 겨루기 타겟은 실루엣 대신 조준경 모양으로 통일한다.
+   위 "1인·2인 공통: 타겟을 더 진하게" 블록이 최종 모양을 잡는다.
+   여기서는 타격 순간 번쩍이는 효과만 남긴다 (실루엣 시안에서 좋았던 부분). */
+#enemyTarget.hit-head .enemyHead,
+.enemy-target.hit-head .enemyHead{
+  background:rgba(255,48,79,.55) !important;
+  box-shadow:0 0 46px rgba(255,48,79,1), inset 0 0 26px rgba(255,255,255,.28) !important;
 }
-#enemyTarget .enemyAura,.enemy-target .enemyAura{display:none !important}
-#enemyTarget::before,.enemy-target::before{
-  content:"" !important;display:block !important;position:absolute !important;
-  left:50% !important;top:82px !important;width:178px !important;height:286px !important;
-  transform:translateX(-50%) !important;border:0 !important;border-radius:72px 72px 34px 34px !important;
-  clip-path:polygon(26% 0,74% 0,100% 18%,87% 58%,71% 100%,56% 100%,50% 66%,44% 100%,29% 100%,13% 58%,0 18%) !important;
-  background:linear-gradient(90deg,rgba(79,103,133,.18),rgba(12,20,31,.76) 24% 76%,rgba(79,103,133,.18)) !important;
-  box-shadow:inset 0 0 36px rgba(172,199,228,.14),0 0 0 1px rgba(199,218,239,.24) !important;
-  z-index:1 !important;
-}
-#enemyTarget::after,.enemy-target::after{
-  content:"" !important;display:block !important;position:absolute !important;
-  left:50% !important;top:116px !important;width:236px !important;height:144px !important;
-  transform:translateX(-50%) !important;border:0 !important;border-top:1px solid rgba(219,232,246,.28) !important;
-  border-radius:48% 48% 28% 28% !important;
-  background:linear-gradient(90deg,transparent 2%,rgba(99,123,151,.16) 20%,rgba(8,15,25,.62) 50%,rgba(99,123,151,.16) 80%,transparent 98%) !important;
-  z-index:1 !important;
-}
-#enemyTarget .enemyGear,.enemy-target .enemyGear{
-  display:block !important;position:absolute;left:50%;top:14px;width:96px;height:105px;
-  transform:translateX(-50%);border:3px solid rgba(205,218,232,.72);border-radius:40px 40px 34px 34px;
-  background:linear-gradient(160deg,rgba(105,132,163,.28),rgba(7,13,22,.76));
-  box-shadow:inset 0 0 20px rgba(127,165,204,.2),0 0 18px rgba(0,0,0,.55);z-index:3;
-}
-#enemyTarget .enemyFace,.enemy-target .enemyFace{
-  display:block !important;position:absolute;left:50%;top:40px;width:66px;height:54px;
-  transform:translateX(-50%);border:1px solid rgba(173,199,226,.5);border-radius:24px;
-  background:repeating-linear-gradient(0deg,rgba(72,111,151,.13) 0 2px,transparent 2px 8px),rgba(7,15,25,.5);z-index:4;
-}
-#enemyTarget .enemyHogu,.enemy-target .enemyHogu{
-  display:block !important;position:absolute;left:50%;top:122px;width:150px;height:158px;
-  transform:translateX(-50%);clip-path:polygon(14% 0,86% 0,100% 20%,88% 100%,12% 100%,0 20%);
-  background:linear-gradient(145deg,rgba(42,111,185,.28),rgba(8,16,26,.76) 52%,rgba(168,36,58,.24));
-  border:0;box-shadow:inset 0 0 28px rgba(118,164,210,.18);z-index:2;
-}
-#enemyTarget .enemyBelt,.enemy-target .enemyBelt{
-  display:block !important;position:absolute;left:50%;top:278px;width:130px;height:8px;
-  transform:translateX(-50%);background:#d4b267;box-shadow:0 0 10px rgba(212,178,103,.34);z-index:4;
-}
-#enemyTarget .enemyArm,.enemy-target .enemyArm,
-#enemyTarget .enemyLeg,.enemy-target .enemyLeg{display:block !important;position:absolute;background:linear-gradient(#1c2a3d,#080e18);border:1px solid rgba(186,207,230,.22);z-index:1}
-#enemyTarget .enemyArm,.enemy-target .enemyArm{top:126px;width:35px;height:132px;border-radius:22px}
-#enemyTarget .enemyArmL,.enemy-target .enemyArmL{left:30px;transform:rotate(24deg)}
-#enemyTarget .enemyArmR,.enemy-target .enemyArmR{right:30px;transform:rotate(-24deg)}
-#enemyTarget .enemyLeg,.enemy-target .enemyLeg{top:272px;width:45px;height:145px;border-radius:8px 8px 18px 18px}
-#enemyTarget .enemyLegL,.enemy-target .enemyLegL{left:72px;transform:rotate(7deg)}
-#enemyTarget .enemyLegR,.enemy-target .enemyLegR{right:72px;transform:rotate(-7deg)}
-#enemyTarget .enemyHead,.enemy-target .enemyHead{
-  top:25px !important;left:50% !important;width:82px !important;height:78px !important;
-  background:rgba(232,56,80,.08) !important;border:2px solid rgba(255,82,105,.72) !important;
-  border-radius:32px !important;box-shadow:0 0 13px rgba(255,48,79,.28),inset 0 0 16px rgba(255,48,79,.12) !important;
-  animation:none !important;z-index:6 !important;
-}
-#enemyTarget .enemyBody,.enemy-target .enemyBody{
-  top:126px !important;left:50% !important;width:140px !important;height:148px !important;
-  clip-path:polygon(12% 0,88% 0,100% 19%,87% 100%,13% 100%,0 19%);
-  border:2px solid rgba(70,151,243,.74) !important;border-radius:0 !important;
-  background:rgba(49,140,255,.08) !important;box-shadow:0 0 15px rgba(49,140,255,.3),inset 0 0 18px rgba(49,140,255,.12) !important;
-  animation:none !important;z-index:6 !important;
-}
-#enemyTarget .enemyHead::before,#enemyTarget .enemyHead::after,
-.enemy-target .enemyHead::before,.enemy-target .enemyHead::after,
-#enemyTarget .enemyBody::before,#enemyTarget .enemyBody::after,
-.enemy-target .enemyBody::before,.enemy-target .enemyBody::after{display:none !important}
-#enemyTarget.hit-head .enemyHead,.enemy-target.hit-head .enemyHead{background:rgba(255,48,79,.4) !important;box-shadow:0 0 34px rgba(255,48,79,.92),inset 0 0 22px rgba(255,255,255,.2) !important}
-#enemyTarget.hit-body .enemyBody,.enemy-target.hit-body .enemyBody{background:rgba(49,140,255,.38) !important;box-shadow:0 0 36px rgba(49,140,255,.92),inset 0 0 22px rgba(255,255,255,.2) !important}
-@media (orientation:landscape) and (max-width:1220px){
-  body.hud-v21.akm-ui.two-player-mode .p2-enemy-target{width:220px !important;height:380px !important}
+#enemyTarget.hit-body .enemyBody,
+.enemy-target.hit-body .enemyBody{
+  background:rgba(49,140,255,.52) !important;
+  box-shadow:0 0 48px rgba(49,140,255,1), inset 0 0 26px rgba(255,255,255,.28) !important;
 }
 </style>
 <script id="fix4-start-stop-text-helper">
