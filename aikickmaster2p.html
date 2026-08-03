@@ -5280,7 +5280,12 @@ function clamp01(v){ return Math.max(0,Math.min(1,v)); }
 
 // 발차기 궤적 분석. 통로는 내부 계산에만 사용하며 화면에는 그리지 않는다.
 function analyzeTraj(peakPctValue=null){
-  if(trajX.length<4) return {score:null,ok:false,msg:'동작을 다시 보여주세요',reason:'too_short'};
+  /* 2026-08-03 · too_short 에도 진단값을 실어 보낸다.
+     종전에는 사유만 남아서, 이 거부가 "그 선수가 아예 안 잡혀서"인지
+     "잡혔는데 프레임이 모자라서"인지 로그만 보고는 가릴 수 없었다.
+     frames 0 이면 인식 실패, 1~3 이면 프레임 부족 쪽이다. */
+  if(trajX.length<4) return {score:null,ok:false,msg:'동작을 다시 보여주세요',reason:'too_short',
+    diag:{frames:trajX.length, preFrames:(typeof preTraj!=='undefined'?preTraj.length:null)}};
 
   const T=trajTorsoRef();
   const relX=trajX.map((x,i)=>x-(trajHipX[i] ?? smHipX ?? 0.5));
@@ -6494,6 +6499,15 @@ function diagLogPush(result){
      거부되면 그 사유에 관련된 값만 남던 문제를 없애, 나중에 발차기 종류
      분류기를 실측으로 설계할 수 있게 한다. */
   if(result.diag && typeof result.diag==='object') Object.assign(entry,result.diag);
+  /* 2026-08-03: 인식 상황도 같이 남긴다 (성공·거부 가리지 않고 전부).
+     detC/detH = 최근 120프레임에서 청/홍이 잡힌 비율(%)
+     detBoth   = 두 명이 동시에 잡힌 비율(%)  ← 2인모드 판정의 실질 상한
+     fps       = 실측 프레임률,  model = full/lite (저사양 자동 강등 여부) */
+  const ds=detectStats(); if(ds) Object.assign(entry,ds);
+  /* 2026-08-03: 기기 정보와 그때의 기기 상태도 함께 남긴다.
+     노트북과 태블릿 데이터가 섞여도 dev/gpu 로 갈라낼 수 있고,
+     upMin(경과 분)과 fpsDrop/press 를 같이 보면 발열로 느려지는 시점이 보인다. */
+  const dv=deviceState(); if(dv) Object.assign(entry,dv);
   // 2026-07-29: 연구소 화면의 "마지막 발차기"에 그대로 띄운다
   labLastEntry=entry;
   if(document.getElementById('kickLabModal')?.classList.contains('show')) updateLabLastKick();
@@ -6918,6 +6932,13 @@ async function startCamera(){
   try{
     stream=await navigator.mediaDevices.getUserMedia({ video:{facingMode,width:{ideal:1280},height:{ideal:720}},audio:false });
     video.srcObject=stream; await video.play();
+    /* 2026-08-03 진단 계측 — 카메라를 켠 시각과 실제로 받아오는 화질을 기록한다.
+       1280x720 을 요청해도 기기가 그대로 준다는 보장이 없다. */
+    camStartT=performance.now(); fpsBase=null; inferHist=[]; detHist=[]; fpsSm=null; fpsLastT=0;
+    try{
+      const st=stream.getVideoTracks()[0].getSettings();
+      camInfo=(st.width||'?')+'x'+(st.height||'?')+'@'+(st.frameRate?Math.round(st.frameRate):'?');
+    }catch(e){ camInfo=null; }
     const isDrill=MODE_CFG[currentMode].isDrill;
     updateModeBadge();
     statusEl.textContent=isDrill?'시작 버튼을 눌러 연습을 시작하세요':'시작 버튼을 누르세요';
@@ -7608,6 +7629,7 @@ function run2pFrame(result){
   } else if(people.length===1){
     if(people[0].screenX<0.5) cPerson=people[0]; else hPerson=people[0];
   }
+  pushDetect(!!cPerson,!!hPerson);   // 2026-08-03 진단 계측 (판정 미사용)
 
   // 2026-08-03: 겨루기 연습모드는 선수마다 미션이 다르므로, 그 선수를 처리하기 직전에
   // 전역 sparringMission 을 그 선수 것으로 갈아끼운다(화살표·채점 모두 여기를 본다).
@@ -7646,6 +7668,119 @@ function run2pFrame(result){
    자동으로 lite 모델로 한 번 전환한다. */
 let idleFrameCounter=0;
 let perfLowStreakMs=0, perfLastCheck=0, perfDowngraded=false;
+
+/* ── 인식 진단 계측 (2026-08-03) ──────────────────────────────────────
+   판정에는 일절 쓰지 않는다. 진단 로그에만 남긴다.
+   최근 120프레임(약 4초) 동안 청·홍이 각각 몇 %나 잡혔는지와 실제 fps 를
+   기록해 두었다가, 발차기가 판정될 때 그 값을 같이 남긴다.
+   "인식이 안 된다"의 원인이 사람 놓침인지 프레임 부족인지 가리기 위한 것. */
+const DETECT_WIN=120;
+let detHist=[];        // 프레임별 비트: 1=청 잡힘, 2=홍 잡힘 (1인모드는 1만 씀)
+let fpsSm=null;        // 스무딩한 실측 fps
+let fpsLastT=0;
+function pushDetect(cOn,hOn){
+  detHist.push((cOn?1:0)|(hOn?2:0));
+  if(detHist.length>DETECT_WIN) detHist.shift();
+}
+function tickFps(now){
+  if(fpsLastT){
+    const dt=now-fpsLastT;
+    if(dt>0&&dt<1000){ const f=1000/dt; fpsSm=(fpsSm==null)?f:fpsSm*0.9+f*0.1; }
+  }
+  fpsLastT=now;
+  /* 카메라 켜고 10초쯤의 값을 "아직 안 뜨거울 때"의 기준으로 잡아둔다.
+     이후 fpsDrop 이 이 기준 대비 몇 % 떨어졌는지를 알려준다. (2026-08-03) */
+  if(fpsBase==null && camStartT!=null && fpsSm!=null && (now-camStartT)>10000) fpsBase=fpsSm;
+}
+function detectStats(){
+  const n=detHist.length;
+  if(!n) return null;
+  const pct=(f)=>Math.round(detHist.filter(f).length/n*100);
+  const s={ detWin:n, fps:(fpsSm==null?null:Math.round(fpsSm)), model:currentModelKind };
+  if(twoPlayerMode){
+    s.detC=pct(v=>v&1); s.detH=pct(v=>v&2); s.detBoth=pct(v=>v===3);
+  }else{
+    s.detOne=pct(v=>v&1);
+  }
+  return s;
+}
+
+/* ── 기기 정보 · 기기 상태 계측 (2026-08-03) ─────────────────────────
+   판정에는 일절 쓰지 않는다. 진단 로그에만 남긴다.
+
+   노트북(팬 있음)과 태블릿(팬 없음)은 지속 성능이 크게 다르다. 태블릿은
+   수업 중반쯤 발열로 느려지는데, 그때 인식이 같이 나빠지는지를 숫자로
+   확인하려는 것이다. 브라우저가 알려주지 않는 값은 조용히 null 로 둔다. */
+const DEVINFO={};
+let camStartT=null;         // 카메라를 켠 시각 (발열 누적 시간의 기준)
+let pressureNow=null;       // 지금 시스템 부하: nominal/fair/serious/critical
+let pressureWorst=null;     // 이번 세션에서 가장 나빴던 값
+let inferHist=[];           // 최근 추론 소요시간(ms)
+let fpsBase=null;           // 카메라 켜고 10초쯤의 기준 fps (이후 얼마나 떨어졌는지 볼 기준)
+let battNow=null, battCharging=null;
+let camInfo=null;           // 카메라가 실제로 주는 해상도·프레임률
+
+function initDevInfo(){
+  try{
+    const ua=navigator.userAgent||'';
+    const uad=navigator.userAgentData||null;
+    DEVINFO.plat = (uad&&uad.platform) || (/Android/.test(ua)?'Android':/Windows/.test(ua)?'Windows':/iPhone|iPad|Macintosh/.test(ua)?'Apple':'기타');
+    DEVINFO.mobile = uad ? !!uad.mobile : /Mobi|Android/.test(ua);
+    DEVINFO.cores = navigator.hardwareConcurrency || null;
+    DEVINFO.ram   = navigator.deviceMemory || null;   // GB (크롬 계열만)
+    /* GPU 이름 — 기기를 사실상 특정해 준다.
+       갤북4엣지는 Adreno X1-85, 탭S8+는 Adreno 730 으로 찍힌다. */
+    try{
+      const c=document.createElement('canvas');
+      const gl=c.getContext('webgl2')||c.getContext('webgl');
+      const ext=gl&&gl.getExtension('WEBGL_debug_renderer_info');
+      if(ext) DEVINFO.gpu=String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)).slice(0,70);
+    }catch(e){}
+    DEVINFO.dev=(DEVINFO.plat||'?')+(DEVINFO.mobile?'/모바일':'')+(DEVINFO.cores?' '+DEVINFO.cores+'코어':'');
+  }catch(e){}
+
+  /* 배터리 — 충전 중이면 기기가 더 뜨거워져서 성능이 먼저 떨어진다. */
+  try{
+    if(navigator.getBattery) navigator.getBattery().then(b=>{
+      const upd=()=>{ battNow=Math.round(b.level*100); battCharging=b.charging; };
+      upd(); b.addEventListener('levelchange',upd); b.addEventListener('chargingchange',upd);
+    }).catch(()=>{});
+  }catch(e){}
+
+  /* 시스템 부하 상태 (Compute Pressure API · 크롬 125 이상).
+     기기가 스스로 "지금 힘들다"고 알려주는 유일한 표준 창구다.
+     사파리·파이어폭스에는 없으므로 없으면 '미지원'으로 남긴다. */
+  try{
+    if(typeof PressureObserver!=='undefined'){
+      const rank={nominal:0,fair:1,serious:2,critical:3};
+      const po=new PressureObserver(recs=>{
+        const r=recs[recs.length-1]; if(!r) return;
+        pressureNow=r.state;
+        if(pressureWorst==null || rank[r.state]>rank[pressureWorst]) pressureWorst=r.state;
+      });
+      po.observe('cpu',{sampleInterval:2000}).catch(()=>{ pressureNow='미지원'; });
+    }else pressureNow='미지원';
+  }catch(e){ pressureNow='미지원'; }
+}
+
+function medianOf(a){ if(!a||!a.length) return null; const s=a.slice().sort((x,y)=>x-y); return s[Math.floor(s.length/2)]; }
+
+function deviceState(){
+  const s={
+    dev:DEVINFO.dev||null, gpu:DEVINFO.gpu||null, cores:DEVINFO.cores||null, ram:DEVINFO.ram||null,
+    cam:camInfo,
+    upMin:(camStartT==null?null:+((performance.now()-camStartT)/60000).toFixed(1)),
+    infer:(()=>{ const m=medianOf(inferHist); return m==null?null:Math.round(m); })(),
+    press:pressureNow, pressMax:pressureWorst,
+    batt:battNow, charging:battCharging,
+    degraded:perfDowngraded
+  };
+  if(fpsBase!=null){
+    s.fps0=Math.round(fpsBase);
+    if(fpsSm!=null) s.fpsDrop=Math.round((1-fpsSm/fpsBase)*100);  // 기준 대비 몇 % 떨어졌나
+  }
+  return s;
+}
 // 2인 full 모델이 13~19fps에 머무는 애매한 저성능 구간도 빠르게 구제한다.
 const PERF_LOW_FPS=20, PERF_LOW_HOLD_MS=3000;
 function perfResetMonitor(){ perfLowStreakMs=0; perfLastCheck=0; }
@@ -7675,15 +7810,19 @@ function loop(){
     const result=poseLandmarker.detectForVideo(video,performance.now());
     const inferMs=performance.now()-t0;
     perfMonitorTick(performance.now(),inferMs);
+    tickFps(performance.now());   // 2026-08-03 진단 계측
+    inferHist.push(inferMs); if(inferHist.length>90) inferHist.shift();  // 추론 소요시간 (발열 지표)
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
     if(twoPlayerMode){
       run2pFrame(result);
     } else if(result.landmarks && result.landmarks.length>0){
+      pushDetect(true,false);     // 2026-08-03 진단 계측
       const lm=result.landmarks[0];
       const wlm=(result.worldLandmarks && result.worldLandmarks.length>0)?result.worldLandmarks[0]:null;
       processPersonFrame(lm,wlm);
     } else {
+      pushDetect(false,false);    // 2026-08-03 진단 계측
       barFill.style.width='0%';
       if(!running){ statusEl.style.opacity='1'; statusEl.textContent='사람을 찾는 중…'; }
       kicking=false; aboveFrames=0; belowFrames=0; smHipY=null; smTorso=null; smHipX=null; smHipW=null; shoulderSamples=[];
@@ -7693,6 +7832,7 @@ function loop(){
 }
 
 /* ── 시작 ── */
+initDevInfo();   // 2026-08-03 진단 계측 (기기 정보·부하 감시 시작)
 // 초기 UI 세팅: 자유모드는 게임버튼 숨김
 drillCountArea.style.display='flex';
 gameArea.style.display='none';
