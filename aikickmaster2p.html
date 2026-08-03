@@ -3659,8 +3659,8 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
         <div class="enemyArm enemyArmR"></div>
         <div class="enemyLeg enemyLegL"></div>
         <div class="enemyLeg enemyLegR"></div>
-        <div class="enemyHead">HEAD</div>
-        <div class="enemyBody">BODY</div>
+        <div class="enemyHead" aria-label="머리 타격존"></div>
+        <div class="enemyBody" aria-label="몸통 타격존"></div>
       </div>
       <div id="comboBadge">0 COMBO</div>
       <div id="damagePopup"></div>
@@ -3831,8 +3831,8 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
       <div class="enemyGear"></div><div class="enemyFace"></div><div class="enemyHogu"></div><div class="enemyBelt"></div>
       <div class="enemyArm enemyArmL"></div><div class="enemyArm enemyArmR"></div>
       <div class="enemyLeg enemyLegL"></div><div class="enemyLeg enemyLegR"></div>
-      <div class="enemyHead">HEAD</div>
-      <div class="enemyBody">BODY</div>
+      <div class="enemyHead" aria-label="머리 타격존"></div>
+      <div class="enemyBody" aria-label="몸통 타격존"></div>
       <span class="p2-enemy-label p2-enemy-label-c">청 공격 →</span>
     </div>
     <div id="p2EnemyH" class="enemy-target p2-enemy-target">
@@ -3840,8 +3840,8 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
       <div class="enemyGear"></div><div class="enemyFace"></div><div class="enemyHogu"></div><div class="enemyBelt"></div>
       <div class="enemyArm enemyArmL"></div><div class="enemyArm enemyArmR"></div>
       <div class="enemyLeg enemyLegL"></div><div class="enemyLeg enemyLegR"></div>
-      <div class="enemyHead">HEAD</div>
-      <div class="enemyBody">BODY</div>
+      <div class="enemyHead" aria-label="머리 타격존"></div>
+      <div class="enemyBody" aria-label="몸통 타격존"></div>
       <span class="p2-enemy-label p2-enemy-label-h">← 홍 공격</span>
     </div>
 
@@ -3850,9 +3850,11 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
 
     <!-- 2인 경기 종료 결과. 승패표시 설정(twoPlayerShowResult)에 따라 내용이 달라진다. -->
     <div id="p2Result">
+      <div id="p2ResultKicker">MATCH RESULT</div>
       <div id="p2ResultTitle"></div>
       <div id="p2ResultScores"></div>
-      <button type="button" id="p2ResultCloseBtn" onclick="closeP2Result()">닫기</button>
+      <div id="p2ResultReason"></div>
+      <button type="button" id="p2ResultCloseBtn" onclick="closeP2Result()">다시 경기</button>
     </div>
 
     <div class="stats-row">
@@ -5177,7 +5179,10 @@ let kickLevel='hard';
 
 /* 설정의 민감도 슬라이더 값에 난이도 보정을 더한 "실제 기준 높이" */
 function effThreshPct(){
-  return Math.max(12, Math.min(100, threshPct + (JUDGE.THRESH_OFFSET||0)));
+  // 2인은 화면에서 한 사람의 크기가 작아지므로 시작 높이만 5%p 완화한다.
+  // 궤적·체임버·발차기 종류 판정은 1인과 같은 기준을 그대로 사용한다.
+  const p2Offset=(typeof twoPlayerMode!=='undefined' && twoPlayerMode)?-5:0;
+  return Math.max(12, Math.min(100, threshPct + (JUDGE.THRESH_OFFSET||0) + p2Offset));
 }
 function applyThreshUi(){
   if(typeof barThresh!=='undefined' && barThresh) barThresh.style.left=effThreshPct()+'%';
@@ -6323,10 +6328,19 @@ window.startGame=()=>{
       drillDone=0; drillScores=[];
       if(twoPlayerMode){
         resetSlot2p(slot2p.c); resetSlot2p(slot2p.h);
+        auto2pTransitioning=false;
+        auto2pStageStartT=performance.now();
+        if(drillRunMode==='auto'){
+          autoDrillIndex=0;
+          currentMode=AUTO_DRILL_SEQUENCE[0];
+          updateSelectedKickButtons(); updateModeBadge();
+        }
         document.getElementById('p2cSuffix').textContent='/'+drillTarget;
         document.getElementById('p2hSuffix').textContent='/'+drillTarget;
         render2pScore('c'); render2pScore('h');
-        render2pStatus('경기 진행 중');
+        render2pStatus(drillRunMode==='auto'
+          ?'자동훈련 1 / '+AUTO_DRILL_SEQUENCE.length+' · '+MODE_CFG[currentMode].label
+          :'경기 진행 중');
       }else if(drillRunMode==='auto'){
         autoDrillIndex=0;
         autoDrillResults={};
@@ -6364,6 +6378,10 @@ function stopGame(){
   timerBadge.classList.remove('show'); readyOverlay.classList.remove('show');
   clearBalloons();
   if(typeof clearBalloons2p==='function') clearBalloons2p(); // 2인 격파 중 모드를 바꿔도 풍선이 화면에 남지 않도록
+  if(typeof p2StageResultTimer!=='undefined' && p2StageResultTimer){ clearTimeout(p2StageResultTimer); p2StageResultTimer=null; }
+  document.getElementById('p2Result')?.classList.remove('show');
+  const p2Close=document.getElementById('p2ResultCloseBtn'); if(p2Close) p2Close.style.display='';
+  if(typeof auto2pTransitioning!=='undefined') auto2pTransitioning=false;
   drillResult.classList.remove('show','auto-summary','final-result'); sparringHud?.classList.remove('show');
   if(drillResultTimer){ clearTimeout(drillResultTimer); drillResultTimer=null; }
   renderStats();
@@ -6903,11 +6921,13 @@ function makeKickSlot(key){
     prevFoot:{left:null,right:null},
     smHipY:null, smTorso:null, smHipX:null, smHipW:null, shoulderSamples:[],
     drillDone:0, drillScores:[], lastScore:null, lastGrade:'', lastColor:'var(--gold)',
-    lastKickCompleteT:0, finished:false
+    lastKickCompleteT:0, finished:false,
+    autoResults:{}, stageFinished:false, stageFinishMs:0
   };
 }
 let slot2p={ c:makeKickSlot('c'), h:makeKickSlot('h') };
 let active2pSlot=null; // 지금 전역변수에 불러와 있는 슬롯(스왑 표시)
+let auto2pTransitioning=false, auto2pStageStartT=0;
 
 function saveToSlot(slot){
   slot.kicking=kicking; slot.peakPct=peakPct; slot.aboveFrames=aboveFrames; slot.belowFrames=belowFrames;
@@ -6939,6 +6959,12 @@ function loadFromSlot(slot){
 function resetSlot2p(slot){
   const key=slot.key;
   Object.assign(slot, makeKickSlot(key));
+}
+function resetSlot2pStage(slot){
+  const keepResults=slot.autoResults||{};
+  const key=slot.key;
+  Object.assign(slot,makeKickSlot(key));
+  slot.autoResults=keepResults;
 }
 /* 2026-08-03 버그수정: 예전에는 발차기 드릴을 시작할 때만 슬롯을 초기화했다.
    그래서 발차기 10회를 끝내면 두 슬롯 모두 finished=true 로 남고, 그 상태로
@@ -7084,11 +7110,47 @@ window.setTwoPlayerShowResult=function(on){
   document.getElementById('p2ResultOnBtn')?.classList.toggle('active', twoPlayerShowResult);
   document.getElementById('p2ResultOffBtn')?.classList.toggle('active', !twoPlayerShowResult);
 };
+let p2StageResultTimer=null;
 window.closeP2Result=function(){
+  if(p2StageResultTimer){ clearTimeout(p2StageResultTimer); p2StageResultTimer=null; }
   document.getElementById('p2Result')?.classList.remove('show');
 };
+function setP2ResultContent(kicker,title,cLabel,cVal,hLabel,hVal,winnerKey,reason){
+  const kickerEl=document.getElementById('p2ResultKicker');
+  const titleEl=document.getElementById('p2ResultTitle');
+  const scoresEl=document.getElementById('p2ResultScores');
+  const reasonEl=document.getElementById('p2ResultReason');
+  if(kickerEl) kickerEl.textContent=kicker;
+  if(titleEl){
+    titleEl.textContent=title;
+    titleEl.classList.remove('win-c','win-h');
+    if(twoPlayerShowResult && winnerKey) titleEl.classList.add(winnerKey==='c'?'win-c':'win-h');
+    titleEl.style.animation='none'; void titleEl.offsetWidth; titleEl.style.animation='';
+  }
+  if(scoresEl) scoresEl.innerHTML=
+    '<div class="p2-result-side p2-result-c"><span>청</span><b>'+cVal+'</b><small>'+cLabel+'</small></div>'+ 
+    '<div class="p2-result-divider"></div>'+ 
+    '<div class="p2-result-side p2-result-h"><span>홍</span><b>'+hVal+'</b><small>'+hLabel+'</small></div>';
+  if(reasonEl) reasonEl.textContent=reason;
+}
+function showP2StageResult(stageLabel,cAvg,hAvg,winnerKey,onDone){
+  const title=twoPlayerShowResult
+    ?(winnerKey==null?'무승부':winnerKey==='c'?'청 승리!':'홍 승리!')
+    :'종목 완료';
+  setP2ResultContent(stageLabel,title,'평균',cAvg+'점','평균',hAvg+'점',winnerKey,'잠시 후 다음 종목으로 이동합니다');
+  const closeBtn=document.getElementById('p2ResultCloseBtn');
+  if(closeBtn) closeBtn.style.display='none';
+  document.getElementById('p2Result')?.classList.add('show');
+  if(p2StageResultTimer) clearTimeout(p2StageResultTimer);
+  p2StageResultTimer=setTimeout(()=>{
+    p2StageResultTimer=null;
+    document.getElementById('p2Result')?.classList.remove('show');
+    if(closeBtn) closeBtn.style.display='';
+    if(typeof onDone==='function') onDone();
+  },1800);
+}
 /* 결과 화면 공통 표시 — 승패표시 켬/끔에 따라 제목만 다르게. */
-function showP2Result(cLabel,cVal,hLabel,hVal,winnerKey){
+function showP2Result(cLabel,cVal,hLabel,hVal,winnerKey,reason=''){
   running=false; setPlayingUi(false);
   let title;
   if(twoPlayerShowResult){
@@ -7097,17 +7159,11 @@ function showP2Result(cLabel,cVal,hLabel,hVal,winnerKey){
     title = '경기 종료';
   }
   render2pStatus(title);
-  const titleEl=document.getElementById('p2ResultTitle');
-  const scoresEl=document.getElementById('p2ResultScores');
-  if(titleEl){
-    titleEl.textContent=title;
-    // 2026-08-03: 승자 색으로 글자색까지 바꿔서 멀리서도 한눈에 보이게 한다.
-    titleEl.classList.remove('win-c','win-h');
-    if(twoPlayerShowResult && winnerKey) titleEl.classList.add(winnerKey==='c'?'win-c':'win-h');
-    // 애니메이션 재생을 매번 강제(연속 경기에서도 팝 효과가 다시 나오도록)
-    titleEl.style.animation='none'; void titleEl.offsetWidth; titleEl.style.animation='';
-  }
-  if(scoresEl) scoresEl.innerHTML='청 <b class="p2rc">'+cLabel+' '+cVal+'</b> · 홍 <b class="p2rh">'+hLabel+' '+hVal+'</b>';
+  setP2ResultContent('FINAL MATCH RESULT',title,cLabel,cVal,hLabel,hVal,winnerKey,reason||(
+    winnerKey==null?'기록이 같습니다':winnerKey==='c'?'청 선수가 앞섰습니다':'홍 선수가 앞섰습니다'
+  ));
+  const closeBtn=document.getElementById('p2ResultCloseBtn');
+  if(closeBtn) closeBtn.style.display='';
   document.getElementById('p2Result')?.classList.add('show');
   setStartBtn(false,'다시 시작');
 }
@@ -7116,12 +7172,57 @@ function check2pFinish(){
   const c=slot2p.c, h=slot2p.h;
   // 2026-08-03: 한 명이 먼저 끝나도 상태줄은 그대로 "경기 진행 중"을 유지하고,
   // 방금 끝난 사람만 짧게 토스트로 알려준다 ("청 완료!"). 상대는 하던 대로 계속한다.
-  if(c.drillDone>=drillTarget && !c.finished){ c.finished=true; showP2Notice('청 완료!'); }
-  if(h.drillDone>=drillTarget && !h.finished){ h.finished=true; showP2Notice('홍 완료!'); }
+  if(c.drillDone>=drillTarget && !c.finished){ c.finished=true; c.stageFinished=true; c.stageFinishMs=Math.max(0,performance.now()-auto2pStageStartT); showP2Notice('청 완료 · 홍 대기'); }
+  if(h.drillDone>=drillTarget && !h.finished){ h.finished=true; h.stageFinished=true; h.stageFinishMs=Math.max(0,performance.now()-auto2pStageStartT); showP2Notice('홍 완료 · 청 대기'); }
   if(c.finished && h.finished){
+    if(drillRunMode==='auto'){
+      if(auto2pTransitioning) return;
+      auto2pTransitioning=true;
+      [c,h].forEach(slot=>{
+        slot.autoResults[currentMode]={
+          scores:slot.drillScores.slice(), avg:avgOf(slot.drillScores)||0,
+          best:slot.drillScores.length?Math.max(...slot.drillScores):0,
+          finishMs:slot.stageFinishMs
+        };
+      });
+      const finishedLabel=MODE_CFG[currentMode].label;
+      const cStageAvg=c.autoResults[currentMode].avg;
+      const hStageAvg=h.autoResults[currentMode].avg;
+      const stageWinner=cStageAvg===hStageAvg?null:(cStageAvg>hStageAvg?'c':'h');
+      if(autoDrillIndex<AUTO_DRILL_SEQUENCE.length-1){
+        const nextIndex=autoDrillIndex+1;
+        render2pStatus(finishedLabel+' 완료 · 다음 종목 준비');
+        showP2StageResult(finishedLabel,cStageAvg,hStageAvg,stageWinner,()=>{
+          autoDrillIndex=nextIndex;
+          currentMode=AUTO_DRILL_SEQUENCE[nextIndex];
+          resetSlot2pStage(c); resetSlot2pStage(h);
+          auto2pStageStartT=performance.now();
+          updateSelectedKickButtons(); updateModeBadge();
+          render2pScore('c'); render2pScore('h');
+          render2pStatus('자동훈련 '+(nextIndex+1)+' / '+AUTO_DRILL_SEQUENCE.length+' · '+MODE_CFG[currentMode].label);
+          showP2Notice('다음 종목 · '+MODE_CFG[currentMode].label);
+          auto2pTransitioning=false;
+        });
+        return;
+      }
+      const summary=slot=>{
+        const all=AUTO_DRILL_SEQUENCE.flatMap(mode=>slot.autoResults[mode]?.scores||[]);
+        const time=AUTO_DRILL_SEQUENCE.reduce((sum,mode)=>sum+(slot.autoResults[mode]?.finishMs||0),0);
+        return {avg:avgOf(all)||0,time};
+      };
+      const cs=summary(c), hs=summary(h);
+      let winner=cs.avg===hs.avg?(cs.time===hs.time?null:(cs.time<hs.time?'c':'h')):(cs.avg>hs.avg?'c':'h');
+      const reason=cs.avg===hs.avg&&winner?'평균 동점 · 완주시간 우세':'4종목 전체 평균';
+      render2pStatus(finishedLabel+' 완료 · 최종 결과 집계');
+      showP2StageResult(finishedLabel,cStageAvg,hStageAvg,stageWinner,()=>{
+        showP2Result('종합 평균',cs.avg+'점','종합 평균',hs.avg+'점',winner,reason);
+        auto2pTransitioning=false;
+      });
+      return;
+    }
     const cAvg=avgOf(c.drillScores)||0, hAvg=avgOf(h.drillScores)||0;
     const winner = cAvg===hAvg ? null : (cAvg>hAvg?'c':'h');
-    showP2Result('평균',cAvg+'점','평균',hAvg+'점',winner);
+    showP2Result('평균',cAvg+'점','평균',hAvg+'점',winner,'발차기 정확도 평균');
   }
 }
 
@@ -7209,7 +7310,7 @@ function finishBalloon2p(){
   const cCnt=balloonCount2p.c, hCnt=balloonCount2p.h;
   const winner = cCnt===hCnt ? null : (cCnt>hCnt?'c':'h');
   if(cCnt>=10 || hCnt>=10) confetti(Math.max(cCnt,hCnt)>=20);
-  showP2Result('격파',cCnt+'개','격파',hCnt+'개',winner);
+  showP2Result('격파',cCnt+'개','격파',hCnt+'개',winner,'제한시간 내 격파 개수');
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -7244,6 +7345,17 @@ function updateAdaptiveSparringTarget2p(){
   el.style.top=(((headY+bodyY)/2)*100).toFixed(1)+'%';
 }
 function sparringHitZone2p(){
+  const key=active2pSlot===slot2p.c?'c':'h';
+  const target=document.getElementById(key==='c'?'p2EnemyC':'p2EnemyH');
+  const head=target?.querySelector('.enemyHead');
+  const body=target?.querySelector('.enemyBody');
+  if(trajX.length && head && body){
+    const headRect=head.getBoundingClientRect();
+    const bodyRect=body.getBoundingClientRect();
+    const gap=Math.max(18,camWrap.clientWidth*.018)*diffCfg().hitZone;
+    for(let i=0;i<trajX.length;i++) if(rectHit(footPointToViewport(trajX[i],trajY[i]),headRect,gap)) return 'head';
+    for(let i=0;i<trajX.length;i++) if(rectHit(footPointToViewport(trajX[i],trajY[i]),bodyRect,gap)) return 'body';
+  }
   if(trajY.length && Math.min(...trajY)<0.27) return 'head';
   if(peakPct>=90) return 'head';
   return 'body';
@@ -7359,7 +7471,7 @@ function finishSparring2p(){
     const c=slot2p.c, h=slot2p.h;
     const cAvg=avgOf(c.drillScores)||0, hAvg=avgOf(h.drillScores)||0;
     const winner = cAvg===hAvg ? null : (cAvg>hAvg?'c':'h');
-    showP2Result('평균',cAvg+'점','평균',hAvg+'점',winner);
+    showP2Result('평균',cAvg+'점','평균',hAvg+'점',winner,'겨루기 미션 정확도 평균');
     return;
   }
   const c=sparringState2p.c, h=sparringState2p.h;
@@ -7368,7 +7480,7 @@ function finishSparring2p(){
   else if(c.hp<=0) winner='h';
   else if(h.hp<=0) winner='c';
   else winner = c.hp===h.hp ? null : (c.hp>h.hp?'c':'h');
-  showP2Result('HP',(c.hp<=0?'K.O.':Math.round(c.hp)),'HP',(h.hp<=0?'K.O.':Math.round(h.hp)),winner);
+  showP2Result('남은 HP',(c.hp<=0?'K.O.':Math.round(c.hp)),'남은 HP',(h.hp<=0?'K.O.':Math.round(h.hp)),winner,'남은 HP 기준');
 }
 
 /* 한 사람(랜드마크 1세트)에 대한 매 프레임 처리.
@@ -7379,7 +7491,9 @@ function processPersonFrame(lm, wlm){
   drawingUtils.drawLandmarks(lm,{color:(twoPlayerMode?(active2pSlot===slot2p.c?'#2b7fff':'#E3172E'):'#E3172E'),lineWidth:1,radius:3});
 
   const ankleVis=Math.max(lm[27]?.visibility??0,lm[28]?.visibility??0);
-  if(ankleVis>0.25){
+  // 두 명이 함께 서면 발목 랜드마크가 작아지므로 2인에서만 소폭 완화한다.
+  const ankleVisMin=twoPlayerMode?0.18:0.25;
+  if(ankleVis>ankleVisMin){
     const m=computeMetrics(lm,wlm);
     if(m){
       if(!twoPlayerMode) barFill.style.width=m.pct+'%';
@@ -7455,8 +7569,11 @@ function run2pFrame(result){
     if(hx==null) return null;
     return { lm, wlm:wlms[i]||null, screenX: mirrored?1-hx:hx };
   }).filter(Boolean);
-  people.sort((a,b)=>a.screenX-b.screenX);
-  const cPerson=people[0]||null, hPerson=people[1]||null;
+  // 중앙선을 기준으로 슬롯을 고정한다. 한 명이 잠깐 사라져도 남은 선수가
+  // 상대 슬롯으로 넘어가지 않도록, 왼쪽은 청·오른쪽은 홍으로만 배정한다.
+  const leftPeople=people.filter(p=>p.screenX<.5).sort((a,b)=>Math.abs(a.screenX-.25)-Math.abs(b.screenX-.25));
+  const rightPeople=people.filter(p=>p.screenX>=.5).sort((a,b)=>Math.abs(a.screenX-.75)-Math.abs(b.screenX-.75));
+  const cPerson=leftPeople[0]||null, hPerson=rightPeople[0]||null;
 
   // 2026-08-03: 겨루기 연습모드는 선수마다 미션이 다르므로, 그 선수를 처리하기 직전에
   // 전역 sparringMission 을 그 선수 것으로 갈아끼운다(화살표·채점 모두 여기를 본다).
@@ -7476,10 +7593,15 @@ function run2pFrame(result){
 
   if(running) check2pFinish();
   active2pSlot=null;
-  if(running && !slot2p.c.finished && !slot2p.h.finished){
+  if(running){
     const cOn=document.getElementById('p2cPresence')?.classList.contains('on');
     const hOn=document.getElementById('p2hPresence')?.classList.contains('on');
-    render2pStatus((cOn&&hOn)?p2RunningStatusText('경기 진행 중'):'두 선수 인식 대기');
+    if(!auto2pTransitioning){
+      const base=(drillRunMode==='auto'&&isDrillMode())
+        ?'자동훈련 '+(autoDrillIndex+1)+' / '+AUTO_DRILL_SEQUENCE.length+' · '+MODE_CFG[currentMode].label
+        :'경기 진행 중';
+      render2pStatus((cOn&&hOn)?p2RunningStatusText(base):'두 선수 인식 대기');
+    }
   }
 }
 
@@ -7490,7 +7612,8 @@ function run2pFrame(result){
    자동으로 lite 모델로 한 번 전환한다. */
 let idleFrameCounter=0;
 let perfLowStreakMs=0, perfLastCheck=0, perfDowngraded=false;
-const PERF_LOW_FPS=12, PERF_LOW_HOLD_MS=6000;
+// 2인 full 모델이 13~19fps에 머무는 애매한 저성능 구간도 빠르게 구제한다.
+const PERF_LOW_FPS=20, PERF_LOW_HOLD_MS=3000;
 function perfResetMonitor(){ perfLowStreakMs=0; perfLastCheck=0; }
 function perfMonitorTick(now, inferMs){
   if(!perfLastCheck){ perfLastCheck=now; return; }
@@ -7872,6 +7995,129 @@ body.hud-v21.akm-ui.two-player-mode .p2-enemy-target{
 #enemyTarget .enemyBody::before, #enemyTarget .enemyBody::after,
 .enemy-target .enemyBody::before, .enemy-target .enemyBody::after{
   background:rgba(255,255,255,.92) !important;
+}
+
+/* =========================================================
+   2026-08-03 · SPORTS BROADCAST RESULT / TAEKWONDO TARGET
+   과한 아케이드 조준경을 걷어내고 실제 헤드기어·호구 실루엣으로 통일한다.
+   enemyHead / enemyBody 자체는 그대로 유지해 판정 rect 는 변하지 않는다.
+   ========================================================= */
+#p2Result{
+  background:
+    radial-gradient(ellipse at 50% 48%,rgba(3,7,13,.08) 0 22%,rgba(3,7,13,.56) 68%,rgba(3,7,13,.86) 100%),
+    linear-gradient(90deg,rgba(17,64,145,.18),transparent 43%,transparent 57%,rgba(145,21,42,.18)) !important;
+  backdrop-filter:none !important;
+  gap:10px !important;
+  overflow:hidden;
+}
+#p2Result::before,
+#p2Result::after{
+  content:""; position:absolute; top:10%; bottom:10%; width:34%; pointer-events:none;
+  filter:blur(44px); opacity:.25; z-index:-1;
+}
+#p2Result::before{left:-20%;background:radial-gradient(circle,#237dff,transparent 68%)}
+#p2Result::after{right:-20%;background:radial-gradient(circle,#ff304f,transparent 68%)}
+#p2ResultKicker{
+  font-size:clamp(11px,1.15vw,17px); font-weight:900; letter-spacing:.34em;
+  color:#e2bf70; text-shadow:0 2px 12px rgba(0,0,0,.9); margin-bottom:2px;
+}
+#p2ResultTitle{
+  font-family:"Arial Black","Noto Sans KR",Impact,sans-serif !important;
+  font-size:clamp(78px,14vw,184px) !important; font-weight:1000 !important;
+  letter-spacing:-.075em !important; line-height:.9 !important; color:#f4f6f8 !important;
+  text-shadow:0 7px 22px rgba(0,0,0,.98),0 1px 0 rgba(255,255,255,.45) !important;
+  margin:4px 0 14px;
+}
+#p2ResultTitle.win-c{color:#f5f8fb !important;text-shadow:0 7px 22px rgba(0,0,0,.98),-7px 0 34px rgba(49,140,255,.48) !important}
+#p2ResultTitle.win-h{color:#f5f8fb !important;text-shadow:0 7px 22px rgba(0,0,0,.98),7px 0 34px rgba(255,48,79,.48) !important}
+#p2ResultScores{display:flex;align-items:center;justify-content:center;gap:clamp(24px,6vw,90px);width:min(760px,84vw)}
+.p2-result-side{display:grid;grid-template-columns:auto auto;align-items:baseline;justify-content:center;column-gap:12px;min-width:180px}
+.p2-result-side span{font-size:clamp(18px,2.2vw,30px);font-weight:1000;color:#d9e0e9}
+.p2-result-side b{font-family:"Arial Black",Impact,sans-serif;font-size:clamp(50px,7.6vw,98px);font-weight:1000;line-height:1;font-variant-numeric:tabular-nums}
+.p2-result-side small{grid-column:1/-1;font-size:13px;font-weight:900;letter-spacing:.08em;color:rgba(255,255,255,.52);margin-top:4px}
+.p2-result-c b{color:#438cff;text-shadow:0 3px 18px rgba(25,94,255,.55)}
+.p2-result-h b{color:#ef3e58;text-shadow:0 3px 18px rgba(255,48,79,.48)}
+.p2-result-divider{width:1px;height:76px;background:linear-gradient(transparent,rgba(255,255,255,.48),transparent)}
+#p2ResultReason{margin-top:10px;font-size:clamp(13px,1.5vw,19px);font-weight:900;color:rgba(255,255,255,.76);letter-spacing:.02em}
+#p2ResultCloseBtn{
+  margin-top:22px !important;padding:9px 26px !important;border:1px solid rgba(255,255,255,.34) !important;
+  border-radius:999px !important;background:rgba(0,0,0,.16) !important;color:#fff !important;
+  font-size:14px !important;font-weight:900 !important;box-shadow:none !important;backdrop-filter:blur(4px);
+}
+
+body.hud-v21.akm-ui #enemyTarget,
+body.hud-v21.akm-ui .enemy-target{
+  width:260px !important;height:430px !important;opacity:.82 !important;
+  filter:drop-shadow(0 20px 24px rgba(0,0,0,.68)) !important;
+}
+#enemyTarget .enemyAura,.enemy-target .enemyAura{display:none !important}
+#enemyTarget::before,.enemy-target::before{
+  content:"" !important;display:block !important;position:absolute !important;
+  left:50% !important;top:82px !important;width:178px !important;height:286px !important;
+  transform:translateX(-50%) !important;border:0 !important;border-radius:72px 72px 34px 34px !important;
+  clip-path:polygon(26% 0,74% 0,100% 18%,87% 58%,71% 100%,56% 100%,50% 66%,44% 100%,29% 100%,13% 58%,0 18%) !important;
+  background:linear-gradient(90deg,rgba(79,103,133,.18),rgba(12,20,31,.76) 24% 76%,rgba(79,103,133,.18)) !important;
+  box-shadow:inset 0 0 36px rgba(172,199,228,.14),0 0 0 1px rgba(199,218,239,.24) !important;
+  z-index:1 !important;
+}
+#enemyTarget::after,.enemy-target::after{
+  content:"" !important;display:block !important;position:absolute !important;
+  left:50% !important;top:116px !important;width:236px !important;height:144px !important;
+  transform:translateX(-50%) !important;border:0 !important;border-top:1px solid rgba(219,232,246,.28) !important;
+  border-radius:48% 48% 28% 28% !important;
+  background:linear-gradient(90deg,transparent 2%,rgba(99,123,151,.16) 20%,rgba(8,15,25,.62) 50%,rgba(99,123,151,.16) 80%,transparent 98%) !important;
+  z-index:1 !important;
+}
+#enemyTarget .enemyGear,.enemy-target .enemyGear{
+  display:block !important;position:absolute;left:50%;top:14px;width:96px;height:105px;
+  transform:translateX(-50%);border:3px solid rgba(205,218,232,.72);border-radius:40px 40px 34px 34px;
+  background:linear-gradient(160deg,rgba(105,132,163,.28),rgba(7,13,22,.76));
+  box-shadow:inset 0 0 20px rgba(127,165,204,.2),0 0 18px rgba(0,0,0,.55);z-index:3;
+}
+#enemyTarget .enemyFace,.enemy-target .enemyFace{
+  display:block !important;position:absolute;left:50%;top:40px;width:66px;height:54px;
+  transform:translateX(-50%);border:1px solid rgba(173,199,226,.5);border-radius:24px;
+  background:repeating-linear-gradient(0deg,rgba(72,111,151,.13) 0 2px,transparent 2px 8px),rgba(7,15,25,.5);z-index:4;
+}
+#enemyTarget .enemyHogu,.enemy-target .enemyHogu{
+  display:block !important;position:absolute;left:50%;top:122px;width:150px;height:158px;
+  transform:translateX(-50%);clip-path:polygon(14% 0,86% 0,100% 20%,88% 100%,12% 100%,0 20%);
+  background:linear-gradient(145deg,rgba(42,111,185,.28),rgba(8,16,26,.76) 52%,rgba(168,36,58,.24));
+  border:0;box-shadow:inset 0 0 28px rgba(118,164,210,.18);z-index:2;
+}
+#enemyTarget .enemyBelt,.enemy-target .enemyBelt{
+  display:block !important;position:absolute;left:50%;top:278px;width:130px;height:8px;
+  transform:translateX(-50%);background:#d4b267;box-shadow:0 0 10px rgba(212,178,103,.34);z-index:4;
+}
+#enemyTarget .enemyArm,.enemy-target .enemyArm,
+#enemyTarget .enemyLeg,.enemy-target .enemyLeg{display:block !important;position:absolute;background:linear-gradient(#1c2a3d,#080e18);border:1px solid rgba(186,207,230,.22);z-index:1}
+#enemyTarget .enemyArm,.enemy-target .enemyArm{top:126px;width:35px;height:132px;border-radius:22px}
+#enemyTarget .enemyArmL,.enemy-target .enemyArmL{left:30px;transform:rotate(24deg)}
+#enemyTarget .enemyArmR,.enemy-target .enemyArmR{right:30px;transform:rotate(-24deg)}
+#enemyTarget .enemyLeg,.enemy-target .enemyLeg{top:272px;width:45px;height:145px;border-radius:8px 8px 18px 18px}
+#enemyTarget .enemyLegL,.enemy-target .enemyLegL{left:72px;transform:rotate(7deg)}
+#enemyTarget .enemyLegR,.enemy-target .enemyLegR{right:72px;transform:rotate(-7deg)}
+#enemyTarget .enemyHead,.enemy-target .enemyHead{
+  top:25px !important;left:50% !important;width:82px !important;height:78px !important;
+  background:rgba(232,56,80,.08) !important;border:2px solid rgba(255,82,105,.72) !important;
+  border-radius:32px !important;box-shadow:0 0 13px rgba(255,48,79,.28),inset 0 0 16px rgba(255,48,79,.12) !important;
+  animation:none !important;z-index:6 !important;
+}
+#enemyTarget .enemyBody,.enemy-target .enemyBody{
+  top:126px !important;left:50% !important;width:140px !important;height:148px !important;
+  clip-path:polygon(12% 0,88% 0,100% 19%,87% 100%,13% 100%,0 19%);
+  border:2px solid rgba(70,151,243,.74) !important;border-radius:0 !important;
+  background:rgba(49,140,255,.08) !important;box-shadow:0 0 15px rgba(49,140,255,.3),inset 0 0 18px rgba(49,140,255,.12) !important;
+  animation:none !important;z-index:6 !important;
+}
+#enemyTarget .enemyHead::before,#enemyTarget .enemyHead::after,
+.enemy-target .enemyHead::before,.enemy-target .enemyHead::after,
+#enemyTarget .enemyBody::before,#enemyTarget .enemyBody::after,
+.enemy-target .enemyBody::before,.enemy-target .enemyBody::after{display:none !important}
+#enemyTarget.hit-head .enemyHead,.enemy-target.hit-head .enemyHead{background:rgba(255,48,79,.4) !important;box-shadow:0 0 34px rgba(255,48,79,.92),inset 0 0 22px rgba(255,255,255,.2) !important}
+#enemyTarget.hit-body .enemyBody,.enemy-target.hit-body .enemyBody{background:rgba(49,140,255,.38) !important;box-shadow:0 0 36px rgba(49,140,255,.92),inset 0 0 22px rgba(255,255,255,.2) !important}
+@media (orientation:landscape) and (max-width:1220px){
+  body.hud-v21.akm-ui.two-player-mode .p2-enemy-target{width:220px !important;height:380px !important}
 }
 </style>
 <script id="fix4-start-stop-text-helper">
