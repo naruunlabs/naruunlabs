@@ -424,20 +424,31 @@ body.two-player-mode #p2CenterLine{
    비슷하므로 아이를 더 가리지는 않는다. 대신 글자가 길어져 한 줄에 안 들어갈 수
    있어서 폭을 860px → 1080px 로 넓히고 항목 간격을 조금 좁혔다.
    ⚠ 여기 숫자를 더 키우려면 아래 max-width:1220px 미디어쿼리도 같이 손볼 것. */
+/* 2026-08-04 · 세로형으로 전환.
+   한 줄로 늘어놓으니 글자를 키울 수가 없어서(가로로 넘침) 도장 뒤쪽에서 잘 안 보였다.
+   이제 이름을 맨 위에 두고 그 아래로 쌓는다. 가로를 안 쓰니 글자를 크게 키울 수 있다.
+   ⚠ 세로로 길어진 만큼 시작 자리를 100px → 62px 로 올렸다. 아래 --p2hud-top 하나만
+   고치면 전체가 같이 움직이므로, 아이 얼굴을 가리면 이 값만 조절할 것. */
 #p2Hud{ display:none; }
 body.two-player-mode #p2Hud{
-  display:flex !important; position:fixed !important; top:100px !important; left:50% !important;
+  --p2hud-top:62px;
+  display:flex !important; position:fixed !important; top:var(--p2hud-top) !important; left:50% !important;
   transform:translateX(-50%) !important; width:min(1080px,96vw) !important; gap:30px !important;
-  z-index:15 !important; align-items:baseline !important; pointer-events:none !important;
+  z-index:15 !important; align-items:flex-start !important; pointer-events:none !important;
 }
 .p2-player{
   flex:1; min-width:0; background:transparent; border:0; padding:0; text-align:center;
-  display:flex; align-items:baseline; justify-content:center; gap:9px; flex-wrap:wrap; white-space:nowrap;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+  gap:2px; white-space:nowrap;
+}
+/* 항목 칸들을 한 줄로 묶는 겉포장 */
+.p2-lines{
+  display:flex; align-items:flex-start; justify-content:center; gap:26px; margin-top:2px;
 }
 /* 2026-08-04: 그림자를 3겹으로 — ① 글자에 딱 붙는 진한 검정 테두리(밝은 도장 바닥용)
    ② 중간 그림자 ③ 넓게 퍼지는 색 글로우. 배경이 밝아도 흰 글씨가 묻히지 않는다. */
 .p2-name{
-  font-size:24px; font-weight:1000; letter-spacing:.5px;
+  font-size:38px; font-weight:1000; letter-spacing:.5px; line-height:1;
   text-shadow:0 0 3px rgba(0,0,0,1),0 2px 6px rgba(0,0,0,1),0 3px 14px rgba(0,0,0,.95);
 }
 .p2-player.p2-cheong .p2-name{ color:var(--arcade-blue); }
@@ -451,32 +462,49 @@ body.two-player-mode #p2Hud{
   font-size:21px; color:rgba(255,255,255,.62); font-weight:800;
   text-shadow:0 0 3px rgba(0,0,0,1),0 2px 6px rgba(0,0,0,.95);
 }
+/* 2026-08-04: 한 칸이 "라벨 위 / 값 아래" 세로가 된다. 값이 주인공이라 크게. */
 .p2-line{
-  font-size:20px; font-weight:1000; letter-spacing:.2px;
+  display:flex; flex-direction:column; align-items:center; gap:0;
+  font-size:19px; font-weight:1000; letter-spacing:.2px;
   color:rgba(255,255,255,.76);
   text-shadow:0 0 3px rgba(0,0,0,1),0 2px 6px rgba(0,0,0,1),0 3px 14px rgba(0,0,0,.95);
 }
-.p2-line b{ color:#fff; font-weight:1000; margin-left:3px; }
+.p2-line b{
+  color:#fff; font-weight:1000; margin-left:0; font-size:34px; line-height:1.05;
+  font-variant-numeric:tabular-nums;
+}
 /* 2026-08-03: 값이 없는 칸은 숨긴다(발차기·격파 모드에서는 세 번째 칸을 안 쓴다) */
 .p2-line3.hide{ display:none !important; }
 /* 2026-08-03: 겨루기 모드 HUD 가독성 — HP 숫자를 크게, 남은시간은 금색으로 */
-body.sparring-mode.two-player-mode .p2-count{ font-size:50px; }
-body.sparring-mode.two-player-mode .p2-line{ font-size:21px; }
+body.sparring-mode.two-player-mode .p2-count{ font-size:54px; }
+body.sparring-mode.two-player-mode .p2-line{ font-size:20px; }
+body.sparring-mode.two-player-mode .p2-line b{ font-size:36px; }
 body.sparring-mode.two-player-mode .p2-line3 b{ color:var(--arcade-gold); }
-body.sparring-mode.two-player-mode .p2-count small{ font-size:20px; }
+body.sparring-mode.two-player-mode .p2-count small{ font-size:22px; }
 /* 2026-08-04: 작은 태블릿(가로 1220px 이하)에서는 겨루기 HUD 항목이 3개라
    한 줄에 안 들어가 아래로 밀린다. 그러면 오히려 아이를 더 가리므로 조금 줄인다.
    그래도 예전(30px)보다는 크다. */
 @media (orientation:landscape) and (max-width:1220px){
-  body.two-player-mode #p2Hud{ gap:22px !important; }
-  .p2-player{ gap:7px; }
-  .p2-name{ font-size:21px; }
-  .p2-count{ font-size:37px; }
-  .p2-count small{ font-size:18px; }
-  .p2-line{ font-size:17px; }
-  body.sparring-mode.two-player-mode .p2-count{ font-size:42px; }
-  body.sparring-mode.two-player-mode .p2-line{ font-size:18px; }
-  body.sparring-mode.two-player-mode .p2-count small{ font-size:17px; }
+  body.two-player-mode #p2Hud{ --p2hud-top:54px; gap:22px !important; }
+  .p2-player{ gap:1px; }
+  .p2-lines{ gap:20px; }
+  .p2-name{ font-size:32px; }
+  .p2-count{ font-size:40px; }
+  .p2-count small{ font-size:17px; }
+  .p2-line{ font-size:16px; }
+  .p2-line b{ font-size:28px; }
+  body.sparring-mode.two-player-mode .p2-count{ font-size:44px; }
+  body.sparring-mode.two-player-mode .p2-line{ font-size:17px; }
+  body.sparring-mode.two-player-mode .p2-line b{ font-size:30px; }
+  body.sparring-mode.two-player-mode .p2-count small{ font-size:18px; }
+}
+/* 세로가 짧은 화면(태블릿 가로)에서는 더 위로 붙이고 조금 줄인다 */
+@media (orientation:landscape) and (max-height:700px){
+  body.two-player-mode #p2Hud{ --p2hud-top:42px; }
+  .p2-name{ font-size:28px; }
+  .p2-line b{ font-size:26px; }
+  body.sparring-mode.two-player-mode .p2-count{ font-size:38px; }
+  body.sparring-mode.two-player-mode .p2-line b{ font-size:27px; }
 }
 /* 2026-08-03: 겨루기 데미지 팝업(2인) — 1인 모드의 #damagePopup 을 좌/우 각자 자리에 띄운다.
    1인은 상대가 화면 가운데 하나뿐이라 가운데 팝업이면 됐지만, 2인은 누가 때렸는지
@@ -570,18 +598,32 @@ body.two-player-mode.sparring-mode.sparring-live.playing-ui .p2-enemy{ display:b
 /* 2인 겨루기 HP 게이지 — 1인 모드의 enemyHpTrack/Fill과 같은 스타일.
    평소 점수줄(.p2-line) 아래 얇게 깔린다. */
 .p2-hpbar{ display:none; }
-/* 2026-08-03: 위 .p2-enemy 와 같은 이유로 .sparring-mode 를 함께 요구한다. */
+/* 2026-08-03: 위 .p2-enemy 와 같은 이유로 .sparring-mode 를 함께 요구한다.
+   2026-08-04: 타원형(border-radius:999px)이 아케이드풍 UI와 안 맞아서
+   1인 모드 #enemyHpTrack 과 같은 각진 평행사변형으로 바꿨다. */
 body.sparring-mode.sparring-live .p2-hpbar{
-  display:block; flex:0 0 100%; width:100%; margin-top:6px; height:15px;
-  border-radius:999px; overflow:hidden; background:rgba(0,0,0,.55);
-  border:1.5px solid rgba(255,255,255,.28); pointer-events:none;
-  box-shadow:0 3px 12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12);
+  display:block; width:92%; margin-top:7px; height:20px;
+  border-radius:0; overflow:hidden; background:rgba(0,0,0,.58);
+  border:2px solid rgba(255,255,255,.5); pointer-events:none;
+  clip-path:polygon(3% 0,100% 0,97% 100%,0 100%);
+  -webkit-clip-path:polygon(3% 0,100% 0,97% 100%,0 100%);
+  box-shadow:0 3px 12px rgba(0,0,0,.5), inset 0 2px 6px rgba(0,0,0,.6);
 }
 .p2-hpbar-fill{
   display:block; height:100%; width:100%;
-  background:#2ecc71;
+  background:var(--p2hp-color, #2ecc71);
+  box-shadow:0 0 14px var(--p2hp-glow, rgba(46,204,113,.55));
   transition:width .25s ease, background .25s ease;
 }
+/* 2026-08-04 · "내 앞의 게이지 = 내가 깎는 것".
+   청 앞에는 홍(빨강) 게이지, 홍 앞에는 청(파랑) 게이지를 둔다.
+   앞에 서 있는 타겟 색과 같아서, 아이가 "내 앞의 빨간 걸 0으로 만들면 이긴다"로
+   바로 이해한다. (종전에는 자기 체력을 보여줘서 "내가 더 깎았는데 왜 졌냐"가 나왔다) */
+.p2-player.p2-cheong .p2-hpbar-fill{ --p2hp-color:#E3172E; --p2hp-glow:rgba(255,48,79,.65); }
+.p2-player.p2-hong   .p2-hpbar-fill{ --p2hp-color:#2b7fff; --p2hp-glow:rgba(49,183,255,.65); }
+/* 상대가 빈사 상태면 게이지가 깜빡여서 "거의 다 됐다"를 알린다 */
+.p2-hpbar-fill.low{ animation:p2HpLow .55s ease-in-out infinite alternate; }
+@keyframes p2HpLow{ from{ filter:brightness(1); } to{ filter:brightness(1.9); } }
 
 /* 2인 경기 종료 — 화면 가운데 크게 */
 #p2Result{
@@ -3839,23 +3881,30 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
     <div id="p2CenterLine"></div>
     <div id="p2Status">경기 준비</div>
     <div id="p2Hud">
+      <!-- 2026-08-04: 가로 한 줄 → 세로형으로 바꿨다. 이름을 맨 위에 크게 두고,
+           그 아래에 항목들을 "라벨 위 / 값 아래" 세로 칸으로 나란히 세운다.
+           .p2-lines 는 그 칸들을 한 줄로 묶기 위해 새로 넣은 겉포장이다. -->
       <div class="p2-player p2-cheong">
         <span class="p2-name">청</span>
         <span class="p2-count"><span id="p2cCount">0</span><small id="p2cSuffix">/10</small></span>
-        <span class="p2-line"><span id="p2cLabel1">이번</span> <b id="p2cVal1">—</b></span>
-        <span class="p2-line"><span id="p2cLabel2">평균</span> <b id="p2cVal2">—</b></span>
-        <!-- 2026-08-03 추가: 겨루기에서 남은시간을 보여줄 세 번째 칸 -->
-        <span class="p2-line p2-line3"><span id="p2cLabel3"></span> <b id="p2cVal3"></b></span>
+        <span class="p2-lines">
+          <span class="p2-line"><span id="p2cLabel1">이번</span> <b id="p2cVal1">—</b></span>
+          <span class="p2-line"><span id="p2cLabel2">평균</span> <b id="p2cVal2">—</b></span>
+          <!-- 2026-08-03 추가: 겨루기에서 남은시간을 보여줄 세 번째 칸 -->
+          <span class="p2-line p2-line3"><span id="p2cLabel3"></span> <b id="p2cVal3"></b></span>
+        </span>
         <span class="p2-presence" id="p2cPresence">인식 대기</span>
         <span class="p2-hpbar" id="p2cHpBar"><span class="p2-hpbar-fill" id="p2cHpFill"></span></span>
       </div>
       <div class="p2-player p2-hong">
         <span class="p2-name">홍</span>
         <span class="p2-count"><span id="p2hCount">0</span><small id="p2hSuffix">/10</small></span>
-        <span class="p2-line"><span id="p2hLabel1">이번</span> <b id="p2hVal1">—</b></span>
-        <span class="p2-line"><span id="p2hLabel2">평균</span> <b id="p2hVal2">—</b></span>
-        <!-- 2026-08-03 추가: 겨루기에서 남은시간을 보여줄 세 번째 칸 -->
-        <span class="p2-line p2-line3"><span id="p2hLabel3"></span> <b id="p2hVal3"></b></span>
+        <span class="p2-lines">
+          <span class="p2-line"><span id="p2hLabel1">이번</span> <b id="p2hVal1">—</b></span>
+          <span class="p2-line"><span id="p2hLabel2">평균</span> <b id="p2hVal2">—</b></span>
+          <!-- 2026-08-03 추가: 겨루기에서 남은시간을 보여줄 세 번째 칸 -->
+          <span class="p2-line p2-line3"><span id="p2hLabel3"></span> <b id="p2hVal3"></b></span>
+        </span>
         <span class="p2-presence" id="p2hPresence">인식 대기</span>
         <span class="p2-hpbar" id="p2hHpBar"><span class="p2-hpbar-fill" id="p2hHpFill"></span></span>
       </div>
@@ -7937,21 +7986,34 @@ function render2pScoreSparringPractice(key){
     label3:'미션', val3:(mission?mission.label:'—')
   });
 }
+/* 2026-08-04 · 관장님 현장 피드백 반영 — "왜 청이 더 많이 깎았는데 졌어요?"
+   종전에는 청 칸에 청 자신의 남은 체력을 보여줬다. 그런데 청이 발차기로 깎는 것은
+   홍의 체력이다. 그래서 "내가 때렸는데 내 앞 숫자가 안 줄어든다"가 되어 헷갈렸다.
+
+   이제 청 칸 = 청이 공격하는 대상(홍)의 남은 체력이다.
+   청 앞에 서 있는 타겟도 홍을 상징하는 빨간색이고, 게이지도 빨간색이라
+   "내 앞의 빨간 것을 0으로 만들면 이긴다"로 한 번에 읽힌다.
+
+   ⚠ 승패 판정(finishSparring2p)은 종전 그대로 각자의 실제 남은 체력으로 정한다.
+   화면 표시만 바꾼 것이라 경기 결과는 달라지지 않는다. */
 function render2pScoreSparring(key){
-  const st=sparringState2p[key];
+  const me=sparringState2p[key];                       // 이 선수 자신 (준 데미지·콤보용)
+  const foe=sparringState2p[key==='c'?'h':'c'];        // 이 선수가 공격하는 상대
   setP2Fields(key,{
-    count:(st.hp<=0?'K.O.':Math.round(st.hp)), suffix:(st.hp<=0?'':'hp'),
-    label1:'데미지', val1:st.damage,
-    label2:'콤보', val2:'x'+st.maxCombo,
+    count:(foe.hp<=0?'K.O.':Math.round(foe.hp)), suffix:(foe.hp<=0?'':'hp'),
+    label1:'준 데미지', val1:me.damage,
+    label2:'콤보', val2:'x'+me.maxCombo,
     // 2026-08-03: 겨루기에도 남은시간 표시(1인 TIME 박스가 2인에선 숨겨지기 때문)
     label3:'시간', val3:(running?Math.max(0,gameRemain)+'초':'—')
   });
   const fill=document.getElementById('p2'+key+'HpFill');
   if(fill){
-    const pct=Math.max(0,(st.hp/250)*100);
+    const pct=Math.max(0,(foe.hp/250)*100);
     fill.style.width=pct+'%';
-    // 1인 겨루기 HP 게이지와 같은 방식: 막대 전체가 남은 비율에 따라 초록→주황→빨강으로 색이 바뀐다.
-    fill.style.background = pct>65 ? '#2ecc71' : (pct>35 ? '#FF6A1A' : '#E3172E');
+    /* 색은 CSS 가 선수별로 정한다(청 앞=빨강 / 홍 앞=파랑).
+       여기서 색을 덮어쓰면 그 규칙이 깨지므로 건드리지 않는다.
+       대신 상대가 빈사면 깜빡이게 해서 "거의 다 됐다"를 알린다. */
+    fill.classList.toggle('low', pct>0 && pct<=25);
   }
 }
 function finishSparring2p(){
@@ -7971,7 +8033,12 @@ function finishSparring2p(){
   else if(c.hp<=0) winner='h';
   else if(h.hp<=0) winner='c';
   else winner = c.hp===h.hp ? null : (c.hp>h.hp?'c':'h');
-  showP2Result('남은 HP',(c.hp<=0?'K.O.':Math.round(c.hp)),'남은 HP',(h.hp<=0?'K.O.':Math.round(h.hp)),winner,'남은 HP 기준');
+  /* 2026-08-04: 결과 화면도 경기 중 화면과 말이 맞게 바꿨다.
+     경기 내내 아이들이 본 것은 "내 앞 게이지를 얼마나 깎았나"다. 그런데 결과에는
+     자기 남은 체력이 떠서 또 헷갈렸다. 이제 각자 준 데미지를 보여준다.
+     양쪽 체력이 250 으로 같게 시작하므로 "준 데미지가 많다 = 상대 체력이 적다"라
+     승패 판정(위의 hp 기준)과 결과가 어긋날 일이 없다. */
+  showP2Result('준 데미지',(h.hp<=0?'K.O. 승':c.damage),'준 데미지',(c.hp<=0?'K.O. 승':h.damage),winner,'상대 체력을 더 많이 깎은 쪽이 승리');
 }
 
 /* 한 사람(랜드마크 1세트)에 대한 매 프레임 처리.
@@ -8526,6 +8593,35 @@ body.hud-v21.akm-ui .kick-level-panel .diff-btn{
 }
 #p2EnemyC{ left:28% !important; }
 #p2EnemyH{ left:72% !important; }
+
+/* 2026-08-04 · 타겟을 팀 색으로 물들인다.
+   청 앞에 서 있는 것은 "홍"이므로 빨갛게, 홍 앞은 "청"이므로 파랗게.
+   HUD 게이지 색과 같아서 "내 앞의 빨간 놈 = 내가 때릴 상대"가 한눈에 읽힌다.
+
+   ⚠ 머리(HEAD)·몸통(BODY) 조준 링은 물들이지 않는다. 그건 팀 색이 아니라
+   "어디를 차야 하는가"를 알려주는 표시라 두 선수 모두 같아야 한다.
+   그리고 그 두 칸의 위치·크기는 타격 판정(sparringHitZone2p)이 실제로 읽으므로
+   생김새만 건드리고 자리는 절대 바꾸지 않는다. */
+#p2EnemyC{ --p2t:255,48,79; }    /* 홍 = 빨강 */
+#p2EnemyH{ --p2t:49,183,255; }   /* 청 = 파랑 */
+.p2-enemy-target .enemyGear,
+.p2-enemy-target .enemyFace,
+.p2-enemy-target .enemyHogu,
+.p2-enemy-target .enemyBelt,
+.p2-enemy-target .enemyArm,
+.p2-enemy-target .enemyLeg{
+  filter:drop-shadow(0 0 10px rgba(var(--p2t),.9)) saturate(1.15) !important;
+}
+/* 실루엣 전체에 팀 색 기운을 한 겹 덮는다 (조준 링보다 뒤에 깔린다) */
+.p2-enemy-target .enemyAura{
+  background:
+    radial-gradient(circle at 50% 42%, rgba(var(--p2t),.34), rgba(var(--p2t),0) 62%),
+    linear-gradient(180deg, rgba(var(--p2t),.14), rgba(var(--p2t),0)) !important;
+  opacity:1 !important;
+}
+/* 타겟 이름표도 같은 색으로 (이미 그렇게 되어 있지만 한 곳에 모아둔다) */
+#p2EnemyC .p2-enemy-label{ color:rgb(var(--p2t)) !important; }
+#p2EnemyH .p2-enemy-label{ color:rgb(var(--p2t)) !important; }
 /* 2인 겨루기 실전 + 경기 진행 중일 때만 보인다 */
 body.two-player-mode.sparring-mode.sparring-live.playing-ui .p2-enemy-target{
   display:block !important;
