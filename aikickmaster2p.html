@@ -3959,6 +3959,22 @@ body.hud-v21.akm-ui.sparring-mode .stats-row{
       </div>
     </div>
 
+    <!-- 2026-08-04: 2인 인식 방식. 종전 방식과 크롭 방식을 그 자리에서 바꿔가며
+         비교할 수 있게 토글로 둔다. 기본은 종전 방식(끔)이라 수업 중에 갑자기
+         달라질 일이 없다. 진단 로그에 detMode 로 어느 방식이었는지 남는다. -->
+    <div class="settings-section">
+      <div class="settings-label">2인 인식 · 좌우 나눠보기</div>
+      <div class="p2-toggle-row">
+        <button type="button" class="p2-toggle-btn" id="p2CropOnBtn" onclick="setCrop2p(true)">켬</button>
+        <button type="button" class="p2-toggle-btn active" id="p2CropOffBtn" onclick="setCrop2p(false)">끔</button>
+      </div>
+      <div style="font-size:11px;opacity:.6;margin-top:6px;line-height:1.5;">
+        켜면 청·홍을 각각 따로 잘라서 인식합니다. 안쪽 발이 잘 안 잡히는 문제와
+        무릎 인식 실패가 줄어듭니다. 대신 두 선수가 서로 붙으면 약해집니다.
+        <b>두 방식을 번갈아 시험해 보시고 알려주세요.</b>
+      </div>
+    </div>
+
     <hr class="settings-divider">
 
     <button class="settings-pw-btn" onclick="logoutLicense()" style="margin-top:8px;background:rgba(227,23,46,0.15);color:#ff8795;border-color:rgba(227,23,46,0.3);">라이선스 로그아웃</button>
@@ -7147,6 +7163,162 @@ async function initModel(numPoses=1, modelKind='full'){
   drawingUtils=new DrawingUtils(ctx);
   statusEl.textContent='카메라 준비 중…';
   perfResetMonitor();
+  // 2026-08-04: 좌우 크롭 방식이면 선수별 추론기도 같이 준비한다.
+  await initCropModels(modelKind);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   2인 좌우 크롭 인식 (2026-08-04)
+   ──────────────────────────────────────────────────────────────────────
+   종전 방식은 화면 한 장을 통째로 주면서 "사람 두 명 찾아"(numPoses:2)라고
+   시켰다. 그러면 MediaPipe 가 사람마다 상자를 치고 그 안만 들여다보는데,
+   한 선수가 안쪽 발을 차면 그 발이 상대 상자와 겹치는 구역으로 들어간다.
+   그래서 안쪽 발 좌표가 상대 쪽으로 새거나 아예 끊겼다.
+   (관장님 관찰: "바깥쪽 발이 훨씬 잘 잡힌다" — 겹칠 일이 없는 발이다)
+
+   여기서는 화면을 선수별로 잘라서 각각 "사람 한 명"으로 따로 추론한다.
+     · 상대가 그림에 아예 안 들어오므로 혼동할 대상이 없다
+     · 잘라낸 조각을 다시 키워서 보므로 사람이 화면을 꽉 채운다.
+       1인 모드와 같은 조건이 되어 발목·무릎이 뭉개지지 않는다
+     · 청/홍 구분이 저절로 된다 (왼쪽 조각 = 청, 오른쪽 조각 = 홍)
+     · 속도는 종전과 비슷하다. numPoses:2 도 내부적으로 두 번 추론한다
+
+   상자는 고정하지 않고 그 선수를 따라 옆으로 미끄러진다. 크기는 고정이라
+   캔버스를 다시 만들 일이 없다. 아이가 조금 움직여도 깨지지 않는다.
+
+   ⚠ 두 선수가 서로 겹칠 만큼 붙으면 약해진다. 이 프로그램은 각자 자기 앞의
+   타겟을 차는 방식이라(겨루기·격파 모두) 실제로는 붙을 일이 거의 없다. */
+let crop2pEnabled=false;              // 설정에서 켠다 (기본 끔)
+let crop2pTooClose=false;             // 두 선수가 붙어서 같은 사람이 두 번 잡힌 상태
+let poseCrop={ c:null, h:null };      // 선수별 추론기 — 트래킹 상태를 따로 유지한다
+let cropCanvas=null, cropCtx=null;
+let cropRoiX={ c:null, h:null };      // 상자 왼쪽 끝 (영상 픽셀). null = 아직 못 찾음
+let cropModelKind=null;
+
+const CROP_W_RATIO=0.55;  // 상자 폭 = 영상 폭의 이만큼. 넓히면 놓칠 확률이 줄고 해상도 이득이 준다
+const CROP_SMOOTH=0.80;   // 상자가 따라가는 부드러움 (1에 가까울수록 천천히 따라감)
+
+async function initCropModels(modelKind){
+  // 크롭 방식을 안 쓰거나 2인이 아니면 추론기를 만들지 않는다 (메모리 절약)
+  if(!crop2pEnabled || !twoPlayerMode){ closeCropModels(); return; }
+  if(cropModelKind===modelKind && poseCrop.c && poseCrop.h) return; // 이미 준비됨
+  closeCropModels();
+  const vision=visionResolver;
+  const MODEL_URL=MODEL_URLS[modelKind]||MODEL_URLS.lite;
+  const mk=async()=>{
+    try{
+      return await PoseLandmarker.createFromOptions(vision,{
+        baseOptions:{ modelAssetPath:MODEL_URL, delegate:currentDelegate },
+        runningMode:"VIDEO", numPoses:1
+      });
+    }catch(e){
+      return await PoseLandmarker.createFromOptions(vision,{
+        baseOptions:{ modelAssetPath:MODEL_URL, delegate:"CPU" },
+        runningMode:"VIDEO", numPoses:1
+      });
+    }
+  };
+  poseCrop.c=await mk();
+  poseCrop.h=await mk();
+  cropModelKind=modelKind;
+}
+function closeCropModels(){
+  for(const k of ['c','h']){
+    if(poseCrop[k]){ try{ poseCrop[k].close(); }catch(e){} poseCrop[k]=null; }
+  }
+  cropModelKind=null;
+}
+function cropReady(){ return crop2pEnabled && twoPlayerMode && poseCrop.c && poseCrop.h; }
+
+/* 그 선수의 "제자리" 상자 위치.
+   ⚠ 청은 화면 기준 왼쪽인데, 거울 모드에서는 영상 좌표로 오른쪽이다.
+   MediaPipe 가 주는 좌표는 거울에 비치기 전 영상 좌표라 여기서 뒤집어 줘야 한다.
+   이걸 빼먹으면 청 상자가 홍이 쪽에 생겨서 두 선수가 서로 바뀐다. */
+function cropHome(key, VW, cw){
+  const mirrored=camWrap.classList.contains('mirrored');
+  const screenLeft=(key==='c');
+  const videoLeft = mirrored ? !screenLeft : screenLeft;
+  return (videoLeft ? VW*0.25 : VW*0.75) - cw/2;
+}
+/* 한 선수의 상자 위치를 정한다.
+   그 선수를 지난 프레임에 찾았으면 골반을 상자 한가운데에 두고,
+   못 찾았으면 제자리로 되돌아간다. */
+function cropRoiFor(key, VW, cw){
+  const want = (cropRoiX[key]==null) ? cropHome(key,VW,cw) : cropRoiX[key];
+  return Math.max(0, Math.min(VW-cw, want));
+}
+function cropSlide(key, hipXNorm, VW, cw){
+  // hipXNorm 은 전체 화면 기준 0~1. 상자 한가운데에 오도록 왼쪽 끝을 잡는다.
+  const target=Math.max(0, Math.min(VW-cw, hipXNorm*VW - cw/2));
+  cropRoiX[key] = (cropRoiX[key]==null) ? target
+                : cropRoiX[key]*CROP_SMOOTH + target*(1-CROP_SMOOTH);
+}
+
+/* 프레임 하나를 선수별로 잘라 두 번 추론하고, 좌표를 전체 화면 기준으로
+   되돌려서 종전과 같은 모양의 결과로 돌려준다.
+   → run2pFrame() 이하 판정 코드는 한 줄도 바꾸지 않아도 된다. */
+function detectCrop2p(nowMs){
+  const VW=video.videoWidth, VH=video.videoHeight;
+  if(!VW||!VH) return {landmarks:[],worldLandmarks:[]};
+  const cw=Math.round(VW*CROP_W_RATIO);
+  if(!cropCanvas){
+    cropCanvas=document.createElement('canvas');
+    cropCtx=cropCanvas.getContext('2d',{willReadFrequently:false});
+  }
+  if(cropCanvas.width!==cw || cropCanvas.height!==VH){
+    cropCanvas.width=cw; cropCanvas.height=VH;
+  }
+
+  const out={landmarks:[],worldLandmarks:[],cropSlots:[]};
+  for(const key of ['c','h']){
+    const rx=cropRoiFor(key,VW,cw);
+    cropCtx.drawImage(video, rx,0,cw,VH, 0,0,cw,VH);
+    let res=null;
+    try{ res=poseCrop[key].detectForVideo(cropCanvas, nowMs); }catch(e){ res=null; }
+    const lm=(res && res.landmarks && res.landmarks[0]) ? res.landmarks[0] : null;
+    if(!lm){
+      // 못 찾았으면 상자를 조금씩 제자리로 되돌린다
+      const home=cropHome(key,VW,cw);
+      cropRoiX[key]=(cropRoiX[key]==null)?home:cropRoiX[key]*0.9+home*0.1;
+      continue;
+    }
+    /* 잘라낸 조각 기준 좌표(0~1)를 전체 화면 기준으로 되돌린다.
+       세로는 통째로 잘랐으므로 그대로다. */
+    const mapped=lm.map(p=>({
+      x:(rx + p.x*cw)/VW,
+      y:p.y,
+      z:p.z,
+      visibility:p.visibility
+    }));
+    const hipX=(mapped[23] && mapped[24]) ? (mapped[23].x+mapped[24].x)/2 : null;
+    if(hipX!=null) cropSlide(key,hipX,VW,cw);
+    out.landmarks.push(mapped);
+    /* worldLandmarks 는 골반을 원점으로 한 미터 단위 3D 좌표라
+       어디를 잘랐는지와 무관하다. 손대지 않고 그대로 넘긴다.
+       (오히려 사람이 크게 잡히므로 무릎 3D 각도가 더 정확해진다) */
+    out.worldLandmarks.push((res.worldLandmarks && res.worldLandmarks[0]) ? res.worldLandmarks[0] : null);
+    out.cropSlots.push(key);
+  }
+  return out;
+}
+
+/* 상자 위치를 화면에 옅게 그려준다. 어디까지가 자기 자리인지 눈으로 보여
+   "선을 넘으면 점수가 안 올라간다"를 아이들이 스스로 알 수 있다. */
+function drawCropZones(){
+  const VW=video.videoWidth;
+  if(!VW || !canvas.width) return;
+  const cw=Math.round(VW*CROP_W_RATIO), W=canvas.width, H=canvas.height;
+  const mirrored=camWrap.classList.contains('mirrored');
+  ctx.save();
+  ctx.lineWidth=3; ctx.setLineDash([14,10]);
+  for(const key of ['c','h']){
+    if(cropRoiX[key]==null) continue;
+    let x0=cropRoiX[key]/VW, x1=(cropRoiX[key]+cw)/VW;
+    if(mirrored){ const a=1-x1, b=1-x0; x0=a; x1=b; }
+    ctx.strokeStyle=(key==='c')?'rgba(43,127,255,0.30)':'rgba(227,23,46,0.30)';
+    ctx.strokeRect(x0*W+2, 2, (x1-x0)*W-4, H-4);
+  }
+  ctx.restore();
 }
 async function startCamera(){
   if(stream) stream.getTracks().forEach(t=>t.stop());
@@ -7287,8 +7459,49 @@ window.setPlayerCount=async function(n){
        내렸는데, 그 사이 몇 분 동안은 발차기가 계속 안 잡힌다. 2인은 사람이
        둘이라 추론량이 거의 2배여서 어차피 full 로는 버티지 못한다.
        1인으로 돌아오면 다시 full 을 쓴다. */
-    await initModel(twoPlayerMode?2:1, twoPlayerMode?'lite':'full');
+    /* 크롭 방식이면 주 추론기는 실제로 쓰이지 않으므로 numPoses:1 로 가볍게 만든다.
+       (loop() 이 poseLandmarker 존재 여부를 확인하므로 없애지는 않는다) */
+    const np = twoPlayerMode ? (crop2pEnabled?1:2) : 1;
+    await initModel(np, twoPlayerMode?'lite':'full');
   }catch(e){ console.error('2인 모드 전환 중 모델 재초기화 실패',e); }
+};
+
+/* 2026-08-04: 2인 인식 방식 전환 (종전 = 통째로 두 명 찾기 / 크롭 = 좌우로 잘라 각각) */
+function initCrop2p(){
+  let saved=null;
+  try{ saved=localStorage.getItem('akm_2p_crop'); }catch(e){}
+  crop2pEnabled=(saved==='1');
+  paintCrop2pBtns();
+}
+function paintCrop2pBtns(){
+  document.getElementById('p2CropOnBtn')?.classList.toggle('active', crop2pEnabled);
+  document.getElementById('p2CropOffBtn')?.classList.toggle('active', !crop2pEnabled);
+}
+window.setCrop2p=async function(on){
+  const next=!!on;
+  if(next===crop2pEnabled){ paintCrop2pBtns(); return; }
+  // 경기 중에 방식을 바꾸면 점수가 뒤섞이므로 멈추고 바꾼다
+  if(typeof running!=='undefined' && running && typeof stopGame==='function') stopGame();
+  crop2pEnabled=next;
+  try{ localStorage.setItem('akm_2p_crop', crop2pEnabled?'1':'0'); }catch(e){}
+  paintCrop2pBtns();
+  cropRoiX={ c:null, h:null };
+  try{
+    if(twoPlayerMode){
+      /* ⚠ 주 추론기의 numPoses 도 같이 바꿔야 한다.
+         크롭을 켤 때 주 추론기를 numPoses:1 로 가볍게 만들어 두는데,
+         그대로 크롭만 끄면 통째 방식인데 사람을 한 명밖에 못 찾는다.
+         initModel 이 끝에서 initCropModels 도 알아서 불러준다. */
+      await initModel(crop2pEnabled?1:2, currentModelKind);
+    }else{
+      closeCropModels();
+    }
+  }catch(e){
+    console.error('좌우 크롭 준비 실패 — 종전 방식으로 되돌립니다.', e);
+    crop2pEnabled=false; closeCropModels(); paintCrop2pBtns();
+    try{ localStorage.setItem('akm_2p_crop','0'); }catch(e2){}
+    if(twoPlayerMode){ try{ await initModel(2,currentModelKind); }catch(e2){} }
+  }
 };
 
 function render2pPresence(key,present){
@@ -7854,13 +8067,33 @@ function run2pFrame(result){
      ② 한 명만 보이면: 그 사람이 서 있는 쪽(중앙선 기준)으로 배정한다.
         이러면 잠깐 한 명이 안 잡혀도 남은 선수가 상대 슬롯으로 넘어가지 않는다. */
   let cPerson=null, hPerson=null;
-  if(people.length>=2){
+  if(result.cropSlots){
+    /* 2026-08-04 좌우 크롭 방식 — 누가 누구인지 이미 알고 있다.
+       청은 청 상자에서, 홍은 홍 상자에서 찾은 사람이다. 정렬할 필요가 없고,
+       한 선수가 중앙선을 넘어도 상대 슬롯을 빼앗지 않는다. */
+    result.cropSlots.forEach((key,i)=>{
+      const lm=lms[i]; const hx=hipXOf(lm);
+      if(hx==null) return;
+      const person={ lm, wlm:wlms[i]||null, screenX: mirrored?1-hx:hx };
+      if(key==='c') cPerson=person; else hPerson=person;
+    });
+  } else if(people.length>=2){
     const sorted=people.slice().sort((a,b)=>a.screenX-b.screenX);
     cPerson=sorted[0]; hPerson=sorted[sorted.length-1];
   } else if(people.length===1){
     if(people[0].screenX<0.5) cPerson=people[0]; else hPerson=people[0];
   }
+  /* 2026-08-04 안전장치 — 두 선수가 서로 붙으면 두 상자에 같은 사람이 들어온다.
+     그러면 한 아이가 찬 발차기가 청·홍 양쪽 점수로 두 번 올라간다.
+     골반 위치가 거의 같으면 같은 사람으로 보고 한쪽을 버린다. */
+  crop2pTooClose=false;
+  if(result.cropSlots && cPerson && hPerson &&
+     Math.abs(cPerson.screenX-hPerson.screenX)<0.06){
+    crop2pTooClose=true;
+    if(cPerson.screenX<0.5) hPerson=null; else cPerson=null;
+  }
   pushDetect(!!cPerson,!!hPerson);   // 2026-08-03 진단 계측 (판정 미사용)
+  if(crop2pEnabled) drawCropZones();  // 각자 자기 자리를 눈으로 보여준다
 
   // 2026-08-03: 겨루기 연습모드는 선수마다 미션이 다르므로, 그 선수를 처리하기 직전에
   // 전역 sparringMission 을 그 선수 것으로 갈아끼운다(화살표·채점 모두 여기를 본다).
@@ -7887,7 +8120,8 @@ function run2pFrame(result){
       const base=(drillRunMode==='auto'&&isDrillMode())
         ?'자동훈련 '+(autoDrillIndex+1)+' / '+AUTO_DRILL_SEQUENCE.length+' · '+MODE_CFG[currentMode].label
         :'경기 진행 중';
-      render2pStatus((cOn&&hOn)?p2RunningStatusText(base):'두 선수 인식 대기');
+      render2pStatus(crop2pTooClose ? '두 선수가 너무 가까워요 — 조금 떨어져 주세요'
+                     : (cOn&&hOn) ? p2RunningStatusText(base) : '두 선수 인식 대기');
     }
   }
 }
@@ -7928,6 +8162,8 @@ function detectStats(){
   if(!n) return null;
   const pct=(f)=>Math.round(detHist.filter(f).length/n*100);
   const s={ detWin:n, fps:(fpsSm==null?null:Math.round(fpsSm)), model:currentModelKind };
+  // 2026-08-04: 2인 인식 방식을 같이 남긴다. 두 방식의 로그를 섞어서 비교할 수 있다.
+  if(twoPlayerMode) s.detMode=(crop2pEnabled?'crop':'whole');
   if(twoPlayerMode){
     s.detC=pct(v=>v&1); s.detH=pct(v=>v&2); s.detBoth=pct(v=>v===3);
   }else{
@@ -8038,7 +8274,11 @@ function loop(){
     }
     if(canvas.width!==video.videoWidth){ canvas.width=video.videoWidth; canvas.height=video.videoHeight; }
     const t0=performance.now();
-    const result=poseLandmarker.detectForVideo(video,performance.now());
+    /* 2026-08-04: 2인 좌우 크롭 방식이 켜져 있으면 선수별로 잘라서 두 번 추론한다.
+       결과 모양은 종전과 같으므로 아래 판정 코드는 그대로 간다. */
+    const result = cropReady()
+      ? detectCrop2p(performance.now())
+      : poseLandmarker.detectForVideo(video,performance.now());
     const inferMs=performance.now()-t0;
     perfMonitorTick(performance.now(),inferMs);
     tickFps(performance.now());   // 2026-08-03 진단 계측
@@ -8071,6 +8311,7 @@ initDifficulty();
 initKickLevel();
 initSound();
 setTwoPlayerShowResult(twoPlayerShowResult);
+initCrop2p();   // 2026-08-04: 2인 인식 방식 설정 불러오기
 initDrillRunMode();
 initSparringMode();
 document.getElementById('sparringTypePanel')?.style.setProperty('display','none','important');
