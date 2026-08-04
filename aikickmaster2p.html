@@ -418,41 +418,66 @@ body.two-player-mode #p2CenterLine{
   transform:translateX(-50%);
 }
 
-/* 청/홍 HUD — 한 줄로 압축해서 아이 얼굴을 최대한 덜 가린다. */
+/* 청/홍 HUD — 한 줄로 압축해서 아이 얼굴을 최대한 덜 가린다.
+   2026-08-04: "도장 뒤쪽에서 잘 안 보인다"는 의견 반영 — 글자를 약 40% 키우고
+   자리를 118px → 100px 로 올렸다. 키웠는데도 HUD 아래쪽 끝은 예전(약 154px)과
+   비슷하므로 아이를 더 가리지는 않는다. 대신 글자가 길어져 한 줄에 안 들어갈 수
+   있어서 폭을 860px → 1080px 로 넓히고 항목 간격을 조금 좁혔다.
+   ⚠ 여기 숫자를 더 키우려면 아래 max-width:1220px 미디어쿼리도 같이 손볼 것. */
 #p2Hud{ display:none; }
 body.two-player-mode #p2Hud{
-  display:flex !important; position:fixed !important; top:118px !important; left:50% !important;
-  transform:translateX(-50%) !important; width:min(860px,90vw) !important; gap:44px !important;
+  display:flex !important; position:fixed !important; top:100px !important; left:50% !important;
+  transform:translateX(-50%) !important; width:min(1080px,96vw) !important; gap:30px !important;
   z-index:15 !important; align-items:baseline !important; pointer-events:none !important;
 }
 .p2-player{
   flex:1; min-width:0; background:transparent; border:0; padding:0; text-align:center;
-  display:flex; align-items:baseline; justify-content:center; gap:10px; flex-wrap:wrap; white-space:nowrap;
+  display:flex; align-items:baseline; justify-content:center; gap:9px; flex-wrap:wrap; white-space:nowrap;
 }
+/* 2026-08-04: 그림자를 3겹으로 — ① 글자에 딱 붙는 진한 검정 테두리(밝은 도장 바닥용)
+   ② 중간 그림자 ③ 넓게 퍼지는 색 글로우. 배경이 밝아도 흰 글씨가 묻히지 않는다. */
 .p2-name{
-  font-size:17px; font-weight:1000; letter-spacing:.5px;
-  text-shadow:0 2px 8px rgba(0,0,0,.95);
+  font-size:24px; font-weight:1000; letter-spacing:.5px;
+  text-shadow:0 0 3px rgba(0,0,0,1),0 2px 6px rgba(0,0,0,1),0 3px 14px rgba(0,0,0,.95);
 }
 .p2-player.p2-cheong .p2-name{ color:var(--arcade-blue); }
 .p2-player.p2-hong .p2-name{ color:var(--arcade-red); }
 .p2-count{
-  font-size:30px; font-weight:1000; line-height:1; color:#fff; font-variant-numeric:tabular-nums;
-  text-shadow:0 4px 18px rgba(0,0,0,.96),0 0 22px rgba(49,183,255,.55);
+  font-size:42px; font-weight:1000; line-height:1; color:#fff; font-variant-numeric:tabular-nums;
+  text-shadow:0 0 4px rgba(0,0,0,1),0 2px 7px rgba(0,0,0,1),0 5px 20px rgba(0,0,0,.98),0 0 26px rgba(49,183,255,.6);
 }
-.p2-player.p2-hong .p2-count{ text-shadow:0 4px 18px rgba(0,0,0,.96),0 0 22px rgba(255,48,79,.55); }
-.p2-count small{ font-size:15px; color:rgba(255,255,255,.5); font-weight:800; text-shadow:none; }
+.p2-player.p2-hong .p2-count{ text-shadow:0 0 4px rgba(0,0,0,1),0 2px 7px rgba(0,0,0,1),0 5px 20px rgba(0,0,0,.98),0 0 26px rgba(255,48,79,.6); }
+.p2-count small{
+  font-size:21px; color:rgba(255,255,255,.62); font-weight:800;
+  text-shadow:0 0 3px rgba(0,0,0,1),0 2px 6px rgba(0,0,0,.95);
+}
 .p2-line{
-  font-size:14px; font-weight:1000; letter-spacing:.2px;
-  color:rgba(255,255,255,.62); text-shadow:0 2px 8px rgba(0,0,0,.95);
+  font-size:20px; font-weight:1000; letter-spacing:.2px;
+  color:rgba(255,255,255,.76);
+  text-shadow:0 0 3px rgba(0,0,0,1),0 2px 6px rgba(0,0,0,1),0 3px 14px rgba(0,0,0,.95);
 }
 .p2-line b{ color:#fff; font-weight:1000; margin-left:3px; }
 /* 2026-08-03: 값이 없는 칸은 숨긴다(발차기·격파 모드에서는 세 번째 칸을 안 쓴다) */
 .p2-line3.hide{ display:none !important; }
 /* 2026-08-03: 겨루기 모드 HUD 가독성 — HP 숫자를 크게, 남은시간은 금색으로 */
-body.sparring-mode.two-player-mode .p2-count{ font-size:36px; }
-body.sparring-mode.two-player-mode .p2-line{ font-size:15px; }
+body.sparring-mode.two-player-mode .p2-count{ font-size:50px; }
+body.sparring-mode.two-player-mode .p2-line{ font-size:21px; }
 body.sparring-mode.two-player-mode .p2-line3 b{ color:var(--arcade-gold); }
-body.sparring-mode.two-player-mode .p2-count small{ font-size:14px; }
+body.sparring-mode.two-player-mode .p2-count small{ font-size:20px; }
+/* 2026-08-04: 작은 태블릿(가로 1220px 이하)에서는 겨루기 HUD 항목이 3개라
+   한 줄에 안 들어가 아래로 밀린다. 그러면 오히려 아이를 더 가리므로 조금 줄인다.
+   그래도 예전(30px)보다는 크다. */
+@media (orientation:landscape) and (max-width:1220px){
+  body.two-player-mode #p2Hud{ gap:22px !important; }
+  .p2-player{ gap:7px; }
+  .p2-name{ font-size:21px; }
+  .p2-count{ font-size:37px; }
+  .p2-count small{ font-size:18px; }
+  .p2-line{ font-size:17px; }
+  body.sparring-mode.two-player-mode .p2-count{ font-size:42px; }
+  body.sparring-mode.two-player-mode .p2-line{ font-size:18px; }
+  body.sparring-mode.two-player-mode .p2-count small{ font-size:17px; }
+}
 /* 2026-08-03: 겨루기 데미지 팝업(2인) — 1인 모드의 #damagePopup 을 좌/우 각자 자리에 띄운다.
    1인은 상대가 화면 가운데 하나뿐이라 가운데 팝업이면 됐지만, 2인은 누가 때렸는지
    바로 알아야 해서 청은 왼쪽(30%), 홍은 오른쪽(70%)에 띄운다. */
@@ -479,16 +504,20 @@ body.sparring-mode.two-player-mode .p2-count small{ font-size:14px; }
   34%{ transform:translate(-50%,-50%) scale(1); }
   100%{ opacity:0; transform:translate(-50%,-120%) scale(1); }
 }
+/* 2026-08-04: '인식 완료 / 찾는 중' 은 점수보다 덜 중요하므로 조금만 키웠다(12→16px). */
 .p2-presence{
-  font-size:12px; font-weight:1000; letter-spacing:.2px;
-  color:rgba(255,255,255,.5); text-shadow:0 2px 8px rgba(0,0,0,.9);
+  font-size:16px; font-weight:1000; letter-spacing:.2px;
+  color:rgba(255,255,255,.62); text-shadow:0 0 3px rgba(0,0,0,1),0 2px 7px rgba(0,0,0,.95);
 }
-.p2-presence.on{ color:var(--arcade-green); text-shadow:0 2px 10px rgba(0,0,0,.95),0 0 12px rgba(81,255,157,.6); }
+.p2-presence.on{ color:var(--arcade-green); text-shadow:0 0 3px rgba(0,0,0,1),0 2px 8px rgba(0,0,0,.95),0 0 14px rgba(81,255,157,.65); }
 #p2Status{ display:none; }
+/* 2026-08-04: HUD 를 100px 로 올렸으므로 이 줄도 92px → 80px 로 같이 올린다.
+   위쪽 #modeBadge(경기 타이틀) 아래끝이 약 73px 이라 더 올릴 여유는 없다. */
 body.two-player-mode #p2Status{
-  display:block !important; position:fixed !important; top:92px !important; left:50% !important;
-  transform:translateX(-50%) !important; text-align:center; font-size:15px; font-weight:1000;
-  letter-spacing:.3px; color:var(--arcade-gold); text-shadow:0 3px 12px rgba(0,0,0,.95),0 0 16px rgba(255,209,90,.7);
+  display:block !important; position:fixed !important; top:80px !important; left:50% !important;
+  transform:translateX(-50%) !important; text-align:center; font-size:15px; font-weight:1000; line-height:1.2;
+  letter-spacing:.3px; color:var(--arcade-gold);
+  text-shadow:0 0 3px rgba(0,0,0,1),0 2px 8px rgba(0,0,0,1),0 3px 14px rgba(0,0,0,.95),0 0 16px rgba(255,209,90,.7);
   z-index:15 !important;
 }
 
