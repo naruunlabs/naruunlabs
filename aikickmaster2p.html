@@ -4490,6 +4490,34 @@ function peakProject(m){
    중간에 끊겼다. 한 번 시작하면 끝날 때까지 같은 발을 본다. */
 let kickFoot=null;
 
+/* ── 사람을 잠깐 놓쳐도 발차기를 이어가기 (2026-08-05) ────────────────
+   종전에는 한 프레임이라도 사람을(또는 발목을) 못 찾으면 발차기 상태를
+   그 자리에서 전부 지웠다. 1인 30fps 에서는 한 프레임이 33ms 라 별 일이
+   아니다. 그런데 2인 태블릿은 한 프레임이 100~250ms 다. 발차기 한 번이
+   0.3초쯤이므로, 올라가는 도중에 한 프레임만 놓쳐도 그 발차기는
+   통째로 없던 일이 된다.
+
+   실측에서 청 46% / 홍 29% 를 놓치고 있었으니, 이건 어쩌다 한 번이 아니라
+   사실상 발차기마다 일어나는 일이었다. "서너 번 차야 한 번 잡힌다"의
+   설명 중 하나가 여기다.
+
+   그래서 '발차기가 이미 진행 중'일 때에 한해 마지막 상태를 잠깐 붙잡아 둔다.
+   ⚠ 판정 기준(높이·속도·무릎)은 하나도 안 바꾼다. 끊긴 것을 이어 붙일 뿐이다.
+   ⚠ 붙잡는 시간이 지나면 그대로 초기화된다 → 발차기가 영영 안 끝나는 일은 없다.
+   ⚠ 발차기 중이 아니면 아무것도 안 한다 → 서 있는 동안에는 종전과 완전히 같다.
+   ⚠ 1인 모드에는 적용하지 않는다. 이미 잘 되고 있어서 건드릴 이유가 없다.
+   몇 번이나 이 보존이 발동했는지는 진단 로그의 hold 값으로 확인한다. */
+const DETECT_HOLD_MS=350;
+let holdSaveCount=0;
+function kickHoldAlive(slot){
+  if(!twoPlayerMode || !running || !slot) return false;
+  if(!kicking && !trajActive) return false;        // 발차기 도중이 아니면 지킬 것이 없다
+  if(!slot.lastSeenT) return false;
+  const alive=(performance.now()-slot.lastSeenT)<=DETECT_HOLD_MS;
+  if(alive) holdSaveCount++;
+  return alive;
+}
+
 let currentMode='apcha_r';
 let running=false, gameTimer=null, gameRemain=0, popTimer=null;
 let readyTimer=null, readyToken=0;
@@ -6763,6 +6791,9 @@ window.startGame=()=>{
       else{ startBalloon(); startTimed(sec,finishBalloon); }
     }
     else if(currentMode==='sparring'){
+      /* 2026-08-05: 2인 겨루기 실전은 화면 장식을 미리 끄고 출발한다.
+         빠른 기기면 3초 뒤 liteFxTick 이 알아서 되살린다. */
+      if(twoPlayerMode && sparringMode==='live' && typeof liteFxStartLight==='function') liteFxStartLight();
       if(twoPlayerMode){ startSparring2p(); const sec=parseInt(sparringTimeSel?.value||'30'); startTimed(sec,finishSparring2p); render2pStatus(p2RunningStatusText('경기 진행 중')); render2pScore('c'); render2pScore('h'); }
       else startSparring();
     }
@@ -6797,6 +6828,7 @@ window.startGame=()=>{
 };
 
 function resetCounters(){
+  holdSaveCount=0;   // 2026-08-05: 끊김 보존 횟수는 경기마다 0 부터 다시 센다
   lastKickCompleteT=0;
   lastScore=null; lastGrade=''; lastColor='var(--gold)';
   balloonCount=0;
@@ -7646,10 +7678,27 @@ function drawCropZones(){
   }
   ctx.restore();
 }
+/* 2026-08-05 ── 카메라 요청 화질을 낮춘다 ────────────────────────────
+   지금까지 1280x720 을 요청했다. 그런데 MediaPipe 는 어떤 화질을 주든
+   내부에서 256x256 으로 줄여서 본다. 즉 1280 으로 받아도 판정에 쓰이는
+   그림은 960 으로 받을 때와 사실상 같다.
+
+   반면 큰 화질은 이런 곳에서 값을 치른다.
+     · 매 프레임 카메라 그림을 GPU 로 올리는 비용
+     · 캔버스를 지우고 뼈대(점 33개 x 2명)를 그리는 비용
+     · 좌우 크롭 방식에서 잘라 다시 그리는 비용
+   960x540 은 넓이가 1280x720 의 56% 라 이 비용이 절반쯤으로 준다.
+
+   크롭 방식도 960 x 0.55 = 528px 폭이라 256 보다 여전히 넉넉하다.
+   ⚠ 되돌리려면 이 두 숫자만 1280 / 720 으로 고치면 된다.
+   ⚠ 실제로 받은 화질은 진단 로그의 cam 항목에 그대로 남는다.
+     (기기가 요청을 그대로 들어준다는 보장이 없다) */
+const CAM_IDEAL_W=960, CAM_IDEAL_H=540;
+
 async function startCamera(){
   if(stream) stream.getTracks().forEach(t=>t.stop());
   try{
-    stream=await navigator.mediaDevices.getUserMedia({ video:{facingMode,width:{ideal:1280},height:{ideal:720}},audio:false });
+    stream=await navigator.mediaDevices.getUserMedia({ video:{facingMode,width:{ideal:CAM_IDEAL_W},height:{ideal:CAM_IDEAL_H}},audio:false });
     video.srcObject=stream; await video.play();
     /* 2026-08-03 진단 계측 — 카메라를 켠 시각과 실제로 받아오는 화질을 기록한다.
        1280x720 을 요청해도 기기가 그대로 준다는 보장이 없다. */
@@ -7677,6 +7726,7 @@ let twoPlayerMode=false;
 function makeKickSlot(key){
   return {
     key, everSeen:false,
+    lastSeenT:0,   // 2026-08-05: 이 선수를 마지막으로 '제대로' 본 시각 (끊김 보존용)
     kicking:false, peakPct:0, aboveFrames:0, belowFrames:0, trajActive:false, kickStartT:0, drillSide:0,
     nearPeak:0, nearAboveN:0, nearProj:0, kickFoot:null,   // 2026-08-04 미인식 계측·차는발 고정도 선수별로 따로 보관
     trajX:[], trajY:[], trajHipX:[], trajTorso:[], trajHipW:[], trajKneeX:[], trajKneeAngle:[], trajHipVis:[], trajKneeVis:[], trajKneeAngle3D:[], trajShoulderW:[],
@@ -8348,6 +8398,22 @@ function processPersonFrame(lm, wlm){
   if(ankleVis>ankleVisMin){
     const m=computeMetrics(lm,wlm);
     if(m){
+      /* 2026-08-05 ── 끊김 보존의 기준점 ──────────────────────────────
+         발목까지 제대로 보인 프레임에만 시각을 찍는다.
+
+         ⚠ 돌아오는 길에 안전장치를 하나 둔다. 붙잡아 둘 수 있는 시간
+         (DETECT_HOLD_MS)을 한참 넘겨서 돌아왔는데 발차기가 아직 진행 중으로
+         남아 있으면, 그건 아이가 화면 밖으로 나갔다 들어온 것 같은 경우다.
+         그 낡은 발차기를 그대로 이어 붙이면 몇 초 전 동작이 뒤늦게 점수로
+         들어간다. 그래서 시간을 넘긴 것은 버리고 새로 시작한다.
+         (이 안전장치가 없으면 종전에 없던 '유령 발차기'가 생긴다) */
+      if(twoPlayerMode && active2pSlot){
+        const gapMs=active2pSlot.lastSeenT ? (performance.now()-active2pSlot.lastSeenT) : 0;
+        if(gapMs>DETECT_HOLD_MS && (kicking||trajActive)){
+          kicking=false; aboveFrames=0; belowFrames=0; nearPeak=0; nearAboveN=0; nearProj=0; kickFoot=null; trajActive=false;
+        }
+        active2pSlot.lastSeenT=performance.now();
+      }
       if(!twoPlayerMode) barFill.style.width=m.pct+'%';
       smHipY=(smHipY==null)?m.hipY:smHipY*0.7+m.hipY*0.3;
       smTorso=(smTorso==null)?m.torso:smTorso*0.7+m.torso*0.3;
@@ -8406,7 +8472,12 @@ function processPersonFrame(lm, wlm){
   } else {
     if(!twoPlayerMode) barFill.style.width='0%';
     if(!running && !twoPlayerMode){ statusEl.style.opacity='1'; statusEl.textContent='전신이 보이게 뒤로 물러서세요'; };
-    kicking=false; aboveFrames=0; belowFrames=0; nearPeak=0; nearAboveN=0; nearProj=0; kickFoot=null;
+    /* 2026-08-05: 사람은 잡혔는데 발목만 잠깐 흐려진 경우다.
+       2인에서는 이쪽이 '사람을 통째로 놓친 것'보다 오히려 잦다.
+       발차기 도중이면 지운다. */
+    if(!kickHoldAlive(active2pSlot)){
+      kicking=false; aboveFrames=0; belowFrames=0; nearPeak=0; nearAboveN=0; nearProj=0; kickFoot=null;
+    }
   }
 }
 
@@ -8463,13 +8534,21 @@ function run2pFrame(result){
   if(practice2p) sparringMission=sparringMission2p.c||newMissionFor('c');
   loadFromSlot(slot2p.c);
   if(cPerson && !slot2p.c.finished){ processPersonFrame(cPerson.lm,cPerson.wlm); render2pPresence('c',true); }
-  else { kicking=false; aboveFrames=0; belowFrames=0; nearPeak=0; nearAboveN=0; nearProj=0; kickFoot=null; prevFoot={left:null,right:null}; render2pPresence('c',!!cPerson); }
+  else {
+    // 2026-08-05: 발차기 도중에 잠깐 놓친 것이면 상태를 지우지 않고 넘어간다
+    if(!kickHoldAlive(slot2p.c)){ kicking=false; aboveFrames=0; belowFrames=0; nearPeak=0; nearAboveN=0; nearProj=0; kickFoot=null; prevFoot={left:null,right:null}; }
+    render2pPresence('c',!!cPerson);
+  }
   saveToSlot(slot2p.c); render2pScore('c');
 
   if(practice2p) sparringMission=sparringMission2p.h||newMissionFor('h');
   loadFromSlot(slot2p.h);
   if(hPerson && !slot2p.h.finished){ processPersonFrame(hPerson.lm,hPerson.wlm); render2pPresence('h',true); }
-  else { kicking=false; aboveFrames=0; belowFrames=0; nearPeak=0; nearAboveN=0; nearProj=0; kickFoot=null; prevFoot={left:null,right:null}; render2pPresence('h',!!hPerson); }
+  else {
+    // 2026-08-05: 발차기 도중에 잠깐 놓친 것이면 상태를 지우지 않고 넘어간다
+    if(!kickHoldAlive(slot2p.h)){ kicking=false; aboveFrames=0; belowFrames=0; nearPeak=0; nearAboveN=0; nearProj=0; kickFoot=null; prevFoot={left:null,right:null}; }
+    render2pPresence('h',!!hPerson);
+  }
   saveToSlot(slot2p.h); render2pScore('h');
 
   if(running) check2pFinish();
@@ -8536,6 +8615,7 @@ function detectStats(){
   s.delegate=currentDelegate;
   s.relief=lowFpsThreshRelief();
   s.liteFx=liteFxOn;              // 2026-08-05: 화면 장식을 끈 상태였는지
+  s.hold=holdSaveCount;           // 2026-08-05: 끊긴 발차기를 몇 프레임이나 이어 붙였는지
   s.dt=Math.round(frameDtMs());   // 프레임 간격(ms) — fps 보다 판정에 직접 쓰이는 값
   // 2026-08-04: 2인 인식 방식을 같이 남긴다. 두 방식의 로그를 섞어서 비교할 수 있다.
   if(twoPlayerMode) s.detMode=(crop2pEnabled?'crop':'whole');
@@ -8627,22 +8707,49 @@ function deviceState(){
    프레임이 계속 모자라면 화면 장식(도는 아우라·맥박·번짐)을 끈다.
    위 CSS 주석에 왜 이것부터 끄는지 적어두었다.
 
-   ⚠ 한 번 켜면 경기가 끝날 때까지 다시 끄지 않는다. 켰다 껐다 하면
-     화면이 깜빡여서 아이들이 산만해지고, 원인 확인도 어려워진다. */
+   ⚠ 느려서 켜진 경우에는 경기가 끝날 때까지 다시 끄지 않는다. 켰다 껐다
+     하면 화면이 깜빡여서 아이들이 산만해지고, 원인 확인도 어려워진다.
+
+   ── 2026-08-05 2차 수정: 2인 겨루기 실전은 '켠 채로 시작'한다 ──────
+   종전에는 9fps 아래가 2초 이어져야 켜졌다. 그런데 겨루기 실전이 가장
+   무거운 화면(타겟 아우라·무한 맥박·큰 그림자·번짐)인데, 하필 그 장식이
+   MediaPipe 와 같은 GPU 를 쓴다. 실측에서 추론이 88ms 로 시작해 245ms 까지
+   늘어난 것이 이 경합의 모양이다. 즉 '느려진 뒤에 끄는' 순서가 거꾸로다.
+   느려질 것을 알고 있으니 처음부터 끄고 시작하고, 3초 동안 프레임이
+   넉넉한 것이 확인되면(22fps 이상) 그때 장식을 되살린다.
+
+   ⚠ 빠른 기기(노트북)에서는 3초 뒤 장식이 그대로 돌아오므로 보기에 달라지지
+     않는다. 느린 태블릿에서만 장식 없이 계속 간다.
+   ⚠ 발차기 판정에는 아무 관련이 없다. 순전히 보기의 문제다. */
 let liteFxOn=false, liteFxStreakMs=0, liteFxLastT=0;
+let liteFxForced=false, liteFxGoodMs=0;       // 2026-08-05: 미리 켜 둔 상태인가 / 프레임이 넉넉했던 시간
 const LITE_FX_DT=110, LITE_FX_HOLD_MS=2000;   // 9fps 아래가 2초 이어지면 켠다
+const LITE_FX_OK_DT=45, LITE_FX_OK_MS=3000;   // 22fps 이상이 3초 이어지면 미리 켠 것을 되살린다
 function setLiteFx(on){
   if(liteFxOn===on) return;
   liteFxOn=on;
   document.body.classList.toggle('akm-lite-fx', on);
-  if(on) console.warn('프레임 부족 → 화면 장식을 끕니다 (판정에는 영향 없음).');
+  if(on) console.warn('화면 장식을 끕니다 (판정에는 영향 없음).');
 }
-function liteFxReset(){ liteFxStreakMs=0; liteFxLastT=0; setLiteFx(false); }
+function liteFxReset(){ liteFxStreakMs=0; liteFxLastT=0; liteFxForced=false; liteFxGoodMs=0; setLiteFx(false); }
+/* 2인 겨루기 실전 시작 직전에 부른다 — 무거운 장식을 미리 꺼 두고 출발한다. */
+function liteFxStartLight(){ liteFxForced=true; liteFxGoodMs=0; liteFxStreakMs=0; liteFxLastT=0; setLiteFx(true); }
 function liteFxTick(now){
-  if(!running || liteFxOn){ liteFxLastT=now; return; }
+  if(!running){ liteFxLastT=now; return; }
   if(!liteFxLastT){ liteFxLastT=now; return; }
   const gap=now-liteFxLastT; liteFxLastT=now;
-  if(frameDtMs()>=LITE_FX_DT) liteFxStreakMs+=gap; else liteFxStreakMs=0;
+  const dt=frameDtMs();
+  if(liteFxOn){
+    /* 미리 꺼 둔 경우에만 되살린다. 느려서 꺼진 것은 그대로 둔다. */
+    if(!liteFxForced) return;
+    if(dt<=LITE_FX_OK_DT) liteFxGoodMs+=gap; else liteFxGoodMs=0;
+    if(liteFxGoodMs>=LITE_FX_OK_MS){
+      liteFxForced=false; setLiteFx(false);
+      console.info('프레임이 넉넉해서 화면 장식을 되살립니다.');
+    }
+    return;
+  }
+  if(dt>=LITE_FX_DT) liteFxStreakMs+=gap; else liteFxStreakMs=0;
   if(liteFxStreakMs>=LITE_FX_HOLD_MS) setLiteFx(true);
 }
 
