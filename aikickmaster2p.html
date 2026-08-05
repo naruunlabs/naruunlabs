@@ -727,6 +727,53 @@ body.sparring-mode.sparring-live .p2-hpbar{
 .p2-hpbar-fill.low{ animation:p2HpLow .55s ease-in-out infinite alternate; }
 @keyframes p2HpLow{ from{ filter:brightness(1); } to{ filter:brightness(1.9); } }
 
+/* ══════════════════════════════════════════════════════════════════════
+   가벼운 화면 (2026-08-05) — body.akm-lite-fx
+   ──────────────────────────────────────────────────────────────────────
+   진단 로그에서 나온 것: 경기를 시작하면 추론이 90ms(11fps)로 출발했다가
+   15~20초 만에 240ms(4fps)가 되고, 경기를 쉬면 다시 90ms 로 돌아온다.
+   발열이라면 20초 만에 뜨거워졌다가 30초 만에 식지 않는다.
+   경기 중에만 켜지는 무언가가 GPU 를 나눠 쓰고 있다고 보는 편이 맞다.
+
+   경기 중에만 도는 것이 바로 이 화면 장식들이다.
+     · 상대 타겟 아우라 — 원뿔형 그라데이션이 5초에 한 바퀴씩 계속 돈다
+     · 점선 링 두 겹 — 7초·11초짜리로 각각 반대 방향으로 계속 돈다
+     · 머리·몸통 조준선 — 1.35초·1.65초마다 커졌다 작아진다 (32px 그림자를 달고)
+   2인 모드는 이것을 **두 벌** 돌린다. MediaPipe 도 같은 GPU 를 쓴다.
+
+   그래서 프레임이 모자라면 장식부터 끈다. 판정·점수·타겟 위치는 그대로다.
+   ⚠ 타겟이 사라지는 게 아니라 "움직임과 번쩍임"만 멈춘다. 아이 눈에는
+     화면이 차분해질 뿐 무엇을 차야 하는지는 똑같이 보인다.
+   ⚠ 이게 원인이 아니면 로그의 infer 가 그대로일 것이다. 그러면 되돌리면 된다.
+     (진단 로그에 liteFx 로 켜졌는지 남는다) */
+html body.akm-lite-fx #enemyTarget .enemyAura,
+html body.akm-lite-fx .enemy-target .enemyAura,
+html body.akm-lite-fx .p2-enemy .enemyAura{
+  animation:none !important; background:none !important; filter:none !important;
+  box-shadow:none !important; border-color:transparent !important;
+}
+html body.akm-lite-fx #enemyTarget .enemyAura::before,
+html body.akm-lite-fx #enemyTarget .enemyAura::after,
+html body.akm-lite-fx .enemy-target .enemyAura::before,
+html body.akm-lite-fx .enemy-target .enemyAura::after,
+html body.akm-lite-fx .p2-enemy .enemyAura::before,
+html body.akm-lite-fx .p2-enemy .enemyAura::after{
+  display:none !important; animation:none !important;
+}
+/* 조준선은 남기되 맥박과 큰 그림자만 없앤다 (무엇을 차야 하는지는 그대로 보인다) */
+html body.akm-lite-fx #enemyTarget .enemyHead,
+html body.akm-lite-fx #enemyTarget .enemyBody,
+html body.akm-lite-fx .enemy-target .enemyHead,
+html body.akm-lite-fx .enemy-target .enemyBody,
+html body.akm-lite-fx .p2-enemy .enemyHead,
+html body.akm-lite-fx .p2-enemy .enemyBody{
+  animation:none !important;
+  box-shadow:0 0 6px rgba(255,255,255,.25) !important;
+}
+/* 체력 게이지 — 깜빡임(filter 애니메이션)과 번짐만 끈다. 길이·색은 그대로 */
+html body.akm-lite-fx .p2-hpbar-fill{ animation:none !important; box-shadow:none !important; }
+html body.akm-lite-fx .p2-hpbar{ box-shadow:none !important; }
+
 /* 2인 경기 종료 — 화면 가운데 크게 */
 #p2Result{
   display:none; position:fixed; inset:0; z-index:99995; background:rgba(3,8,16,.82);
@@ -4361,7 +4408,10 @@ const MIN_FOOT_SPEED=0.0012; // 너무 천천히 드는 발은 발차기로 덜 
    NEAR_MISS_MARGIN : 기준선보다 이만큼 아래까지 올라왔으면 "아깝게 놓쳤다"로 본다 */
 let nearPeak=0, nearAboveN=0;
 let nearProj=0;   // 2026-08-05: 이번 시도에 최고점 추정을 얼마나 쳐줬는지 (진단 로그 전용)
-let drawSkelTick=0;  // 2026-08-05: 저프레임에서 뼈대를 한 프레임 걸러 그리기 위한 카운터
+/* 2026-08-05 · 뼈대를 이번 프레임에 그릴지. loop() 가 프레임마다 딱 한 번 정한다.
+   ⚠ 이 값을 processPersonFrame 안에서 정하면 안 된다. 그 함수는 2인일 때
+   한 프레임에 두 번 불려서, 사람에 따라 값이 갈리는 사고가 난다(실제로 났었다). */
+let skelFrameTick=0, skelDrawThisFrame=true;
 const NEAR_MISS_MARGIN=12;
 
 /* 2026-08-04 STRONG_MARGIN
@@ -6763,6 +6813,10 @@ function resetCounters(){
 }
 function stopGame(){
   readyToken++;
+  /* 2026-08-05: 경기가 끝나면 화면 장식을 되살린다. 다음 경기도 장식을 켠 채로
+     시작해서, 정말 장식 때문에 느려지는 것인지 로그로 매번 확인할 수 있게 한다.
+     (원인이 확정되면 그때 아예 켜지지 않도록 바꾸면 된다) */
+  if(typeof liteFxReset==='function') liteFxReset();
   if(readyTimer){ clearTimeout(readyTimer); readyTimer=null; }
   setPlayingUi(false);
   setReadyUi(false);
@@ -8276,10 +8330,14 @@ function processPersonFrame(lm, wlm){
      1280x720 캔버스에 사람마다 점 33개와 연결선을 매 프레임 그리는 일은
      판정에 아무 보탬이 안 되는 장식이다. 2인이면 그 일을 두 번 한다.
      기기가 이미 헐떡이면(10fps 미만) 한 프레임 걸러 한 번만 그린다.
-     → 뼈대는 눈에 살짝 끊겨 보이지만, 판정에 쓰는 프레임이 그만큼 늘어난다.
-     프레임이 넉넉하면 종전처럼 매 프레임 그린다. */
-  const skelSkip = frameDtMs()>=100 && (drawSkelTick++ & 1);
-  if(!skelSkip){
+
+     ⚠⚠ 2026-08-05 버그수정 — 처음 넣을 때 카운터를 이 함수 안에서 올렸다.
+     이 함수는 2인 모드에서 한 프레임에 청·홍 두 번 불린다. 그래서 청은 항상
+     짝수, 홍은 항상 홀수가 되어 **홍의 뼈대가 영원히 안 그려졌다.**
+     ("한 명이 관절선이 아예 안 보인다" — 관장님 2026-08-05 시운전 제보)
+     이제 프레임 단위로 loop() 에서 한 번만 정하고, 여기서는 그 값을 읽기만 한다.
+     사람마다 다르게 판단할 여지를 아예 없앤 것이다. */
+  if(skelDrawThisFrame){
     drawingUtils.drawConnectors(lm,PoseLandmarker.POSE_CONNECTIONS,{color:(twoPlayerMode?(active2pSlot===slot2p.c?'rgba(43,127,255,0.6)':'rgba(227,23,46,0.6)'):'rgba(255,106,26,0.6)'),lineWidth:2});
     drawingUtils.drawLandmarks(lm,{color:(twoPlayerMode?(active2pSlot===slot2p.c?'#2b7fff':'#E3172E'):'#E3172E'),lineWidth:1,radius:3});
   }
@@ -8477,6 +8535,8 @@ function detectStats(){
      relief 는 이번 발차기 때 저프레임 보정이 얼마나 들어갔는지다. */
   s.delegate=currentDelegate;
   s.relief=lowFpsThreshRelief();
+  s.liteFx=liteFxOn;              // 2026-08-05: 화면 장식을 끈 상태였는지
+  s.dt=Math.round(frameDtMs());   // 프레임 간격(ms) — fps 보다 판정에 직접 쓰이는 값
   // 2026-08-04: 2인 인식 방식을 같이 남긴다. 두 방식의 로그를 섞어서 비교할 수 있다.
   if(twoPlayerMode) s.detMode=(crop2pEnabled?'crop':'whole');
   if(twoPlayerMode){
@@ -8563,6 +8623,29 @@ function deviceState(){
   }
   return s;
 }
+/* ── 가벼운 화면 자동 전환 (2026-08-05) ──────────────────────────────
+   프레임이 계속 모자라면 화면 장식(도는 아우라·맥박·번짐)을 끈다.
+   위 CSS 주석에 왜 이것부터 끄는지 적어두었다.
+
+   ⚠ 한 번 켜면 경기가 끝날 때까지 다시 끄지 않는다. 켰다 껐다 하면
+     화면이 깜빡여서 아이들이 산만해지고, 원인 확인도 어려워진다. */
+let liteFxOn=false, liteFxStreakMs=0, liteFxLastT=0;
+const LITE_FX_DT=110, LITE_FX_HOLD_MS=2000;   // 9fps 아래가 2초 이어지면 켠다
+function setLiteFx(on){
+  if(liteFxOn===on) return;
+  liteFxOn=on;
+  document.body.classList.toggle('akm-lite-fx', on);
+  if(on) console.warn('프레임 부족 → 화면 장식을 끕니다 (판정에는 영향 없음).');
+}
+function liteFxReset(){ liteFxStreakMs=0; liteFxLastT=0; setLiteFx(false); }
+function liteFxTick(now){
+  if(!running || liteFxOn){ liteFxLastT=now; return; }
+  if(!liteFxLastT){ liteFxLastT=now; return; }
+  const gap=now-liteFxLastT; liteFxLastT=now;
+  if(frameDtMs()>=LITE_FX_DT) liteFxStreakMs+=gap; else liteFxStreakMs=0;
+  if(liteFxStreakMs>=LITE_FX_HOLD_MS) setLiteFx(true);
+}
+
 // 2인 full 모델이 13~19fps에 머무는 애매한 저성능 구간도 빠르게 구제한다.
 const PERF_LOW_FPS=20, PERF_LOW_HOLD_MS=3000;
 function perfResetMonitor(){ perfLowStreakMs=0; perfLastCheck=0; }
@@ -8597,8 +8680,12 @@ function loop(){
     const inferMs=performance.now()-t0;
     perfMonitorTick(performance.now(),inferMs);
     tickFps(performance.now());   // 2026-08-03 진단 계측
+    liteFxTick(performance.now()); // 2026-08-05 프레임이 계속 모자라면 화면 장식을 끈다
     inferHist.push(inferMs); if(inferHist.length>90) inferHist.shift();  // 추론 소요시간 (발열 지표)
     ctx.clearRect(0,0,canvas.width,canvas.height);
+    /* 2026-08-05: 이번 프레임에 뼈대를 그릴지 여기서 한 번만 정한다.
+       프레임이 넉넉하면(10fps 이상) 항상 그린다 = 종전과 같다. */
+    skelDrawThisFrame = (frameDtMs()<100) || ((skelFrameTick++ & 1)===0);
 
     if(twoPlayerMode){
       run2pFrame(result);
