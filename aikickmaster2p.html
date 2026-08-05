@@ -694,7 +694,7 @@ body.sparring-mode.sparring-live .p2-hpbar{
   clip-path:polygon(0 0,97% 0,100% 100%,3% 100%);
   -webkit-clip-path:polygon(0 0,97% 0,100% 100%,3% 100%);
 }
-/* 격투게임처럼 바깥쪽에서 안쪽으로 닳는다.
+/* 격투게임처럼 바깥쪽에서 안쪽으로 닳는다. (2026-08-05 관장님 확인 — 이대로 유지)
    청(왼쪽)은 왼쪽 끝부터 비고, 홍(오른쪽)은 오른쪽 끝부터 빈다.
    남은 체력이 화면 가운데 쪽으로 몰려서, 둘이 서로 밀어내는 것처럼 보인다.
    → 남은 막대를 안쪽 끝에 붙이면 되므로 justify-content 로 정한다. */
@@ -706,13 +706,20 @@ body.sparring-mode.sparring-live .p2-hpbar{
   box-shadow:0 0 14px var(--p2hp-glow, rgba(46,204,113,.55));
   transition:width .25s ease, background .25s ease;
 }
-/* 2026-08-04 · "내 앞의 게이지 = 내가 깎는 것".
-   청 앞에는 홍(빨강) 게이지, 홍 앞에는 청(파랑) 게이지를 둔다.
-   앞에 서 있는 타겟 색과 같아서, 아이가 "내 앞의 빨간 걸 0으로 만들면 이긴다"로
-   바로 이해한다. (종전에는 자기 체력을 보여줘서 "내가 더 깎았는데 왜 졌냐"가 나왔다) */
-.p2-player.p2-cheong .p2-hpbar-fill{ --p2hp-color:#E3172E; --p2hp-glow:rgba(255,48,79,.65); }
-.p2-player.p2-hong   .p2-hpbar-fill{ --p2hp-color:#2b7fff; --p2hp-glow:rgba(49,183,255,.65); }
-/* 상대가 빈사 상태면 게이지가 깜빡여서 "거의 다 됐다"를 알린다 */
+/* 2026-08-05 · 격투게임 방식으로 되돌림 — "내 머리 위 게이지 = 내 체력".
+   ⚠ 2026-08-04 에는 반대로 했었다(내 앞에 상대 체력). 시운전에서 아이들이 더
+   헷갈려 했다. 철권·스파를 비롯한 거의 모든 격투게임이 자기 체력을 자기 쪽에
+   두기 때문에, 그 익숙한 규칙을 따르는 편이 설명이 필요 없다.
+
+   그래서 색도 자기 팀 색이다. 청 머리 위 = 파랑, 홍 머리 위 = 빨강.
+   내 앞에 서 있는 타겟은 여전히 상대 색(청 앞=빨강)이라, 화면이
+   "파란 내 체력을 지키면서 앞의 빨간 놈을 친다"로 읽힌다.
+
+   ⚠ 승패 판정(finishSparring2p)은 처음부터 각자 실제 남은 체력이었다.
+      이제 화면과 판정 기준이 같아졌으므로 "왜 졌냐" 문제도 같이 사라진다. */
+.p2-player.p2-cheong .p2-hpbar-fill{ --p2hp-color:#2b7fff; --p2hp-glow:rgba(49,183,255,.65); }
+.p2-player.p2-hong   .p2-hpbar-fill{ --p2hp-color:#E3172E; --p2hp-glow:rgba(255,48,79,.65); }
+/* 내가 빈사 상태면 게이지가 깜빡여서 "위험하다"를 알린다 */
 .p2-hpbar-fill.low{ animation:p2HpLow .55s ease-in-out infinite alternate; }
 @keyframes p2HpLow{ from{ filter:brightness(1); } to{ filter:brightness(1.9); } }
 
@@ -4334,6 +4341,44 @@ const NEAR_MISS_MARGIN=12;
    값을 키우면 인식이 둔해지고, 줄이면 예민해진다. */
 const STRONG_MARGIN=10;
 
+/* ══════════════════════════════════════════════════════════════════════
+   2026-08-05 · 저프레임 기기 판정 보정  ★ 겨루기 미인식의 진짜 원인 ★
+   ──────────────────────────────────────────────────────────────────────
+   실측 로그(2026-08-05 겨루기 2인)에서 fps 가 3~4 밖에 안 나왔다.
+   추론 한 장에 88ms→245ms 가 걸려서, 발차기 한 번(약 0.3초)에 프레임이
+   한 장뿐이었다. 판정이 엄격해서 못 잡은 게 아니라 볼 그림이 없었던 것이다.
+
+     miss_frame  기준선 위 프레임 1장 → 2장이 필요해서 버려짐
+     miss_low    최고점 45 / 기준 45 → 발이 제일 높은 순간을 아예 못 찍음
+
+   그래서 프레임 간격에 따라 판정 잣대를 자동으로 눕힌다.
+   프레임이 넉넉한 기기(노트북 30fps)에서는 종전 값이 그대로 쓰이므로
+   지금까지의 인식 감도가 달라지지 않는다.
+
+   ⚠ 이 값들은 "프레임이 없어서 놓친 것"을 되찾는 보정이지
+      감도를 무작정 높이는 게 아니다. 그래서 프레임이 정상이면 0이 된다. */
+let frameDtSm=null;               // 스무딩한 프레임 간격(ms)
+function frameDtMs(){ return (frameDtSm==null)?33:frameDtSm; }
+/* 프레임이 듬성할수록 "한 프레임만 봐도 인정"하는 문턱을 낮춘다. */
+function effStrongMargin(){
+  const dt=frameDtMs();
+  if(dt>=150) return 0;           // 7fps 이하 — 기준선만 넘으면 바로 인정
+  if(dt>=100) return 3;           // 10fps 이하
+  if(dt>=70)  return 6;           // 14fps 이하
+  return STRONG_MARGIN;           // 정상 프레임률 — 종전 그대로
+}
+/* 최고점을 놓치는 만큼 기준 높이를 조금 깎아준다. 최대 5%p 까지만. */
+function lowFpsThreshRelief(){
+  const dt=frameDtMs();
+  if(dt>=150) return 5;
+  if(dt>=100) return 3;
+  if(dt>=70)  return 1;
+  return 0;
+}
+/* 발이 완전히 내려온 것을 확인하는 시간도 프레임 한 장은 넘지 않게 한다.
+   (4fps 에서는 한 프레임이 250ms 라 BELOW_MS 70 이 사실상 두 프레임을 요구했다) */
+function effBelowMs(){ return Math.min(BELOW_MS, Math.max(20, frameDtMs()*0.6)); }
+
 /* 2026-08-04 kickFoot
    발차기가 진행되는 동안 어느 발로 차고 있는지 붙잡아 두는 값.
    겨루기 실전은 차는 발을 미리 정하지 않아서, 종전에는 매 프레임
@@ -5462,7 +5507,11 @@ function effThreshPct(){
   // 2인은 화면에서 한 사람의 크기가 작아지므로 시작 높이만 5%p 완화한다.
   // 궤적·체임버·발차기 종류 판정은 1인과 같은 기준을 그대로 사용한다.
   const p2Offset=(typeof twoPlayerMode!=='undefined' && twoPlayerMode)?-5:0;
-  return Math.max(12, Math.min(100, threshPct + (JUDGE.THRESH_OFFSET||0) + p2Offset));
+  /* 2026-08-05: 프레임이 듬성한 기기는 발이 제일 높은 순간을 아예 못 찍는다.
+     (실측: 최고점 45 / 기준 45 로 아슬아슬하게 떨어진 miss_low)
+     놓친 만큼만 기준을 깎아준다. 프레임이 정상이면 0 이라 종전과 같다. */
+  const lowFps=(typeof lowFpsThreshRelief==='function')?lowFpsThreshRelief():0;
+  return Math.max(12, Math.min(100, threshPct + (JUDGE.THRESH_OFFSET||0) + p2Offset - lowFps));
 }
 function applyThreshUi(){
   if(typeof barThresh!=='undefined' && barThresh) barThresh.style.left=effThreshPct()+'%';
@@ -7112,7 +7161,11 @@ window.toggleFullscreen=()=>{
 function onKickComplete(peak){
   if(!running) return;
   const now=performance.now();
-  if(now-lastKickCompleteT<KICK_COOLDOWN_MS){
+  /* 2026-08-05: 4fps 기기에서 320ms 잠금은 프레임 1~2장이라, 연속으로 찬
+     두 번째 발차기를 통째로 삼켰다. 프레임이 듬성하면 잠금도 짧게 잡는다.
+     (중복 인식은 "발이 RESET_PCT 아래로 내려와야 종료"가 이미 막아준다) */
+  const coolMs=Math.min(KICK_COOLDOWN_MS, Math.max(160, frameDtMs()*0.9));
+  if(now-lastKickCompleteT<coolMs){
     // 2026-08-04: 잠금 시간에 걸려 버려진 발차기도 기록한다.
     // 연속으로 찰 때 반응이 없다는 증상의 원인이 여기일 수 있다.
     diagLogMiss(peak, 0, effThreshPct(), 'miss_cooldown');
@@ -7158,7 +7211,10 @@ function runKick(pct,m=null){
          그래서 발이 기준선을 확실히 넘었으면(STRONG_MARGIN 이상) 한 프레임
          만으로 인정한다. 애매하게 걸친 경우에만 종전처럼 두 프레임을 본다.
          느리게 드는 발은 fastEnough 가 여전히 걸러준다. */
-      const strong = pct >= TH + STRONG_MARGIN;
+      /* 2026-08-05: STRONG_MARGIN 을 프레임 간격에 맞춰 눕힌다.
+         4fps 기기에서는 0 이 되어 기준선을 넘은 첫 프레임에 바로 인정된다.
+         30fps 노트북에서는 종전 값(10) 그대로라 감도가 달라지지 않는다. */
+      const strong = pct >= TH + effStrongMargin();
       if(strong || now-aboveFrames>=ABOVE_MS){
         kicking=true; peakPct=pct; belowFrames=0; trajActive=true;
         nearPeak=0; nearAboveN=0;   // 정상 인식됐으므로 미인식 계측을 버린다
@@ -7183,7 +7239,7 @@ function runKick(pct,m=null){
     peakPct=Math.max(peakPct,pct);
     if(pct<RESET_PCT){
       if(!belowFrames) belowFrames=now;
-      if(now-belowFrames>=BELOW_MS){
+      if(now-belowFrames>=effBelowMs()){   // 2026-08-05: 저프레임에서 종료가 늦어지던 것 보정
         kicking=false; aboveFrames=0; belowFrames=0; nearPeak=0; nearAboveN=0; kickFoot=null; trajActive=false;
         kickFoot=null;
         onKickComplete(peakPct);
@@ -8081,21 +8137,23 @@ function render2pScoreSparringPractice(key){
     label3:'미션', val3:(mission?mission.label:'—')
   });
 }
-/* 2026-08-04 · 관장님 현장 피드백 반영 — "왜 청이 더 많이 깎았는데 졌어요?"
-   종전에는 청 칸에 청 자신의 남은 체력을 보여줬다. 그런데 청이 발차기로 깎는 것은
-   홍의 체력이다. 그래서 "내가 때렸는데 내 앞 숫자가 안 줄어든다"가 되어 헷갈렸다.
+/* 겨루기 실전 2인 · 체력 게이지를 누구 것으로 보여줄 것인가 (경위 기록)
+   2026-08-04 에는 "왜 청이 더 많이 깎았는데 졌어요?" 라는 현장 질문 때문에
+   "청 칸 = 홍의 남은 체력"으로 바꿔봤다. 시운전 결과 아이들이
+   더 헷갈려 했다. 격투게임을 해 본 아이는 자기 머리 위가 자기 체력이라고 이미
+   알고 있어서, 익숙한 규칙을 뒤집으니 오히려 설명이 더 필요해진 것이다.
 
-   이제 청 칸 = 청이 공격하는 대상(홍)의 남은 체력이다.
-   청 앞에 서 있는 타겟도 홍을 상징하는 빨간색이고, 게이지도 빨간색이라
-   "내 앞의 빨간 것을 0으로 만들면 이긴다"로 한 번에 읽힌다.
+   2026-08-05 · 격투게임 방식으로 되돌린다.
+     · 청 머리 위 = 청 자신의 남은 체력 (파란색)
+     · 청이 차면 → 앞에 있는 빨간 타겟이 맞고 → 홍 머리 위 게이지가 깎인다
+   "준 데미지"는 아래 작은 줄에 그대로 남아 있어서 내가 얼마나 때렸는지도 보인다.
 
-   ⚠ 승패 판정(finishSparring2p)은 종전 그대로 각자의 실제 남은 체력으로 정한다.
-   화면 표시만 바꾼 것이라 경기 결과는 달라지지 않는다. */
+   ⚠ 승패 판정(finishSparring2p)은 처음부터 각자 실제 남은 체력이었다.
+      이제 화면에 보이는 숫자와 판정 기준이 완전히 같아졌다. */
 function render2pScoreSparring(key){
-  const me=sparringState2p[key];                       // 이 선수 자신 (준 데미지·콤보용)
-  const foe=sparringState2p[key==='c'?'h':'c'];        // 이 선수가 공격하는 상대
+  const me=sparringState2p[key];                       // 이 선수 자신 (체력·준 데미지·콤보)
   setP2Fields(key,{
-    count:(foe.hp<=0?'K.O.':Math.round(foe.hp)), suffix:(foe.hp<=0?'':'hp'),
+    count:(me.hp<=0?'K.O.':Math.round(me.hp)), suffix:(me.hp<=0?'':'hp'),
     label1:'준 데미지', val1:me.damage,
     label2:'콤보', val2:'x'+me.maxCombo,
     /* 2026-08-05: 남은시간을 여기서 뺐다. 청 칸·홍 칸에 똑같은 값이 두 번 뜨는 데다
@@ -8107,11 +8165,11 @@ function render2pScoreSparring(key){
   if(tEl) tEl.textContent=(running?Math.max(0,gameRemain)+'초':'—');
   const fill=document.getElementById('p2'+key+'HpFill');
   if(fill){
-    const pct=Math.max(0,(foe.hp/250)*100);
+    const pct=Math.max(0,(me.hp/250)*100);
     fill.style.width=pct+'%';
-    /* 색은 CSS 가 선수별로 정한다(청 앞=빨강 / 홍 앞=파랑).
+    /* 색은 CSS 가 선수별로 정한다(청=파랑 / 홍=빨강, 자기 팀 색).
        여기서 색을 덮어쓰면 그 규칙이 깨지므로 건드리지 않는다.
-       대신 상대가 빈사면 깜빡이게 해서 "거의 다 됐다"를 알린다. */
+       대신 내가 빈사면 깜빡이게 해서 "위험하다"를 알린다. */
     fill.classList.toggle('low', pct>0 && pct<=25);
   }
 }
@@ -8132,12 +8190,10 @@ function finishSparring2p(){
   else if(c.hp<=0) winner='h';
   else if(h.hp<=0) winner='c';
   else winner = c.hp===h.hp ? null : (c.hp>h.hp?'c':'h');
-  /* 2026-08-04: 결과 화면도 경기 중 화면과 말이 맞게 바꿨다.
-     경기 내내 아이들이 본 것은 "내 앞 게이지를 얼마나 깎았나"다. 그런데 결과에는
-     자기 남은 체력이 떠서 또 헷갈렸다. 이제 각자 준 데미지를 보여준다.
-     양쪽 체력이 250 으로 같게 시작하므로 "준 데미지가 많다 = 상대 체력이 적다"라
-     승패 판정(위의 hp 기준)과 결과가 어긋날 일이 없다. */
-  showP2Result('준 데미지',(h.hp<=0?'K.O. 승':c.damage),'준 데미지',(c.hp<=0?'K.O. 승':h.damage),winner,'상대 체력을 더 많이 깎은 쪽이 승리');
+  /* 2026-08-05: 경기 중 게이지를 자기 체력으로 되돌렸으므로 결과도 남은 체력이다.
+     경기 내내 본 숫자가 그대로 결과에 뜨고, 승패 판정 기준(위의 hp)과도 같다.
+     세 가지가 전부 같은 숫자라 더 설명할 것이 없다. */
+  showP2Result('남은 체력',(c.hp<=0?'K.O. 패':c.hp),'남은 체력',(h.hp<=0?'K.O. 패':h.hp),winner,'체력이 더 많이 남은 쪽이 승리');
 }
 
 /* 한 사람(랜드마크 1세트)에 대한 매 프레임 처리.
@@ -8316,7 +8372,13 @@ function pushDetect(cOn,hOn){
 function tickFps(now){
   if(fpsLastT){
     const dt=now-fpsLastT;
-    if(dt>0&&dt<1000){ const f=1000/dt; fpsSm=(fpsSm==null)?f:fpsSm*0.9+f*0.1; }
+    if(dt>0&&dt<1000){
+      const f=1000/dt; fpsSm=(fpsSm==null)?f:fpsSm*0.9+f*0.1;
+      /* 2026-08-05: 판정이 프레임 간격을 보고 잣대를 눕히는 데 쓴다.
+         fps 를 뒤집어 쓰지 않고 간격을 따로 스무딩하는 이유는, 한 프레임만
+         튀어도 판정이 출렁이지 않게 하기 위해서다. */
+      frameDtSm=(frameDtSm==null)?dt:frameDtSm*0.9+dt*0.1;
+    }
   }
   fpsLastT=now;
   /* 카메라 켜고 10초쯤의 값을 "아직 안 뜨거울 때"의 기준으로 잡아둔다.
@@ -8328,6 +8390,12 @@ function detectStats(){
   if(!n) return null;
   const pct=(f)=>Math.round(detHist.filter(f).length/n*100);
   const s={ detWin:n, fps:(fpsSm==null?null:Math.round(fpsSm)), model:currentModelKind };
+  /* 2026-08-05 추가 ── 느린 원인을 가리기 위한 두 값.
+     delegate 가 'CPU' 로 찍히면 GPU 가속이 아예 안 붙은 것이라 무엇을 조여도
+     소용이 없다. 그때는 성능 문제가 아니라 초기화 문제로 봐야 한다.
+     relief 는 이번 발차기 때 저프레임 보정이 얼마나 들어갔는지다. */
+  s.delegate=currentDelegate;
+  s.relief=lowFpsThreshRelief();
   // 2026-08-04: 2인 인식 방식을 같이 남긴다. 두 방식의 로그를 섞어서 비교할 수 있다.
   if(twoPlayerMode) s.detMode=(crop2pEnabled?'crop':'whole');
   if(twoPlayerMode){
