@@ -8020,7 +8020,39 @@ let p2StageResultTimer=null;
 window.closeP2Result=function(){
   if(p2StageResultTimer){ clearTimeout(p2StageResultTimer); p2StageResultTimer=null; }
   document.getElementById('p2Result')?.classList.remove('show');
+  reset2pAfterMatch();
 };
+/* ── 한 판이 끝난 뒤 되돌리기 (2026-08-06 관장님 요청) ────────────────────
+   증상 두 가지였다.
+     ① 결과창을 닫아도 '청 승리!' 노란 글씨(#p2Status)가 다음 판까지 남아 있었다
+     ② 깎인 체력 게이지가 "3·2·1 시작" 이 끝난 **뒤에야** 가득 찼다
+
+   원인은 같다. 되돌리는 일을 startSparring2p() 가 하는데, 그 함수는 카운트다운이
+   끝나고 경기가 실제로 시작될 때 불린다. 그래서 결과창을 닫고 다음 판을 누르기
+   전까지는 지난 판의 화면이 그대로 남아 있었던 것이다.
+
+   되돌리는 시점을 **결과창을 닫는 순간**으로 앞당긴다.
+   startGame() 도 맨 처음에 closeP2Result() 를 부르므로 두 길 모두 덮인다.
+
+   ⚠ 화면에 보이는 것만 되돌린다. 승패 판정은 이미 finishSparring2p 에서 끝났고
+      결과창에 뜬 숫자도 그 전에 읽어간 값이라 영향이 없다.
+   ⚠ 경기 중(running)에는 손대지 않는다. 자동훈련이 종목을 넘어가는 중에
+      화면이 초기화되면 안 되기 때문이다. */
+function reset2pAfterMatch(){
+  if(!twoPlayerMode || running) return;
+  render2pStatus('경기 준비');
+  if(currentMode==='sparring' && sparringMode==='live'){
+    sparringState2p={c:makeSparringSlot(), h:makeSparringSlot()};
+    render2pScoreSparring('c'); render2pScoreSparring('h');
+  }
+  /* 격파도 같은 증상이었다 — 지난 판의 "12개" 가 다음 판 시작 전까지 남아 있었다.
+     ⚠ 발차기 연습은 일부러 뺐다. 자동훈련이 종목별 기록을 들고 다니므로
+        여기서 함부로 지우면 종합 결과가 어긋난다. */
+  if(currentMode==='balloon'){
+    balloonCount2p={c:0,h:0};
+    render2pScoreBalloon('c'); render2pScoreBalloon('h');
+  }
+}
 function setP2ResultContent(kicker,title,cLabel,cVal,hLabel,hVal,winnerKey,reason){
   const kickerEl=document.getElementById('p2ResultKicker');
   const titleEl=document.getElementById('p2ResultTitle');
