@@ -8831,10 +8831,33 @@ function loop(){
     tickFps(performance.now());   // 2026-08-03 진단 계측
     liteFxTick(performance.now()); // 2026-08-05 프레임이 계속 모자라면 화면 장식을 끈다
     inferHist.push(inferMs); if(inferHist.length>90) inferHist.shift();  // 추론 소요시간 (발열 지표)
-    ctx.clearRect(0,0,canvas.width,canvas.height);
     /* 2026-08-05: 이번 프레임에 뼈대를 그릴지 여기서 한 번만 정한다.
-       프레임이 넉넉하면(10fps 이상) 항상 그린다 = 종전과 같다. */
-    skelDrawThisFrame = (frameDtMs()<100) || ((skelFrameTick++ & 1)===0);
+       프레임이 넉넉하면(10fps 이상) 항상 그린다 = 종전과 같다.
+
+       ⚠⚠ 2026-08-06 버그수정 — "2인 겨루기에서 관절선이 엄청 깜빡인다" (관장님 제보)
+       원인은 판정이 아니라 지우는 순서였다. 종전에는 캔버스를 **매 프레임 지운 뒤**
+       뼈대만 걸러 그렸다. 그래서 이렇게 됐다:
+           1프레임 지우고 그린다 → 보임
+           2프레임 지우고 안 그린다 → 사라짐
+       7~8fps 에서 초당 3~4번 껐다 켜지는 셈이다. 1인 모드는 10fps 를 넘어
+       위 조건에 안 걸리니 항상 그려져서 안 깜빡였던 것이다.
+
+       고침: **안 그리는 프레임에는 지우지도 않는다.** 직전 뼈대가 한 프레임 더
+       남아 있어서 깜빡임 대신 "조금 느리게 따라오는" 모양이 된다.
+       그리는 횟수는 종전과 똑같으므로 성능은 한 톨도 안 바뀐다.
+
+       ⚠ 단, 캔버스에 뼈대 말고 **다른 것도 그리는 모드**는 매 프레임 지워야 한다.
+       안 지우면 반투명 글로우가 겹쳐 점점 밝아진다. 해당하는 것은 셋:
+         · 발차기 연습(isDrillMode) — 앞차기/돌려차기 안내 화살표
+         · 겨루기 연습 — 같은 화살표
+         · 좌우 크롭 켬 — 자기 자리 상자(drawCropZones, 알파 0.30)
+       이 모드들은 어차피 매 프레임 다시 그리므로 뼈대도 같이 항상 그린다.
+       겨루기 실전·격파는 캔버스에 뼈대밖에 없어서 잔상 방식이 안전하다. */
+    const mustRepaint = isDrillMode()
+      || (currentMode==='sparring' && sparringMode==='practice')
+      || (twoPlayerMode && crop2pEnabled);
+    skelDrawThisFrame = mustRepaint || (frameDtMs()<100) || ((skelFrameTick++ & 1)===0);
+    if(skelDrawThisFrame) ctx.clearRect(0,0,canvas.width,canvas.height);
 
     if(twoPlayerMode){
       run2pFrame(result);
