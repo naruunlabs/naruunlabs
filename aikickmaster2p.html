@@ -5666,9 +5666,34 @@ const MEASURE_GATE={
      몸통 높이(riseTFront 약 2.4) → 80점대
      얼굴 높이(약 3.0 이상)      → 100점
    옆차기는 지금 점수 분포가 알맞아서 종전 값을 그대로 둔다. */
+
+/* ── 2026-08-07 · 아이 실측 24건으로 다시 잡았다 ────────────────────────
+   위 구간(옆 1.6~4.0 / 뒤 1.7~3.0)은 성인 36건으로 만든 값이었다.
+   8/6 저녁 아이들 실측을 보니 완전히 어긋나 있었다.
+
+                    riseTFront 중앙   hScore 중앙   점수 중앙
+     앞차기              3.04            0.59         76
+     돌려차기            2.95            0.55         74
+     옆차기              1.93            0.14         62   ← 바닥
+     뒤차기              1.86            0.12         62   ← 바닥
+
+   아이들의 옆·뒤차기 높이가 앞·돌려차기의 63%밖에 안 된다. 몸을 돌려 차니
+   겉보기 상승량이 원래 작은 것이지 못 찬 게 아니다. 그런데 옆차기는 앞차기와
+   똑같은 1.6~4.0 을 쓰고 있어서 hScore 가 0.14 로 바닥에 붙었다.
+
+   1.0~3.0 으로 내리면 (실측 24건 재계산):
+     옆차기 62 → 73점 (낮게 찬 아이 62 · 높이 찬 아이 91)
+     뒤차기 62 → 73점 (낮게 찬 아이 61 · 높이 찬 아이 90)
+   사분위 폭이 앞차기(14)와 거의 같아진다.
+
+   ⚠ H_HI 를 3.0 으로 둔 이유: 아이 실측 최고가 3.22 라 천장에 여유를 남겼다.
+     2.8 로 하면 중앙값이 앞차기와 더 잘 맞지만 높이 차는 아이가 다 만점으로
+     뭉뚱그려진다. "낮게 차면 낮게, 높이 차면 높게"가 우선 — 관장님 결정.
+   ⚠ 표본이 옆 12건·뒤 12건뿐이고 전부 "쉬움" 난이도·2인 모드다.
+     "어려움"은 한 건도 없다. 적용 후 반드시 다시 잴 것. */
 const MEASURE_H={
-  yeop:{H_LO:1.6, H_HI:4.0},   // 종전과 동일
-  dwi :{H_LO:1.7, H_HI:3.0}    // 뒤차기 전용 — 낮춘 구간
+  yeop:{H_LO:1.0, H_HI:3.0},   // 2026-08-07: 1.6~4.0 에서 변경
+  dwi :{H_LO:1.0, H_HI:3.0}    // 2026-08-07: 1.7~3.0 에서 변경
 };
 
 /* 현재 적용 중인 기준값. 난이도 버튼을 누르면 통째로 교체된다. */
@@ -5772,14 +5797,148 @@ function stableHipTurn(limit, endIndex=trajHipW.length-1, minFrames=JUDGE.ROUND.
 
 function clamp01(v){ return Math.max(0,Math.min(1,v)); }
 
+/* ── 짧은 발차기 전용 간이 판정 (2026-08-07) ────────────────────────────
+   왜 만들었나. 8/6 저녁 실측 205건에서 통과율이 35% 였고, 거절 사유가
+   칼같이 갈렸다.
+
+       궤적 프레임   통과   거절
+          2장          0     69     ← 100% 거절
+          3장          0     23     ← 100% 거절
+          4장         16      7
+          5장 이상    52     18
+
+   2~3장짜리 92건이 곧 too_short 92건이다. 2인 모드 fps 8 = 프레임당 125ms
+   이므로 0.3초짜리 빠른 발차기는 2.4프레임밖에 안 잡힌다.
+   즉 판정이 까다로운 게 아니라 볼 그림이 없었던 것이고,
+   결과적으로 "빨리 차면 무조건 거절"이었다.
+
+   ⚠ 1인 모드는 fps 14 라 프레임이 4장을 넘는다. 이 함수는 거의 안 불린다.
+     사실상 2인 모드를 위한 것이고 1인에는 안전망으로만 남는다.
+
+   무엇을 할 수 있고 없나. 값이 두 종류다.
+     · 경로형 (maxDev 곧기, latT 횡이동) — 길의 모양. 2~3장으로는 못 잰다
+     · 순간형 (높이, 어깨폭, 골반폭, 무릎각) — 프레임마다 따로 재는 값. 잴 수 있다
+   특히 높이·무릎은 프리롤(발차기 시작 전 프레임)도 함께 쓰므로,
+   궤적이 2장이어도 실측 92건 중 71건이 프리롤 4장 이상을 갖고 있었다.
+
+   그래서 경로형을 버리고 순간형만으로 채점한다. 계수(factor)는 정식 경로와
+   글자 그대로 같은 식을 쓴다. 실측으로 역산해보니 높이 하나만 써도
+   정식 점수와 앞차기 -2점 · 돌려차기 -3점 차이였다. 짧은 발차기가 살짝
+   보수적으로 채점되는 것이라 오히려 알맞다.
+
+   ⚠ 종류 관문(거절)을 두지 않는다. 실측으로 경계를 찾아봤지만 쓸 값이 없었다.
+       앞차기 모드 (어깨폭 낮으면 거절): 0.25 에서 앞차기 10% 오거부 / 돌려차기 26% 차단
+       → 우리 아이를 자르는 만큼도 못 막는다. 어떤 경계도 손해가 이득보다 컸다.
+     대신 몸 돌림을 점수 계수로 넣어 깎고 조언 문구를 준다.
+     아이들은 "발만 그 방향으로 가면 그 발차기"라고 생각한다(관장님 관찰).
+     그런 아이를 거절하면 자기가 맞게 했는데 기계가 틀렸다고 하는 셈이라
+     아무것도 안 배우고 짜증만 난다. 점수로 알려주면 스스로 고친다.
+   ⚠ 그래서 어려움의 CH_REJECT(무릎 안 접은 앞차기 거부)도 여기서는 안 건다.
+     대신 무릎 계수가 0.62 배까지 깎으므로 점수로는 확실히 불리하다.
+   ⚠ 로그에 reason:'short_ok' 로 남는다. 얼마나 자주 발동하는지, 점수가
+     정식 경로보다 얼마나 낮은지, 이상한 것이 통과하는지 다음 수업에 확인할 것. */
+function analyzeTrajShort(peakPctValue=null){
+  const P=V3();
+  const c01=(v)=>Math.max(0,Math.min(1,v));
+  const T=trajTorsoRef();
+  const cutoff=(kickStartT||0)-PRE_LOOKBACK_MS;
+  const inPre=(i)=>!(preT[i]<cutoff) && !(kickStartT && preT[i]>kickStartT);
+
+  // ① 높이 — 정식 경로와 같은 방식(프리롤 발높이 + 궤적, 가장 낮은 곳부터 최고점까지)
+  let riseTFront=0;
+  {
+    const yBuf=[];
+    for(let i=0;i<preT.length;i++) if(inPre(i) && Number.isFinite(preFootY[i])) yBuf.push(preFootY[i]);
+    for(const y of trajY) if(Number.isFinite(y)) yBuf.push(y);
+    const tops=trajY.filter(Number.isFinite);
+    if(yBuf.length>=2 && tops.length) riseTFront=Math.max(0,Math.max(...yBuf)-Math.min(...tops))/T;
+  }
+
+  // ② 무릎 체임버(3D) — 정식 경로와 같은 방식. 4장을 못 채우면 null(=중간 점수)
+  let kneeChamber3D=null, knee3DFrames=0;
+  {
+    const a3=[];
+    for(let i=0;i<preT.length;i++){
+      if(!inPre(i)) continue;
+      const v=preKneeAngle3D[i];
+      if(Number.isFinite(v) && v>=0 && v<=180) a3.push(v);
+    }
+    for(const v of trajKneeAngle3D) if(Number.isFinite(v) && v>=0 && v<=180) a3.push(v);
+    knee3DFrames=a3.length;
+    if(a3.length>=4){
+      const sm=a3.map((v,i)=>(i===0||i===a3.length-1)?v:[a3[i-1],v,a3[i+1]].sort((x,y)=>x-y)[1]);
+      const tailFrom=Math.max(1,sm.length-3);
+      const mx=Math.max(...sm.slice(tailFrom)), mn=Math.min(...sm.slice(0,tailFrom));
+      kneeChamber3D=(mx>=mn)?(mx-mn):null;   // 뒤집히면 "못 잰 것"으로 (정식 경로와 동일)
+    }
+  }
+
+  // ③ 몸 돌림 — 프레임마다 따로 재는 값이라 2~3장으로도 나온다
+  let hipWRatio=1, shoulderWRatio=1;
+  for(const v of trajHipW)      if(Number.isFinite(v)) hipWRatio=Math.min(hipWRatio,v);
+  for(const v of trajShoulderW) if(Number.isFinite(v)) shoulderWRatio=Math.min(shoulderWRatio,v);
+
+  // ④ 채점 — 높이 × 계수. 계수 식은 정식 경로와 글자 그대로 같다
+  const want=drillKickType();
+  const measure=isMeasureOnlyMode();
+  const B=measure ? (MEASURE_H[want] || {H_LO:P.H_LO,H_HI:P.H_HI}) : {H_LO:P.H_LO,H_HI:P.H_HI};
+  const hScore=c01((riseTFront-B.H_LO)/(B.H_HI-B.H_LO));
+  const cScore=(kneeChamber3D===null) ? 0.5
+             : measure ? c01((kneeChamber3D-20)/(75-20))          // scoreMeasureOnly 와 동일
+                       : c01((kneeChamber3D-P.C_LO)/(P.C_HI-P.C_LO)); // scoreKick 과 동일
+  const rot=c01(1-shoulderWRatio/0.85);
+  const hipScore=c01((P.HIP_HI-hipWRatio)/(P.HIP_HI-P.HIP_LO));
+
+  let factor, worst;
+  if(want==='dwi'){        factor=0.70+0.30*rot;                              worst=(rot<0.45)?'rot':'height'; }
+  else if(want==='yeop'){  factor=(0.70+0.30*rot)*(0.78+0.22*cScore);         worst=(rot<0.45)?'rot':'height'; }
+  else if(want==='dollo'){ factor=(0.70+0.30*cScore)*(0.62+0.38*hipScore);    worst=(hipScore<0.35)?'hip':((cScore<0.35)?'knee':'height'); }
+  else {                   factor=0.62+0.38*cScore;                           worst=(cScore<0.35)?'knee':'height'; }
+
+  const score=Math.max(P.BASE,Math.min(100,Math.round(P.BASE+P.SPAN*hScore*factor)));
+
+  let msg;
+  if(score>=95)      msg='완벽해요!';
+  else if(score>=85) msg='아주 좋아요!';
+  else if(score>=72) msg='좋아요!';
+  else msg={height:'더 높이 차보세요!', knee:'무릎을 더 접었다 펴세요!',
+            hip:'허리를 더 돌려보세요!',
+            rot:(want==='dwi')?'등을 더 보이며 차보세요!':'몸을 더 옆으로 돌려보세요!'}[worst]||'좋아요!';
+
+  return {
+    score, ok:true, msg, reason:'short_ok',
+    riseTFront,
+    kneeChamber:(kneeChamber3D==null)?0:kneeChamber3D,
+    kneeDataOk:(kneeChamber3D!=null),
+    diag:{
+      riseTFront:+riseTFront.toFixed(3),
+      kneeChamber3D:(kneeChamber3D==null)?null:Math.round(kneeChamber3D),
+      knee3DFrames,
+      hipWRatio:+hipWRatio.toFixed(3),
+      shoulderWRatio:+shoulderWRatio.toFixed(3),
+      peakPct:(typeof peakPctValue==='number' && Number.isFinite(peakPctValue))?Math.round(peakPctValue):null,
+      frames:trajX.length,
+      preFrames:preT.filter((t,i)=>inPre(i)).length,
+      torsoRef:+T.toFixed(4),
+      hScore:+hScore.toFixed(3), cScore:+cScore.toFixed(3), factor:+factor.toFixed(3),
+      rot:+rot.toFixed(3),
+      want:want||'', kind:'short'        // kind:'short' 로 정식 경로와 로그에서 구분된다
+    }
+  };
+}
+
 // 발차기 궤적 분석. 통로는 내부 계산에만 사용하며 화면에는 그리지 않는다.
 function analyzeTraj(peakPctValue=null){
   /* 2026-08-03 · too_short 에도 진단값을 실어 보낸다.
      종전에는 사유만 남아서, 이 거부가 "그 선수가 아예 안 잡혀서"인지
      "잡혔는데 프레임이 모자라서"인지 로그만 보고는 가릴 수 없었다.
-     frames 0 이면 인식 실패, 1~3 이면 프레임 부족 쪽이다. */
-  if(trajX.length<4) return {score:null,ok:false,msg:'동작을 다시 보여주세요',reason:'too_short',
+     frames 0 이면 인식 실패, 1~3 이면 프레임 부족 쪽이다.
+
+     2026-08-07: 2~3장은 거절하지 않고 간이 판정으로 보낸다.
+     0~1장은 그대로 거절 — 그건 프레임 부족이 아니라 진짜 인식 실패다. */
+  if(trajX.length<2) return {score:null,ok:false,msg:'동작을 다시 보여주세요',reason:'too_short',
     diag:{frames:trajX.length, preFrames:(typeof preTraj!=='undefined'?preTraj.length:null)}};
+  if(trajX.length<4) return analyzeTrajShort(peakPctValue);
 
   const T=trajTorsoRef();
   const relX=trajX.map((x,i)=>x-(trajHipX[i] ?? smHipX ?? 0.5));
